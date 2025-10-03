@@ -1,0 +1,173 @@
+# ProManage Production Environment Configuration
+
+spring:
+  datasource:
+    druid:
+      # IMPORTANT: Replace with production database credentials
+      url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:promanage}
+      username: ${DB_USERNAME:postgres}
+      password: ${DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+
+      # Production Connection Pool Configuration
+      initial-size: 10
+      min-idle: 10
+      max-active: 50
+      max-wait: 60000
+
+      # Connection Test Configuration
+      test-while-idle: true
+      test-on-borrow: true
+      test-on-return: false
+      validation-query: SELECT 1
+      validation-query-timeout: 3000
+
+      # Connection Timeout Configuration
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      max-evictable-idle-time-millis: 600000
+
+      # Monitoring (Disable in production or secure properly)
+      filters: stat,wall,slf4j
+      stat-view-servlet:
+        enabled: false
+
+  # Redis Configuration
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD}
+    database: 0
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        max-wait: -1ms
+      shutdown-timeout: 100ms
+
+  # Flyway Database Migration Configuration
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    baseline-version: 0
+    validate-on-migrate: true
+    out-of-order: false
+    clean-disabled: true
+    table: flyway_schema_history
+    encoding: UTF-8
+    placeholder-replacement: true
+    placeholders:
+      database: ${DB_NAME:promanage}
+
+# MyBatis Plus Configuration
+mybatis-plus:
+  configuration:
+    # Production mode - disable SQL logs
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    map-underscore-to-camel-case: true
+    cache-enabled: true
+    lazy-loading-enabled: true
+    multiple-result-sets-enabled: true
+    use-column-label: true
+    use-generated-keys: true
+    auto-mapping-behavior: partial
+    default-executor-type: reuse
+    default-statement-timeout: 25000
+
+  global-config:
+    banner: false
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: true
+      logic-not-delete-value: false
+      id-type: auto
+
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.promanage.service.entity
+
+# JWT Configuration
+# IMPORTANT: Use strong secret key in production (minimum 512 bits for HS512)
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+  issuer: ProManage
+  header: Authorization
+  token-prefix: Bearer
+
+# Elasticsearch Configuration
+# elasticsearch:
+#   host: ${ES_HOST:localhost}
+#   port: ${ES_PORT:9200}
+#   scheme: ${ES_SCHEME:https}
+#   username: ${ES_USERNAME:elastic}
+#   password: ${ES_PASSWORD}
+
+# MinIO Configuration
+# minio:
+#   endpoint: ${MINIO_ENDPOINT}
+#   access-key: ${MINIO_ACCESS_KEY}
+#   secret-key: ${MINIO_SECRET_KEY}
+#   bucket-name: ${MINIO_BUCKET:promanage}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.promanage: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    com.baomidou.mybatisplus: WARN
+  file:
+    name: /var/log/promanage/promanage.log
+    max-size: 500MB
+    max-history: 60
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } --- [%t] %-40.40logger{39} : %m%n%wEx"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } --- [%t] %-40.40logger{39} : %m%n%wEx"
+
+# Management Endpoints Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only expose necessary endpoints in production
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+    info:
+      enabled: true
+  health:
+    redis:
+      enabled: true
+    db:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: prod
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8080}
+  # Enable HTTPS in production
+  # ssl:
+  #   enabled: true
+  #   key-store: classpath:keystore.p12
+  #   key-store-password: ${KEYSTORE_PASSWORD}
+  #   key-store-type: PKCS12
+  #   key-alias: promanage
+
+# SpringDoc Configuration (Disable Swagger in production or secure it)
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

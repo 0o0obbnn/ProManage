@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.UserRoleMapper">
+
+    <!-- 根据用户ID删除所有角色关联 -->
+    <delete id="deleteByUserId">
+        DELETE FROM tb_user_role
+        WHERE user_id = #{userId}
+    </delete>
+
+    <!-- 根据角色ID删除所有用户关联 -->
+    <delete id="deleteByRoleId">
+        DELETE FROM tb_user_role
+        WHERE role_id = #{roleId}
+    </delete>
+
+    <!-- 批量插入用户角色关联 -->
+    <insert id="batchInsert">
+        INSERT INTO tb_user_role (user_id, role_id, create_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.roleId}, #{item.createTime})
+        </foreach>
+    </insert>
+
+    <!-- 检查用户是否拥有指定角色 -->
+    <select id="existsByUserIdAndRoleId" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM tb_user_role
+        WHERE user_id = #{userId}
+        AND role_id = #{roleId}
+    </select>
+
+</mapper>

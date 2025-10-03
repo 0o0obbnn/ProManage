@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.RoleMapper">
+
+    <!-- 根据用户ID查找角色列表 -->
+    <select id="findByUserId" resultType="com.promanage.service.entity.Role">
+        SELECT r.* FROM tb_role r
+        INNER JOIN tb_user_role ur ON r.id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND r.deleted = false
+        ORDER BY r.sort ASC, r.create_time DESC
+    </select>
+
+    <!-- 根据角色编码查找角色 -->
+    <select id="findByRoleCode" resultType="com.promanage.service.entity.Role">
+        SELECT * FROM tb_role
+        WHERE role_code = #{roleCode}
+        AND deleted = false
+    </select>
+
+    <!-- 检查角色编码是否存在 -->
+    <select id="existsByRoleCode" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM tb_role
+        WHERE role_code = #{roleCode}
+        AND deleted = false
+    </select>
+
+</mapper>

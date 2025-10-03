@@ -1,0 +1,1068 @@
+{
+  "elasticsearch_schema_design": {
+    "version": "1.0",
+    "created_date": "2024-12-30",
+    "architect": "Senior Full-Stack Architect",
+    "description": "ProManage 项目管理系统 Elasticsearch 索引设计",
+
+    "cluster_settings": {
+      "cluster.name": "promanage-search-cluster",
+      "discovery.type": "single-node",
+      "network.host": "0.0.0.0",
+      "http.port": 9200,
+      "transport.port": 9300,
+      "bootstrap.memory_lock": true,
+      "indices.memory.index_buffer_size": "10%",
+      "indices.memory.min_index_buffer_size": "48mb",
+      "thread_pool.search.size": 5,
+      "thread_pool.search.queue_size": 1000,
+      "http.max_content_length": "200mb"
+    },
+
+    "index_templates": {
+      "promanage_template": {
+        "index_patterns": ["promanage-*"],
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 1,
+          "max_result_window": 50000,
+          "analysis": {
+            "analyzer": {
+              "chinese_analyzer": {
+                "type": "custom",
+                "tokenizer": "ik_max_word",
+                "filter": ["lowercase", "stop"]
+              },
+              "pinyin_analyzer": {
+                "type": "custom",
+                "tokenizer": "keyword",
+                "filter": ["pinyin_filter", "lowercase"]
+              },
+              "autocomplete_analyzer": {
+                "type": "custom",
+                "tokenizer": "autocomplete_tokenizer",
+                "filter": ["lowercase"]
+              },
+              "search_analyzer": {
+                "type": "custom",
+                "tokenizer": "autocomplete_tokenizer",
+                "filter": ["lowercase"]
+              }
+            },
+            "tokenizer": {
+              "autocomplete_tokenizer": {
+                "type": "edge_ngram",
+                "min_gram": 2,
+                "max_gram": 10,
+                "token_chars": ["letter", "digit"]
+              }
+            },
+            "filter": {
+              "pinyin_filter": {
+                "type": "pinyin",
+                "keep_first_letter": true,
+                "keep_separate_first_letter": false,
+                "keep_full_pinyin": true,
+                "keep_joined_full_pinyin": true,
+                "keep_none_chinese": true,
+                "keep_none_chinese_together": true,
+                "keep_none_chinese_in_first_letter": true,
+                "keep_none_chinese_in_joined_full_pinyin": true,
+                "none_chinese_pinyin_tokenize": false,
+                "keep_original": false,
+                "lowercase": true,
+                "trim_whitespace": true,
+                "remove_duplicated_term": true
+              }
+            }
+          }
+        },
+        "mappings": {
+          "dynamic": "strict",
+          "properties": {
+            "suggest": {
+              "type": "completion",
+              "analyzer": "simple",
+              "preserve_separators": true,
+              "preserve_position_increments": true,
+              "max_input_length": 50
+            }
+          }
+        }
+      }
+    },
+
+    "indices": {
+      "documents_index": {
+        "index_name": "promanage-documents",
+        "description": "文档全文搜索索引",
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 1,
+          "refresh_interval": "5s",
+          "max_result_window": 50000,
+          "analysis": {
+            "analyzer": {
+              "document_analyzer": {
+                "type": "custom",
+                "tokenizer": "ik_max_word",
+                "filter": ["lowercase", "stop", "synonym_filter"]
+              },
+              "title_analyzer": {
+                "type": "custom",
+                "tokenizer": "ik_smart",
+                "filter": ["lowercase"]
+              }
+            },
+            "filter": {
+              "synonym_filter": {
+                "type": "synonym",
+                "synonyms": [
+                  "需求,requirement",
+                  "设计,design",
+                  "开发,development,dev",
+                  "测试,test,testing",
+                  "bug,缺陷,问题",
+                  "API,接口,interface"
+                ]
+              }
+            }
+          }
+        },
+        "mappings": {
+          "dynamic": "strict",
+          "properties": {
+            "id": {
+              "type": "long"
+            },
+            "project_id": {
+              "type": "long"
+            },
+            "organization_id": {
+              "type": "long"
+            },
+            "title": {
+              "type": "text",
+              "analyzer": "title_analyzer",
+              "search_analyzer": "title_analyzer",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                },
+                "pinyin": {
+                  "type": "text",
+                  "analyzer": "pinyin_analyzer"
+                },
+                "autocomplete": {
+                  "type": "text",
+                  "analyzer": "autocomplete_analyzer",
+                  "search_analyzer": "search_analyzer"
+                }
+              }
+            },
+            "content": {
+              "type": "text",
+              "analyzer": "document_analyzer",
+              "search_analyzer": "document_analyzer",
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 32766
+                }
+              }
+            },
+            "content_type": {
+              "type": "keyword"
+            },
+            "status": {
+              "type": "keyword"
+            },
+            "version": {
+              "type": "keyword"
+            },
+            "category": {
+              "type": "keyword"
+            },
+            "tags": {
+              "type": "keyword"
+            },
+            "author": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "long"},
+                "name": {
+                  "type": "text",
+                  "analyzer": "chinese_analyzer",
+                  "fields": {
+                    "keyword": {"type": "keyword"}
+                  }
+                },
+                "avatar_url": {"type": "keyword"}
+              }
+            },
+            "reviewer": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "long"},
+                "name": {
+                  "type": "text",
+                  "analyzer": "chinese_analyzer",
+                  "fields": {
+                    "keyword": {"type": "keyword"}
+                  }
+                }
+              }
+            },
+            "view_count": {
+              "type": "integer"
+            },
+            "like_count": {
+              "type": "integer"
+            },
+            "is_template": {
+              "type": "boolean"
+            },
+            "created_at": {
+              "type": "date",
+              "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+            },
+            "updated_at": {
+              "type": "date",
+              "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+            },
+            "published_at": {
+              "type": "date",
+              "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+            },
+            "project_name": {
+              "type": "keyword"
+            },
+            "file_attachments": {
+              "type": "nested",
+              "properties": {
+                "filename": {
+                  "type": "text",
+                  "analyzer": "chinese_analyzer",
+                  "fields": {
+                    "keyword": {"type": "keyword"}
+                  }
+                },
+                "file_type": {"type": "keyword"},
+                "file_size": {"type": "long"}
+              }
+            },
+            "related_documents": {
+              "type": "nested",
+              "properties": {
+                "id": {"type": "long"},
+                "title": {"type": "keyword"},
+                "relation_type": {"type": "keyword"}
+              }
+            },
+            "suggest": {
+              "type": "completion",
+              "analyzer": "simple",
+              "preserve_separators": true,
+              "preserve_position_increments": true,
+              "max_input_length": 50,
+              "contexts": [
+                {
+                  "name": "project",
+                  "type": "category"
+                },
+                {
+                  "name": "category",
+                  "type": "category"
+                }
+              ]
+            },
+            "popularity_score": {
+              "type": "rank_feature"
+            }
+          }
+        }
+      },
+
+      "tasks_index": {
+        "index_name": "promanage-tasks",
+        "description": "任务搜索索引",
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 1,
+          "refresh_interval": "10s"
+        },
+        "mappings": {
+          "dynamic": "strict",
+          "properties": {
+            "id": {"type": "long"},
+            "project_id": {"type": "long"},
+            "organization_id": {"type": "long"},
+            "title": {
+              "type": "text",
+              "analyzer": "chinese_analyzer",
+              "fields": {
+                "keyword": {"type": "keyword"},
+                "autocomplete": {
+                  "type": "text",
+                  "analyzer": "autocomplete_analyzer",
+                  "search_analyzer": "search_analyzer"
+                }
+              }
+            },
+            "description": {
+              "type": "text",
+              "analyzer": "chinese_analyzer"
+            },
+            "status": {"type": "keyword"},
+            "priority": {"type": "keyword"},
+            "assignee": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "long"},
+                "name": {"type": "keyword"},
+                "avatar_url": {"type": "keyword"}
+              }
+            },
+            "reporter": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "long"},
+                "name": {"type": "keyword"}
+              }
+            },
+            "tags": {"type": "keyword"},
+            "labels": {"type": "keyword"},
+            "estimated_hours": {"type": "float"},
+            "actual_hours": {"type": "float"},
+            "progress_percentage": {"type": "integer"},
+            "start_date": {"type": "date"},
+            "due_date": {"type": "date"},
+            "created_at": {"type": "date"},
+            "updated_at": {"type": "date"},
+            "completed_at": {"type": "date"},
+            "project_name": {"type": "keyword"},
+            "parent_task_id": {"type": "long"},
+            "subtasks_count": {"type": "integer"},
+            "comments_count": {"type": "integer"},
+            "suggest": {
+              "type": "completion",
+              "contexts": [
+                {"name": "project", "type": "category"},
+                {"name": "assignee", "type": "category"}
+              ]
+            }
+          }
+        }
+      },
+
+      "change_requests_index": {
+        "index_name": "promanage-change-requests",
+        "description": "变更请求搜索索引",
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 1,
+          "refresh_interval": "10s"
+        },
+        "mappings": {
+          "dynamic": "strict",
+          "properties": {
+            "id": {"type": "long"},
+            "project_id": {"type": "long"},
+            "organization_id": {"type": "long"},
+            "title": {
+              "type": "text",
+              "analyzer": "chinese_analyzer",
+              "fields": {
+                "keyword": {"type": "keyword"},
+                "autocomplete": {
+                  "type": "text",
+                  "analyzer": "autocomplete_analyzer",
+                  "search_analyzer": "search_analyzer"
+                }
+              }
+            },
+            "description": {
+              "type": "text",
+              "analyzer": "chinese_analyzer"
+            },
+            "reason": {
+              "type": "text",
+              "analyzer": "chinese_analyzer"
+            },
+            "status": {"type": "keyword"},
+            "priority": {"type": "keyword"},
+            "impact_level": {"type": "keyword"},
+            "requester": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "long"},
+                "name": {"type": "keyword"}
+              }
+            },
+            "assignee": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "long"},
+                "name": {"type": "keyword"}
+              }
+            },
+            "reviewer": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "long"},
+                "name": {"type": "keyword"}
+              }
+            },
+            "estimated_effort": {"type": "integer"},
+            "actual_effort": {"type": "integer"},
+            "implementation_date": {"type": "date"},
+            "tags": {"type": "keyword"},
+            "created_at": {"type": "date"},
+            "updated_at": {"type": "date"},
+            "submitted_at": {"type": "date"},
+            "approved_at": {"type": "date"},
+            "implemented_at": {"type": "date"},
+            "project_name": {"type": "keyword"},
+            "impacted_entities": {
+              "type": "nested",
+              "properties": {
+                "entity_type": {"type": "keyword"},
+                "entity_id": {"type": "long"},
+                "impact_level": {"type": "keyword"},
+                "confidence_score": {"type": "float"}
+              }
+            },
+            "approval_history": {
+              "type": "nested",
+              "properties": {
+                "approver_name": {"type": "keyword"},
+                "status": {"type": "keyword"},
+                "approved_at": {"type": "date"}
+              }
+            },
+            "suggest": {
+              "type": "completion",
+              "contexts": [
+                {"name": "project", "type": "category"},
+                {"name": "status", "type": "category"}
+              ]
+            }
+          }
+        }
+      },
+
+      "test_cases_index": {
+        "index_name": "promanage-test-cases",
+        "description": "测试用例搜索索引",
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 1,
+          "refresh_interval": "15s"
+        },
+        "mappings": {
+          "dynamic": "strict",
+          "properties": {
+            "id": {"type": "long"},
+            "project_id": {"type": "long"},
+            "organization_id": {"type": "long"},
+            "title": {
+              "type": "text",
+              "analyzer": "chinese_analyzer",
+              "fields": {
+                "keyword": {"type": "keyword"},
+                "autocomplete": {
+                  "type": "text",
+                  "analyzer": "autocomplete_analyzer",
+                  "search_analyzer": "search_analyzer"
+                }
+              }
+            },
+            "description": {
+              "type": "text",
+              "analyzer": "chinese_analyzer"
+            },
+            "preconditions": {
+              "type": "text",
+              "analyzer": "chinese_analyzer"
+            },
+            "test_steps": {
+              "type": "text",
+              "analyzer": "chinese_analyzer"
+            },
+            "expected_results": {
+              "type": "text",
+              "analyzer": "chinese_analyzer"
+            },
+            "status": {"type": "keyword"},
+            "priority": {"type": "keyword"},
+            "test_type": {"type": "keyword"},
+            "automation_level": {"type": "keyword"},
+            "author": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "long"},
+                "name": {"type": "keyword"}
+              }
+            },
+            "reviewer": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "long"},
+                "name": {"type": "keyword"}
+              }
+            },
+            "tags": {"type": "keyword"},
+            "reuse_count": {"type": "integer"},
+            "template_id": {"type": "long"},
+            "created_at": {"type": "date"},
+            "updated_at": {"type": "date"},
+            "project_name": {"type": "keyword"},
+            "execution_history": {
+              "type": "nested",
+              "properties": {
+                "execution_date": {"type": "date"},
+                "status": {"type": "keyword"},
+                "executor_name": {"type": "keyword"}
+              }
+            },
+            "related_test_cases": {
+              "type": "nested",
+              "properties": {
+                "id": {"type": "long"},
+                "title": {"type": "keyword"},
+                "relation_type": {"type": "keyword"},
+                "similarity_score": {"type": "float"}
+              }
+            },
+            "suggest": {
+              "type": "completion",
+              "contexts": [
+                {"name": "project", "type": "category"},
+                {"name": "test_type", "type": "category"}
+              ]
+            },
+            "reusability_score": {
+              "type": "rank_feature"
+            }
+          }
+        }
+      },
+
+      "users_index": {
+        "index_name": "promanage-users",
+        "description": "用户搜索索引",
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 1,
+          "refresh_interval": "30s"
+        },
+        "mappings": {
+          "dynamic": "strict",
+          "properties": {
+            "id": {"type": "long"},
+            "organization_id": {"type": "long"},
+            "username": {
+              "type": "text",
+              "analyzer": "keyword",
+              "fields": {
+                "autocomplete": {
+                  "type": "text",
+                  "analyzer": "autocomplete_analyzer",
+                  "search_analyzer": "search_analyzer"
+                }
+              }
+            },
+            "email": {
+              "type": "text",
+              "analyzer": "keyword"
+            },
+            "first_name": {
+              "type": "text",
+              "analyzer": "chinese_analyzer",
+              "fields": {
+                "keyword": {"type": "keyword"}
+              }
+            },
+            "last_name": {
+              "type": "text",
+              "analyzer": "chinese_analyzer",
+              "fields": {
+                "keyword": {"type": "keyword"}
+              }
+            },
+            "full_name": {
+              "type": "text",
+              "analyzer": "chinese_analyzer",
+              "fields": {
+                "keyword": {"type": "keyword"},
+                "pinyin": {
+                  "type": "text",
+                  "analyzer": "pinyin_analyzer"
+                },
+                "autocomplete": {
+                  "type": "text",
+                  "analyzer": "autocomplete_analyzer",
+                  "search_analyzer": "search_analyzer"
+                }
+              }
+            },
+            "avatar_url": {"type": "keyword"},
+            "status": {"type": "keyword"},
+            "roles": {"type": "keyword"},
+            "projects": {
+              "type": "nested",
+              "properties": {
+                "project_id": {"type": "long"},
+                "project_name": {"type": "keyword"},
+                "role": {"type": "keyword"}
+              }
+            },
+            "last_login_at": {"type": "date"},
+            "created_at": {"type": "date"},
+            "suggest": {
+              "type": "completion",
+              "contexts": [
+                {"name": "role", "type": "category"}
+              ]
+            }
+          }
+        }
+      },
+
+      "activity_logs_index": {
+        "index_name": "promanage-activity-logs",
+        "description": "活动日志搜索索引",
+        "settings": {
+          "number_of_shards": 2,
+          "number_of_replicas": 1,
+          "refresh_interval": "30s",
+          "index.lifecycle.name": "activity-logs-policy",
+          "index.lifecycle.rollover_alias": "promanage-activity-logs"
+        },
+        "mappings": {
+          "dynamic": "strict",
+          "properties": {
+            "id": {"type": "long"},
+            "user_id": {"type": "long"},
+            "organization_id": {"type": "long"},
+            "project_id": {"type": "long"},
+            "action": {"type": "keyword"},
+            "entity_type": {"type": "keyword"},
+            "entity_id": {"type": "long"},
+            "user_name": {"type": "keyword"},
+            "project_name": {"type": "keyword"},
+            "entity_title": {
+              "type": "text",
+              "analyzer": "chinese_analyzer",
+              "fields": {
+                "keyword": {"type": "keyword"}
+              }
+            },
+            "ip_address": {"type": "ip"},
+            "user_agent": {
+              "type": "text",
+              "index": false
+            },
+            "session_id": {"type": "keyword"},
+            "created_at": {"type": "date"},
+            "changes": {
+              "type": "object",
+              "properties": {
+                "field": {"type": "keyword"},
+                "old_value": {"type": "text"},
+                "new_value": {"type": "text"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "search_templates": {
+      "document_search": {
+        "description": "文档全文搜索模板",
+        "template": {
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "multi_match": {
+                    "query": "{{query}}",
+                    "fields": [
+                      "title^3",
+                      "title.pinyin^2",
+                      "content^1",
+                      "tags^2"
+                    ],
+                    "type": "best_fields",
+                    "fuzziness": "AUTO",
+                    "prefix_length": 2
+                  }
+                }
+              ],
+              "filter": [
+                {
+                  "terms": {
+                    "project_id": "{{project_ids}}"
+                  }
+                },
+                {
+                  "term": {
+                    "organization_id": "{{organization_id}}"
+                  }
+                }
+              ]
+            }
+          },
+          "highlight": {
+            "fields": {
+              "title": {"number_of_fragments": 0},
+              "content": {
+                "fragment_size": 150,
+                "number_of_fragments": 3
+              }
+            },
+            "pre_tags": ["<mark>"],
+            "post_tags": ["</mark>"]
+          },
+          "sort": [
+            {"_score": {"order": "desc"}},
+            {"popularity_score": {"order": "desc"}},
+            {"updated_at": {"order": "desc"}}
+          ],
+          "from": "{{from|0}}",
+          "size": "{{size|20}}"
+        }
+      },
+
+      "smart_suggestion": {
+        "description": "智能建议搜索模板",
+        "template": {
+          "suggest": {
+            "document_suggest": {
+              "prefix": "{{prefix}}",
+              "completion": {
+                "field": "suggest",
+                "size": "{{size|10}}",
+                "contexts": {
+                  "project": ["{{project_id}}"]
+                }
+              }
+            }
+          }
+        }
+      },
+
+      "similar_content": {
+        "description": "相似内容推荐模板",
+        "template": {
+          "query": {
+            "more_like_this": {
+              "fields": ["title", "content", "tags"],
+              "like": [
+                {
+                  "_index": "promanage-documents",
+                  "_id": "{{document_id}}"
+                }
+              ],
+              "min_term_freq": 2,
+              "max_query_terms": 12,
+              "min_doc_freq": 1,
+              "analyzer": "chinese_analyzer"
+            }
+          },
+          "filter": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "organization_id": "{{organization_id}}"
+                  }
+                }
+              ],
+              "must_not": [
+                {
+                  "term": {
+                    "id": "{{document_id}}"
+                  }
+                }
+              ]
+            }
+          },
+          "size": "{{size|5}}"
+        }
+      },
+
+      "cross_entity_search": {
+        "description": "跨实体搜索模板",
+        "template": {
+          "query": {
+            "bool": {
+              "should": [
+                {
+                  "multi_match": {
+                    "query": "{{query}}",
+                    "fields": ["title^2", "content"],
+                    "type": "best_fields"
+                  }
+                }
+              ],
+              "filter": [
+                {
+                  "term": {
+                    "organization_id": "{{organization_id}}"
+                  }
+                },
+                {
+                  "terms": {
+                    "project_id": "{{project_ids}}"
+                  }
+                }
+              ]
+            }
+          },
+          "indices": [
+            "promanage-documents",
+            "promanage-tasks",
+            "promanage-change-requests",
+            "promanage-test-cases"
+          ],
+          "from": "{{from|0}}",
+          "size": "{{size|20}}"
+        }
+      }
+    },
+
+    "aggregations": {
+      "document_analytics": {
+        "description": "文档分析聚合",
+        "aggregation": {
+          "project_distribution": {
+            "terms": {
+              "field": "project_name",
+              "size": 10
+            }
+          },
+          "category_distribution": {
+            "terms": {
+              "field": "category",
+              "size": 10
+            }
+          },
+          "author_distribution": {
+            "terms": {
+              "field": "author.name.keyword",
+              "size": 10
+            }
+          },
+          "monthly_creation": {
+            "date_histogram": {
+              "field": "created_at",
+              "calendar_interval": "month"
+            }
+          },
+          "status_distribution": {
+            "terms": {
+              "field": "status",
+              "size": 10
+            }
+          },
+          "popular_tags": {
+            "terms": {
+              "field": "tags",
+              "size": 20
+            }
+          }
+        }
+      }
+    },
+
+    "index_lifecycle_policies": {
+      "activity_logs_policy": {
+        "policy": {
+          "phases": {
+            "hot": {
+              "actions": {
+                "rollover": {
+                  "max_size": "1gb",
+                  "max_age": "7d"
+                },
+                "set_priority": {
+                  "priority": 100
+                }
+              }
+            },
+            "warm": {
+              "min_age": "7d",
+              "actions": {
+                "allocate": {
+                  "number_of_replicas": 0
+                },
+                "set_priority": {
+                  "priority": 50
+                }
+              }
+            },
+            "cold": {
+              "min_age": "30d",
+              "actions": {
+                "set_priority": {
+                  "priority": 0
+                }
+              }
+            },
+            "delete": {
+              "min_age": "90d"
+            }
+          }
+        }
+      }
+    },
+
+    "pipeline_configurations": {
+      "document_enrichment_pipeline": {
+        "description": "文档数据富化管道",
+        "processors": [
+          {
+            "set": {
+              "field": "full_text",
+              "value": "{{title}} {{content}}"
+            }
+          },
+          {
+            "script": {
+              "lang": "painless",
+              "source": "ctx.popularity_score = Math.log(ctx.view_count + 1) + Math.log(ctx.like_count + 1)"
+            }
+          },
+          {
+            "date": {
+              "field": "created_at",
+              "formats": ["yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd", "epoch_millis"]
+            }
+          }
+        ]
+      },
+
+      "test_case_reusability_pipeline": {
+        "description": "测试用例可复用性评分管道",
+        "processors": [
+          {
+            "script": {
+              "lang": "painless",
+              "source": "ctx.reusability_score = Math.log(ctx.reuse_count + 1) * (ctx.test_type == 'FUNCTIONAL' ? 1.5 : 1.0)"
+            }
+          }
+        ]
+      }
+    },
+
+    "monitoring_and_alerting": {
+      "index_monitoring": {
+        "cluster_health": {
+          "check_interval": "30s",
+          "alert_on": ["red", "yellow"]
+        },
+        "index_stats": {
+          "metrics": [
+            "search_query_total",
+            "search_query_time_in_millis",
+            "indexing_index_total",
+            "indexing_index_time_in_millis"
+          ],
+          "check_interval": "1m"
+        }
+      },
+      "performance_alerts": {
+        "slow_queries": {
+          "threshold": "5s",
+          "action": "log_and_alert"
+        },
+        "high_memory_usage": {
+          "threshold": "85%",
+          "action": "alert"
+        },
+        "disk_usage": {
+          "threshold": "80%",
+          "action": "alert"
+        }
+      }
+    },
+
+    "backup_and_snapshot": {
+      "snapshot_repository": {
+        "type": "fs",
+        "settings": {
+          "location": "/backup/elasticsearch",
+          "compress": true
+        }
+      },
+      "snapshot_policy": {
+        "schedule": "0 2 * * *",
+        "name": "daily-snapshot-{now/d}",
+        "repository": "backup_repository",
+        "config": {
+          "indices": ["promanage-*"],
+          "ignore_unavailable": false,
+          "include_global_state": false
+        },
+        "retention": {
+          "expire_after": "30d",
+          "min_count": 5,
+          "max_count": 50
+        }
+      }
+    },
+
+    "integration_settings": {
+      "postgresql_sync": {
+        "description": "PostgreSQL 数据同步配置",
+        "sync_strategy": "near_real_time",
+        "batch_size": 1000,
+        "sync_interval": "30s",
+        "error_handling": "retry_with_backoff",
+        "tables_mapping": {
+          "documents": "promanage-documents",
+          "tasks": "promanage-tasks",
+          "change_requests": "promanage-change-requests",
+          "test_cases": "promanage-test-cases",
+          "users": "promanage-users",
+          "activity_logs": "promanage-activity-logs"
+        }
+      },
+
+      "api_integration": {
+        "bulk_index_size": 100,
+        "refresh_policy": "wait_for",
+        "timeout": "30s",
+        "retry_on_conflict": 3
+      }
+    },
+
+    "performance_tuning": {
+      "search_optimization": {
+        "index_sorting": {
+          "field": ["project_id", "created_at"],
+          "order": ["asc", "desc"]
+        },
+        "force_merge": {
+          "schedule": "0 3 * * *",
+          "max_num_segments": 1
+        }
+      },
+
+      "memory_optimization": {
+        "circuit_breaker": {
+          "fielddata": "60%",
+          "request": "40%",
+          "total": "95%"
+        },
+        "cache_settings": {
+          "indices.queries.cache.size": "10%",
+          "indices.fielddata.cache.size": "20%"
+        }
+      }
+    }
+  }
+}

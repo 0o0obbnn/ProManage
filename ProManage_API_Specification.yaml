@@ -1,0 +1,3967 @@
+openapi: 3.0.3
+info:
+  title: ProManage API
+  description: |
+    ProManage 项目管理系统 RESTful API 规范
+
+    ## 功能概述
+    - 统一知识库管理
+    - 智能变更管理
+    - 任务和测试用例管理
+    - 实时通知和协作
+    - 基于角色的访问控制
+
+    ## 认证说明
+    API 使用 JWT Bearer Token 进行认证。获取 token 后，在请求头中添加：
+    ```
+    Authorization: Bearer {your_jwt_token}
+    ```
+
+    ## 错误处理
+    API 使用标准 HTTP 状态码，错误响应格式统一为：
+    ```json
+    {
+      "error": {
+        "code": "ERROR_CODE",
+        "message": "错误描述",
+        "details": {}
+      }
+    }
+    ```
+
+    ## 分页
+    列表接口支持分页，参数包括：
+    - `page`: 页码（从1开始）
+    - `size`: 每页数量（默认20，最大100）
+    - `sort`: 排序字段
+    - `order`: 排序方向（asc/desc）
+
+  version: 1.0.0
+  contact:
+    name: ProManage Development Team
+    email: dev@promanage.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.promanage.com/v1
+    description: 生产环境
+  - url: https://staging-api.promanage.com/v1
+    description: 测试环境
+  - url: http://localhost:8080/api/v1
+    description: 本地开发环境
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Authentication
+    description: 认证和授权
+  - name: Test
+    description: 系统测试和健康检查
+  - name: Organizations
+    description: 组织管理
+  - name: Projects
+    description: 项目管理
+  - name: Documents
+    description: 文档管理
+  - name: Tasks
+    description: 任务管理
+  - name: Change Requests
+    description: 变更请求管理
+  - name: Test Cases
+    description: 测试用例管理
+  - name: Users
+    description: 用户管理
+  - name: Notifications
+    description: 通知管理
+  - name: Search
+    description: 搜索功能
+  - name: Analytics
+    description: 数据分析
+
+paths:
+  # ================================
+  # 系统测试 API
+  # ================================
+  /test/health:
+    get:
+      tags: [Test]
+      summary: 系统健康检查
+      description: 检查系统基本状态和配置
+      operationId: healthCheck
+      responses:
+        '200':
+          description: 系统运行正常
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "系统运行正常"
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: "UP"
+                      timestamp:
+                        type: string
+                        format: date-time
+                      version:
+                        type: string
+                        example: "1.0.0-SNAPSHOT"
+                      springBootVersion:
+                        type: string
+                        example: "3.2.5"
+                      javaVersion:
+                        type: string
+                        example: "17.0.1"
+      security: []
+
+  /test/info:
+    get:
+      tags: [Test]
+      summary: 系统信息
+      description: 获取系统基本信息和配置
+      operationId: systemInfo
+      responses:
+        '200':
+          description: 系统信息
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "系统信息获取成功"
+                  data:
+                    type: object
+                    properties:
+                      applicationName:
+                        type: string
+                        example: "ProManage"
+                      version:
+                        type: string
+                        example: "1.0.0-SNAPSHOT"
+                      description:
+                        type: string
+                        example: "智能项目管理系统"
+                      springBootVersion:
+                        type: string
+                      javaVersion:
+                        type: string
+                      osName:
+                        type: string
+                      osVersion:
+                        type: string
+                      userTimezone:
+                        type: string
+                      serverTime:
+                        type: string
+                        format: date-time
+      security: []
+
+  /test/ping:
+    get:
+      tags: [Test]
+      summary: Ping测试
+      description: 简单的连通性测试
+      operationId: ping
+      responses:
+        '200':
+          description: API正常运行
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: string
+                    example: "Pong! API is working correctly."
+      security: []
+
+  # ================================
+  # 认证和授权 API
+  # ================================
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: 用户登录
+      description: 使用邮箱/用户名和密码进行登录
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  description: 用户名
+                  example: "admin"
+                password:
+                  type: string
+                  format: password
+                  description: 密码
+                  example: "password123"
+                rememberMe:
+                  type: boolean
+                  description: 记住登录状态
+                  default: false
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        description: JWT 访问令牌
+                      refreshToken:
+                        type: string
+                        description: 刷新令牌
+                      tokenType:
+                        type: string
+                        enum: [Bearer]
+                        example: "Bearer"
+                      expiresIn:
+                        type: integer
+                        description: 令牌过期时间（秒）
+                        example: 86400
+                      userInfo:
+                        $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      security: []
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: 刷新访问令牌
+      description: 使用刷新令牌获取新的访问令牌
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+                  description: 刷新令牌
+      responses:
+        '200':
+          description: 令牌刷新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  expires_in:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security: []
+
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: 用户注册
+      description: 创建新用户账号，自动分配默认角色
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password, confirmPassword, email]
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  description: 用户名
+                  example: "newuser"
+                password:
+                  type: string
+                  format: password
+                  minLength: 6
+                  description: 密码
+                  example: "password123"
+                confirmPassword:
+                  type: string
+                  format: password
+                  description: 确认密码
+                  example: "password123"
+                email:
+                  type: string
+                  format: email
+                  description: 邮箱地址
+                  example: "newuser@example.com"
+                phone:
+                  type: string
+                  description: 手机号码
+                  example: "13800138000"
+                realName:
+                  type: string
+                  description: 真实姓名
+                  example: "张三"
+      responses:
+        '200':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Success"
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: 请求参数错误（如两次密码不一致）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      security: []
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: 用户登出
+      description: 注销当前用户会话
+      operationId: logout
+      responses:
+        '200':
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully logged out"
+
+  /auth/me:
+    post:
+      tags: [Authentication]
+      summary: 获取当前用户信息
+      description: 获取当前登录用户的详细信息
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: 用户信息
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Success"
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/forgot-password/send-code:
+    post:
+      tags: [Authentication]
+      summary: 发送密码重置验证码
+      description: 向用户邮箱发送6位数字验证码，用于重置密码
+      operationId: sendResetCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: 用户邮箱地址
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: 验证码发送成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "验证码已发送到您的邮箱"
+        '404':
+          description: 用户不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: []
+
+  /auth/forgot-password/reset:
+    post:
+      tags: [Authentication]
+      summary: 重置密码
+      description: 通过邮箱验证码重置用户密码
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, verificationCode, newPassword, confirmPassword]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: 用户邮箱地址
+                  example: "user@example.com"
+                verificationCode:
+                  type: string
+                  description: 邮箱验证码
+                  example: "123456"
+                newPassword:
+                  type: string
+                  format: password
+                  description: 新密码
+                  example: "newpassword123"
+                confirmPassword:
+                  type: string
+                  format: password
+                  description: 确认新密码
+                  example: "newpassword123"
+      responses:
+        '200':
+          description: 密码重置成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "密码重置成功"
+        '400':
+          description: 请求参数错误（如验证码错误、两次密码不一致）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: []
+
+  /auth/change-password:
+    post:
+      tags: [Authentication]
+      summary: 修改密码
+      description: 已登录用户修改自己的密码，需要验证旧密码
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [oldPassword, newPassword, confirmPassword]
+              properties:
+                oldPassword:
+                  type: string
+                  format: password
+                  description: 旧密码
+                  example: "oldpassword123"
+                newPassword:
+                  type: string
+                  format: password
+                  description: 新密码
+                  example: "newpassword123"
+                confirmPassword:
+                  type: string
+                  format: password
+                  description: 确认新密码
+                  example: "newpassword123"
+      responses:
+        '200':
+          description: 密码修改成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "密码修改成功"
+        '400':
+          description: 请求参数错误（如旧密码错误、两次密码不一致）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/check-password-strength:
+    post:
+      tags: [Authentication]
+      summary: 检查密码强度
+      description: 实时检查密码强度，返回强度等级、百分比和改进建议
+      operationId: checkPasswordStrength
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+                  description: 待检查的密码
+                  example: "Test123!"
+      responses:
+        '200':
+          description: 密码强度检查结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: object
+                    properties:
+                      level:
+                        type: string
+                        enum: [WEAK, FAIR, GOOD, STRONG, VERY_STRONG]
+                        description: 密码强度等级
+                        example: "GOOD"
+                      score:
+                        type: integer
+                        minimum: 0
+                        maximum: 100
+                        description: 密码强度分数（0-100）
+                        example: 75
+                      suggestions:
+                        type: array
+                        items:
+                          type: string
+                        description: 改进建议
+                        example: ["添加特殊字符可以提高密码强度", "建议密码长度至少12位"]
+      security: []
+
+  # ================================
+  # 项目管理 API
+  # ================================
+  /projects:
+    get:
+      tags: [Projects]
+      summary: 获取项目列表
+      description: 获取当前用户可访问的项目列表
+      operationId: getProjects
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: status
+          in: query
+          description: 项目状态筛选
+          schema:
+            $ref: '#/components/schemas/ProjectStatus'
+        - name: search
+          in: query
+          description: 搜索关键词
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 项目列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Project'
+
+    post:
+      tags: [Projects]
+      summary: 创建新项目
+      description: 创建一个新的项目
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: 项目创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /projects/{projectId}:
+    get:
+      tags: [Projects]
+      summary: 获取项目详情
+      description: 获取指定项目的详细信息
+      operationId: getProject
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      responses:
+        '200':
+          description: 项目详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Projects]
+      summary: 更新项目
+      description: 更新项目信息
+      operationId: updateProject
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '200':
+          description: 项目更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags: [Projects]
+      summary: 删除项目
+      description: 软删除项目（仅项目所有者可操作）
+      operationId: deleteProject
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      responses:
+        '204':
+          description: 项目删除成功
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /projects/{projectId}/members:
+    get:
+      tags: [Projects]
+      summary: 获取项目成员
+      description: 获取项目成员列表
+      operationId: getProjectMembers
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 项目成员列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ProjectMember'
+
+    post:
+      tags: [Projects]
+      summary: 添加项目成员
+      description: 邀请用户加入项目
+      operationId: addProjectMember
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, role_id]
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+                  description: 用户ID
+                role_id:
+                  type: integer
+                  format: int64
+                  description: 角色ID
+      responses:
+        '201':
+          description: 成员添加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMember'
+
+  /projects/{projectId}/members/{userId}:
+    put:
+      tags: [Projects]
+      summary: 更新成员角色
+      description: 更新项目成员的角色
+      operationId: updateProjectMemberRole
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role_id]
+              properties:
+                role_id:
+                  type: integer
+                  format: int64
+                  description: 新角色ID
+      responses:
+        '200':
+          description: 角色更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMember'
+
+    delete:
+      tags: [Projects]
+      summary: 移除项目成员
+      description: 从项目中移除成员
+      operationId: removeProjectMember
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: 成员移除成功
+
+  # ================================
+  # 文档管理 API
+  # ================================
+  /projects/{projectId}/documents:
+    get:
+      tags: [Documents]
+      summary: 获取文档列表
+      description: 获取项目的文档列表
+      operationId: getDocuments
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: category_id
+          in: query
+          description: 文档分类ID
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          description: 文档状态
+          schema:
+            $ref: '#/components/schemas/DocumentStatus'
+        - name: author_id
+          in: query
+          description: 作者ID
+          schema:
+            type: integer
+            format: int64
+        - name: search
+          in: query
+          description: 搜索关键词
+          schema:
+            type: string
+        - name: tags
+          in: query
+          description: 标签筛选（逗号分隔）
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 文档列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Document'
+
+    post:
+      tags: [Documents]
+      summary: 创建文档
+      description: 在项目中创建新文档
+      operationId: createDocument
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDocumentRequest'
+      responses:
+        '201':
+          description: 文档创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetail'
+
+  /documents/{documentId}:
+    get:
+      tags: [Documents]
+      summary: 获取文档详情
+      description: 获取文档的详细信息和内容
+      operationId: getDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentIdParam'
+        - name: version
+          in: query
+          description: 指定版本（默认为最新版本）
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 文档详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetail'
+
+    put:
+      tags: [Documents]
+      summary: 更新文档
+      description: 更新文档内容和元数据
+      operationId: updateDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDocumentRequest'
+      responses:
+        '200':
+          description: 文档更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetail'
+
+    delete:
+      tags: [Documents]
+      summary: 删除文档
+      description: 软删除文档
+      operationId: deleteDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentIdParam'
+      responses:
+        '204':
+          description: 文档删除成功
+
+  /documents/{documentId}/versions:
+    get:
+      tags: [Documents]
+      summary: 获取文档版本历史
+      description: 获取文档的所有版本信息
+      operationId: getDocumentVersions
+      parameters:
+        - $ref: '#/components/parameters/DocumentIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 版本历史列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DocumentVersion'
+
+  /documents/{documentId}/versions/{version}/restore:
+    post:
+      tags: [Documents]
+      summary: 恢复文档版本
+      description: 将文档恢复到指定版本
+      operationId: restoreDocumentVersion
+      parameters:
+        - $ref: '#/components/parameters/DocumentIdParam'
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 版本恢复成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetail'
+
+  /documents/{documentId}/attachments:
+    get:
+      tags: [Documents]
+      summary: 获取文档附件
+      description: 获取文档的附件列表
+      operationId: getDocumentAttachments
+      parameters:
+        - $ref: '#/components/parameters/DocumentIdParam'
+      responses:
+        '200':
+          description: 附件列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocumentAttachment'
+
+    post:
+      tags: [Documents]
+      summary: 上传文档附件
+      description: 为文档上传附件
+      operationId: uploadDocumentAttachment
+      parameters:
+        - $ref: '#/components/parameters/DocumentIdParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 附件文件
+                description:
+                  type: string
+                  description: 附件描述
+      responses:
+        '201':
+          description: 附件上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentAttachment'
+
+  /documents/{documentId}/relations:
+    get:
+      tags: [Documents]
+      summary: 获取文档关联关系
+      description: 获取与当前文档相关联的其他文档
+      operationId: getDocumentRelations
+      parameters:
+        - $ref: '#/components/parameters/DocumentIdParam'
+        - name: relation_type
+          in: query
+          description: 关系类型筛选
+          schema:
+            type: string
+            enum: [REFERENCES, DEPENDS_ON, SUPERSEDES, RELATED]
+      responses:
+        '200':
+          description: 关联文档列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocumentRelation'
+
+    post:
+      tags: [Documents]
+      summary: 创建文档关联
+      description: 建立文档间的关联关系
+      operationId: createDocumentRelation
+      parameters:
+        - $ref: '#/components/parameters/DocumentIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_document_id, relation_type]
+              properties:
+                target_document_id:
+                  type: integer
+                  format: int64
+                  description: 目标文档ID
+                relation_type:
+                  type: string
+                  enum: [REFERENCES, DEPENDS_ON, SUPERSEDES, RELATED]
+                  description: 关系类型
+                description:
+                  type: string
+                  description: 关系描述
+      responses:
+        '201':
+          description: 关联创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentRelation'
+
+  # ================================
+  # 变更请求管理 API
+  # ================================
+  /projects/{projectId}/change-requests:
+    get:
+      tags: [Change Requests]
+      summary: 获取变更请求列表
+      description: 获取项目的变更请求列表
+      operationId: getChangeRequests
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: status
+          in: query
+          description: 状态筛选
+          schema:
+            $ref: '#/components/schemas/ChangeRequestStatus'
+        - name: priority
+          in: query
+          description: 优先级筛选
+          schema:
+            $ref: '#/components/schemas/TaskPriority'
+        - name: assignee_id
+          in: query
+          description: 指派人ID
+          schema:
+            type: integer
+            format: int64
+        - name: requester_id
+          in: query
+          description: 请求人ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 变更请求列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ChangeRequest'
+
+    post:
+      tags: [Change Requests]
+      summary: 创建变更请求
+      description: 创建新的变更请求
+      operationId: createChangeRequest
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChangeRequestRequest'
+      responses:
+        '201':
+          description: 变更请求创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeRequestDetail'
+
+  /change-requests/{changeRequestId}:
+    get:
+      tags: [Change Requests]
+      summary: 获取变更请求详情
+      description: 获取变更请求的详细信息
+      operationId: getChangeRequest
+      parameters:
+        - $ref: '#/components/parameters/ChangeRequestIdParam'
+      responses:
+        '200':
+          description: 变更请求详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeRequestDetail'
+
+    put:
+      tags: [Change Requests]
+      summary: 更新变更请求
+      description: 更新变更请求信息
+      operationId: updateChangeRequest
+      parameters:
+        - $ref: '#/components/parameters/ChangeRequestIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateChangeRequestRequest'
+      responses:
+        '200':
+          description: 变更请求更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeRequestDetail'
+
+  /change-requests/{changeRequestId}/submit:
+    post:
+      tags: [Change Requests]
+      summary: 提交变更请求
+      description: 将草稿状态的变更请求提交审批
+      operationId: submitChangeRequest
+      parameters:
+        - $ref: '#/components/parameters/ChangeRequestIdParam'
+      responses:
+        '200':
+          description: 变更请求提交成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeRequestDetail'
+
+  /change-requests/{changeRequestId}/approve:
+    post:
+      tags: [Change Requests]
+      summary: 审批变更请求
+      description: 审批或拒绝变更请求
+      operationId: approveChangeRequest
+      parameters:
+        - $ref: '#/components/parameters/ChangeRequestIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [APPROVED, REJECTED]
+                  description: 审批决定
+                comments:
+                  type: string
+                  description: 审批意见
+      responses:
+        '200':
+          description: 审批完成
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeRequestDetail'
+
+  /change-requests/{changeRequestId}/impact-analysis:
+    get:
+      tags: [Change Requests]
+      summary: 获取影响分析
+      description: 获取变更请求的影响分析结果
+      operationId: getChangeRequestImpactAnalysis
+      parameters:
+        - $ref: '#/components/parameters/ChangeRequestIdParam'
+      responses:
+        '200':
+          description: 影响分析结果
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChangeRequestImpact'
+
+    post:
+      tags: [Change Requests]
+      summary: 执行影响分析
+      description: 对变更请求执行智能影响分析
+      operationId: analyzeChangeRequestImpact
+      parameters:
+        - $ref: '#/components/parameters/ChangeRequestIdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force_refresh:
+                  type: boolean
+                  description: 是否强制重新分析
+                  default: false
+      responses:
+        '200':
+          description: 影响分析完成
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChangeRequestImpact'
+
+  # ================================
+  # 任务管理 API
+  # ================================
+  /projects/{projectId}/tasks:
+    get:
+      tags: [Tasks]
+      summary: 获取任务列表
+      description: 获取项目的任务列表
+      operationId: getTasks
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: status
+          in: query
+          description: 任务状态
+          schema:
+            $ref: '#/components/schemas/TaskStatus'
+        - name: priority
+          in: query
+          description: 任务优先级
+          schema:
+            $ref: '#/components/schemas/TaskPriority'
+        - name: assignee_id
+          in: query
+          description: 指派人ID
+          schema:
+            type: integer
+            format: int64
+        - name: reporter_id
+          in: query
+          description: 报告人ID
+          schema:
+            type: integer
+            format: int64
+        - name: parent_task_id
+          in: query
+          description: 父任务ID
+          schema:
+            type: integer
+            format: int64
+        - name: labels
+          in: query
+          description: 标签筛选（逗号分隔）
+          schema:
+            type: string
+        - name: due_date_from
+          in: query
+          description: 截止日期范围开始
+          schema:
+            type: string
+            format: date
+        - name: due_date_to
+          in: query
+          description: 截止日期范围结束
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 任务列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Task'
+
+    post:
+      tags: [Tasks]
+      summary: 创建任务
+      description: 在项目中创建新任务
+      operationId: createTask
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: 任务创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDetail'
+
+  /tasks/{taskId}:
+    get:
+      tags: [Tasks]
+      summary: 获取任务详情
+      description: 获取任务的详细信息
+      operationId: getTask
+      parameters:
+        - $ref: '#/components/parameters/TaskIdParam'
+      responses:
+        '200':
+          description: 任务详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDetail'
+
+    put:
+      tags: [Tasks]
+      summary: 更新任务
+      description: 更新任务信息
+      operationId: updateTask
+      parameters:
+        - $ref: '#/components/parameters/TaskIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: 任务更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDetail'
+
+    delete:
+      tags: [Tasks]
+      summary: 删除任务
+      description: 软删除任务
+      operationId: deleteTask
+      parameters:
+        - $ref: '#/components/parameters/TaskIdParam'
+      responses:
+        '204':
+          description: 任务删除成功
+
+  /tasks/{taskId}/comments:
+    get:
+      tags: [Tasks]
+      summary: 获取任务评论
+      description: 获取任务的评论列表
+      operationId: getTaskComments
+      parameters:
+        - $ref: '#/components/parameters/TaskIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 评论列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TaskComment'
+
+    post:
+      tags: [Tasks]
+      summary: 添加任务评论
+      description: 为任务添加评论
+      operationId: createTaskComment
+      parameters:
+        - $ref: '#/components/parameters/TaskIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: 评论内容
+                parent_comment_id:
+                  type: integer
+                  format: int64
+                  description: 父评论ID（回复评论）
+                is_internal:
+                  type: boolean
+                  description: 是否为内部评论
+                  default: false
+      responses:
+        '201':
+          description: 评论添加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskComment'
+
+  # ================================
+  # 测试用例管理 API
+  # ================================
+  /projects/{projectId}/test-cases:
+    get:
+      tags: [Test Cases]
+      summary: 获取测试用例列表
+      description: 获取项目的测试用例列表
+      operationId: getTestCases
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: status
+          in: query
+          description: 测试用例状态
+          schema:
+            $ref: '#/components/schemas/TestCaseStatus'
+        - name: priority
+          in: query
+          description: 优先级
+          schema:
+            $ref: '#/components/schemas/TaskPriority'
+        - name: test_type
+          in: query
+          description: 测试类型
+          schema:
+            type: string
+            enum: [FUNCTIONAL, INTEGRATION, PERFORMANCE, SECURITY, USABILITY]
+        - name: automation_level
+          in: query
+          description: 自动化程度
+          schema:
+            type: string
+            enum: [MANUAL, SEMI_AUTO, AUTOMATED]
+        - name: author_id
+          in: query
+          description: 作者ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 测试用例列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TestCase'
+
+    post:
+      tags: [Test Cases]
+      summary: 创建测试用例
+      description: 创建新的测试用例
+      operationId: createTestCase
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTestCaseRequest'
+      responses:
+        '201':
+          description: 测试用例创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestCaseDetail'
+
+  /test-cases/{testCaseId}:
+    get:
+      tags: [Test Cases]
+      summary: 获取测试用例详情
+      description: 获取测试用例的详细信息
+      operationId: getTestCase
+      parameters:
+        - $ref: '#/components/parameters/TestCaseIdParam'
+      responses:
+        '200':
+          description: 测试用例详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestCaseDetail'
+
+    put:
+      tags: [Test Cases]
+      summary: 更新测试用例
+      description: 更新测试用例信息
+      operationId: updateTestCase
+      parameters:
+        - $ref: '#/components/parameters/TestCaseIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTestCaseRequest'
+      responses:
+        '200':
+          description: 测试用例更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestCaseDetail'
+
+    delete:
+      tags: [Test Cases]
+      summary: 删除测试用例
+      description: 软删除测试用例
+      operationId: deleteTestCase
+      parameters:
+        - $ref: '#/components/parameters/TestCaseIdParam'
+      responses:
+        '204':
+          description: 测试用例删除成功
+
+  /test-cases/{testCaseId}/execute:
+    post:
+      tags: [Test Cases]
+      summary: 执行测试用例
+      description: 执行测试用例并记录结果
+      operationId: executeTestCase
+      parameters:
+        - $ref: '#/components/parameters/TestCaseIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: '#/components/schemas/TestExecutionStatus'
+                actual_results:
+                  type: string
+                  description: 实际结果
+                failure_reason:
+                  type: string
+                  description: 失败原因
+                environment:
+                  type: string
+                  description: 执行环境
+                browser_version:
+                  type: string
+                  description: 浏览器版本
+                screenshots:
+                  type: array
+                  items:
+                    type: string
+                  description: 截图文件URL列表
+      responses:
+        '201':
+          description: 测试执行记录创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestExecution'
+
+  /test-cases/{testCaseId}/similar:
+    get:
+      tags: [Test Cases]
+      summary: 获取相似测试用例
+      description: 基于AI算法获取相似的测试用例，支持复用
+      operationId: getSimilarTestCases
+      parameters:
+        - $ref: '#/components/parameters/TestCaseIdParam'
+        - name: limit
+          in: query
+          description: 返回结果数量限制
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+        - name: min_similarity
+          in: query
+          description: 最小相似度阈值
+          schema:
+            type: number
+            format: float
+            minimum: 0.0
+            maximum: 1.0
+            default: 0.6
+      responses:
+        '200':
+          description: 相似测试用例列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/TestCase'
+                    - type: object
+                      properties:
+                        similarity_score:
+                          type: number
+                          format: float
+                          description: 相似度分数
+                        similarity_reasons:
+                          type: array
+                          items:
+                            type: string
+                          description: 相似原因
+
+  # ================================
+  # 搜索功能 API
+  # ================================
+  /search:
+    get:
+      tags: [Search]
+      summary: 全局搜索
+      description: 跨所有实体类型进行全文搜索
+      operationId: globalSearch
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: 搜索关键词
+          schema:
+            type: string
+        - name: types
+          in: query
+          description: 搜索类型（逗号分隔）
+          schema:
+            type: string
+            example: "documents,tasks,test_cases"
+        - name: project_ids
+          in: query
+          description: 项目ID筛选（逗号分隔）
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 搜索结果
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SearchResult'
+                      aggregations:
+                        type: object
+                        description: 搜索结果聚合信息
+                        properties:
+                          by_type:
+                            type: object
+                            additionalProperties:
+                              type: integer
+                          by_project:
+                            type: object
+                            additionalProperties:
+                              type: integer
+
+  /search/suggestions:
+    get:
+      tags: [Search]
+      summary: 搜索建议
+      description: 获取搜索关键词建议
+      operationId: getSearchSuggestions
+      parameters:
+        - name: prefix
+          in: query
+          required: true
+          description: 搜索前缀
+          schema:
+            type: string
+        - name: types
+          in: query
+          description: 建议类型（逗号分隔）
+          schema:
+            type: string
+        - name: project_id
+          in: query
+          description: 项目ID限制
+          schema:
+            type: integer
+            format: int64
+        - name: limit
+          in: query
+          description: 返回数量限制
+          schema:
+            type: integer
+            default: 10
+            maximum: 20
+      responses:
+        '200':
+          description: 搜索建议列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchSuggestion'
+
+  # ================================
+  # 通知管理 API
+  # ================================
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: 获取通知列表
+      description: 获取当前用户的通知列表
+      operationId: getNotifications
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: is_read
+          in: query
+          description: 读取状态筛选
+          schema:
+            type: boolean
+        - name: type
+          in: query
+          description: 通知类型筛选
+          schema:
+            $ref: '#/components/schemas/NotificationType'
+        - name: created_after
+          in: query
+          description: 创建时间筛选（晚于）
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: 通知列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Notification'
+                      unread_count:
+                        type: integer
+                        description: 未读通知数量
+
+  /notifications/{notificationId}/read:
+    post:
+      tags: [Notifications]
+      summary: 标记通知为已读
+      description: 将指定通知标记为已读
+      operationId: markNotificationAsRead
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 标记成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+
+  /notifications/mark-all-read:
+    post:
+      tags: [Notifications]
+      summary: 标记所有通知为已读
+      description: 将当前用户的所有未读通知标记为已读
+      operationId: markAllNotificationsAsRead
+      responses:
+        '200':
+          description: 标记成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  marked_count:
+                    type: integer
+                    description: 标记的通知数量
+
+  /subscriptions:
+    get:
+      tags: [Notifications]
+      summary: 获取订阅列表
+      description: 获取当前用户的通知订阅设置
+      operationId: getSubscriptions
+      parameters:
+        - name: entity_type
+          in: query
+          description: 实体类型筛选
+          schema:
+            type: string
+            enum: [PROJECT, DOCUMENT, TASK, CHANGE_REQUEST, TEST_CASE]
+        - name: project_id
+          in: query
+          description: 项目ID筛选
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 订阅列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+
+    post:
+      tags: [Notifications]
+      summary: 创建订阅
+      description: 订阅实体的通知
+      operationId: createSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entity_type, entity_id]
+              properties:
+                entity_type:
+                  type: string
+                  enum: [PROJECT, DOCUMENT, TASK, CHANGE_REQUEST, TEST_CASE]
+                entity_id:
+                  type: integer
+                  format: int64
+                notification_types:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NotificationType'
+                channels:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NotificationChannel'
+      responses:
+        '201':
+          description: 订阅创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+  /subscriptions/{subscriptionId}:
+    put:
+      tags: [Notifications]
+      summary: 更新订阅设置
+      description: 更新通知订阅的设置
+      operationId: updateSubscription
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notification_types:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NotificationType'
+                channels:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NotificationChannel'
+                is_active:
+                  type: boolean
+      responses:
+        '200':
+          description: 订阅更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+    delete:
+      tags: [Notifications]
+      summary: 删除订阅
+      description: 取消订阅
+      operationId: deleteSubscription
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: 订阅删除成功
+
+  # ================================
+  # 数据分析 API
+  # ================================
+  /analytics/dashboard:
+    get:
+      tags: [Analytics]
+      summary: 获取仪表盘数据
+      description: 获取项目仪表盘的统计数据
+      operationId: getDashboardAnalytics
+      parameters:
+        - name: project_id
+          in: query
+          description: 项目ID（不指定则返回所有项目数据）
+          schema:
+            type: integer
+            format: int64
+        - name: date_from
+          in: query
+          description: 日期范围开始
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          description: 日期范围结束
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 仪表盘数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardAnalytics'
+
+  /analytics/documents:
+    get:
+      tags: [Analytics]
+      summary: 文档统计分析
+      description: 获取文档相关的统计分析数据
+      operationId: getDocumentAnalytics
+      parameters:
+        - name: project_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: period
+          in: query
+          description: 统计周期
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: weekly
+        - name: limit
+          in: query
+          description: 返回记录数限制
+          schema:
+            type: integer
+            default: 30
+      responses:
+        '200':
+          description: 文档统计数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentAnalytics'
+
+  /analytics/tasks:
+    get:
+      tags: [Analytics]
+      summary: 任务统计分析
+      description: 获取任务相关的统计分析数据
+      operationId: getTaskAnalytics
+      parameters:
+        - name: project_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: assignee_id
+          in: query
+          description: 指派人ID筛选
+          schema:
+            type: integer
+            format: int64
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: weekly
+      responses:
+        '200':
+          description: 任务统计数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAnalytics'
+
+  /analytics/test-cases/reusability:
+    get:
+      tags: [Analytics]
+      summary: 测试用例复用分析
+      description: 获取测试用例复用情况的分析数据
+      operationId: getTestCaseReusabilityAnalytics
+      parameters:
+        - name: project_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [monthly, quarterly, yearly]
+            default: monthly
+      responses:
+        '200':
+          description: 测试用例复用分析数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestCaseReusabilityAnalytics'
+
+# ================================
+# 组件定义
+# ================================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: 页码（从1开始）
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    SizeParam:
+      name: size
+      in: query
+      description: 每页数量
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    SortParam:
+      name: sort
+      in: query
+      description: 排序字段
+      schema:
+        type: string
+        default: "created_at"
+
+    ProjectIdParam:
+      name: projectId
+      in: path
+      required: true
+      description: 项目ID
+      schema:
+        type: integer
+        format: int64
+
+    DocumentIdParam:
+      name: documentId
+      in: path
+      required: true
+      description: 文档ID
+      schema:
+        type: integer
+        format: int64
+
+    TaskIdParam:
+      name: taskId
+      in: path
+      required: true
+      description: 任务ID
+      schema:
+        type: integer
+        format: int64
+
+    ChangeRequestIdParam:
+      name: changeRequestId
+      in: path
+      required: true
+      description: 变更请求ID
+      schema:
+        type: integer
+        format: int64
+
+    TestCaseIdParam:
+      name: testCaseId
+      in: path
+      required: true
+      description: 测试用例ID
+      schema:
+        type: integer
+        format: int64
+
+  responses:
+    Unauthorized:
+      description: 未授权 - Token无效或已过期
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: 访问被禁止 - 没有足够权限
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: 资源未找到
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ValidationError:
+      description: 请求参数验证失败
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+
+  schemas:
+    # ================================
+    # 基础类型定义
+    # ================================
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: 错误代码
+            message:
+              type: string
+              description: 错误描述
+            details:
+              type: object
+              description: 错误详细信息
+
+    ValidationErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, validation_errors]
+          properties:
+            code:
+              type: string
+              enum: [VALIDATION_ERROR]
+            message:
+              type: string
+            validation_errors:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+
+    PaginatedResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        pagination:
+          type: object
+          required: [page, size, total, total_pages]
+          properties:
+            page:
+              type: integer
+              description: 当前页码
+            size:
+              type: integer
+              description: 每页数量
+            total:
+              type: integer
+              description: 总记录数
+            total_pages:
+              type: integer
+              description: 总页数
+            has_next:
+              type: boolean
+              description: 是否有下一页
+            has_prev:
+              type: boolean
+              description: 是否有上一页
+
+    # ================================
+    # 枚举类型定义
+    # ================================
+    UserStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE, SUSPENDED, PENDING_VERIFICATION]
+      description: 用户状态
+
+    ProjectStatus:
+      type: string
+      enum: [PLANNING, ACTIVE, ON_HOLD, COMPLETED, CANCELLED]
+      description: 项目状态
+
+    DocumentStatus:
+      type: string
+      enum: [DRAFT, UNDER_REVIEW, APPROVED, ARCHIVED, DEPRECATED]
+      description: 文档状态
+
+    TaskStatus:
+      type: string
+      enum: [TODO, IN_PROGRESS, UNDER_REVIEW, COMPLETED, CANCELLED, BLOCKED]
+      description: 任务状态
+
+    TaskPriority:
+      type: string
+      enum: [LOW, NORMAL, HIGH, URGENT]
+      description: 任务优先级
+
+    ChangeRequestStatus:
+      type: string
+      enum: [DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED, IMPLEMENTED, CLOSED]
+      description: 变更请求状态
+
+    TestCaseStatus:
+      type: string
+      enum: [DRAFT, ACTIVE, DEPRECATED, ARCHIVED]
+      description: 测试用例状态
+
+    TestExecutionStatus:
+      type: string
+      enum: [PENDING, RUNNING, PASSED, FAILED, SKIPPED, BLOCKED]
+      description: 测试执行状态
+
+    NotificationType:
+      type: string
+      enum: [SYSTEM, PROJECT, TASK, DOCUMENT, CHANGE_REQUEST, TEST, MENTION]
+      description: 通知类型
+
+    NotificationChannel:
+      type: string
+      enum: [IN_APP, EMAIL, SLACK, TEAMS, WEBHOOK]
+      description: 通知渠道
+
+    # ================================
+    # 实体模型定义
+    # ================================
+    User:
+      type: object
+      required: [id, username, email, first_name, last_name]
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 用户ID
+        username:
+          type: string
+          description: 用户名
+        email:
+          type: string
+          format: email
+          description: 邮箱地址
+        first_name:
+          type: string
+          description: 名
+        last_name:
+          type: string
+          description: 姓
+        avatar_url:
+          type: string
+          format: uri
+          description: 头像URL
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+        last_login_at:
+          type: string
+          format: date-time
+          description: 最后登录时间
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            phone:
+              type: string
+              description: 电话号码
+            timezone:
+              type: string
+              description: 时区
+            locale:
+              type: string
+              description: 语言设置
+            two_factor_enabled:
+              type: boolean
+              description: 是否启用双因素认证
+            roles:
+              type: array
+              items:
+                type: string
+              description: 用户角色列表
+            permissions:
+              type: array
+              items:
+                type: string
+              description: 用户权限列表
+            preferences:
+              type: object
+              description: 用户偏好设置
+
+    UserResponse:
+      type: object
+      required: [id, username, email]
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 用户ID
+        username:
+          type: string
+          description: 用户名
+        email:
+          type: string
+          format: email
+          description: 邮箱地址
+        phone:
+          type: string
+          description: 手机号码
+        realName:
+          type: string
+          description: 真实姓名
+        avatar:
+          type: string
+          format: uri
+          description: 头像URL
+        status:
+          type: string
+          description: 用户状态
+          enum: [ACTIVE, INACTIVE, LOCKED]
+        position:
+          type: string
+          description: 职位
+        lastLoginTime:
+          type: string
+          format: date-time
+          description: 最后登录时间
+        lastLoginIp:
+          type: string
+          description: 最后登录IP
+        createTime:
+          type: string
+          format: date-time
+          description: 创建时间
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新时间
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleResponse'
+          description: 用户角色列表
+
+    RoleResponse:
+      type: object
+      required: [id, roleName, roleCode]
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 角色ID
+        roleName:
+          type: string
+          description: 角色名称
+          example: "系统管理员"
+        roleCode:
+          type: string
+          description: 角色代码
+          example: "ADMIN"
+        description:
+          type: string
+          description: 角色描述
+        sort:
+          type: integer
+          description: 排序
+        status:
+          type: string
+          description: 角色状态
+          enum: [ACTIVE, INACTIVE]
+        createTime:
+          type: string
+          format: date-time
+          description: 创建时间
+        updateTime:
+          type: string
+          format: date-time
+          description: 更新时间
+
+    Project:
+      type: object
+      required: [id, name, slug, status, owner]
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 项目ID
+        name:
+          type: string
+          description: 项目名称
+        slug:
+          type: string
+          description: 项目标识符
+        description:
+          type: string
+          description: 项目描述
+        status:
+          $ref: '#/components/schemas/ProjectStatus'
+        owner:
+          $ref: '#/components/schemas/User'
+        start_date:
+          type: string
+          format: date
+          description: 开始日期
+        end_date:
+          type: string
+          format: date
+          description: 结束日期
+        budget:
+          type: number
+          format: decimal
+          description: 项目预算
+        avatar_url:
+          type: string
+          format: uri
+          description: 项目头像URL
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新时间
+
+    ProjectDetail:
+      allOf:
+        - $ref: '#/components/schemas/Project'
+        - type: object
+          properties:
+            members_count:
+              type: integer
+              description: 成员数量
+            documents_count:
+              type: integer
+              description: 文档数量
+            tasks_count:
+              type: integer
+              description: 任务数量
+            recent_activities:
+              type: array
+              items:
+                $ref: '#/components/schemas/ActivityLog'
+              description: 最近活动
+            settings:
+              type: object
+              description: 项目设置
+
+    ProjectMember:
+      type: object
+      required: [user, role, joined_at]
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        role:
+          type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+            name:
+              type: string
+            display_name:
+              type: string
+        joined_at:
+          type: string
+          format: date-time
+          description: 加入时间
+        invited_by:
+          $ref: '#/components/schemas/User'
+        is_active:
+          type: boolean
+          description: 是否活跃
+
+    Document:
+      type: object
+      required: [id, title, status, author, project_id]
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 文档ID
+        title:
+          type: string
+          description: 文档标题
+        slug:
+          type: string
+          description: 文档标识符
+        status:
+          $ref: '#/components/schemas/DocumentStatus'
+        version:
+          type: string
+          description: 版本号
+        author:
+          $ref: '#/components/schemas/User'
+        reviewer:
+          $ref: '#/components/schemas/User'
+        project_id:
+          type: integer
+          format: int64
+          description: 项目ID
+        category:
+          type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+            name:
+              type: string
+        tags:
+          type: array
+          items:
+            type: string
+          description: 标签列表
+        view_count:
+          type: integer
+          description: 查看次数
+        like_count:
+          type: integer
+          description: 点赞次数
+        is_template:
+          type: boolean
+          description: 是否为模板
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新时间
+        published_at:
+          type: string
+          format: date-time
+          description: 发布时间
+
+    DocumentDetail:
+      allOf:
+        - $ref: '#/components/schemas/Document'
+        - type: object
+          properties:
+            content:
+              type: string
+              description: 文档内容
+            content_type:
+              type: string
+              enum: [markdown, html, rich_text]
+              description: 内容类型
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/DocumentAttachment'
+              description: 附件列表
+            relations:
+              type: array
+              items:
+                $ref: '#/components/schemas/DocumentRelation'
+              description: 关联文档
+            versions_count:
+              type: integer
+              description: 版本数量
+            comments_count:
+              type: integer
+              description: 评论数量
+
+    DocumentVersion:
+      type: object
+      required: [id, version, title, author, created_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        version:
+          type: string
+          description: 版本号
+        title:
+          type: string
+          description: 版本标题
+        author:
+          $ref: '#/components/schemas/User'
+        changelog:
+          type: string
+          description: 变更日志
+        file_size:
+          type: integer
+          format: int64
+          description: 文件大小（字节）
+        is_current:
+          type: boolean
+          description: 是否为当前版本
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+
+    DocumentAttachment:
+      type: object
+      required: [id, filename, file_size, uploaded_by]
+      properties:
+        id:
+          type: integer
+          format: int64
+        filename:
+          type: string
+          description: 文件名
+        original_name:
+          type: string
+          description: 原始文件名
+        file_size:
+          type: integer
+          format: int64
+          description: 文件大小（字节）
+        mime_type:
+          type: string
+          description: MIME类型
+        download_url:
+          type: string
+          format: uri
+          description: 下载URL
+        uploaded_by:
+          $ref: '#/components/schemas/User'
+        created_at:
+          type: string
+          format: date-time
+          description: 上传时间
+
+    DocumentRelation:
+      type: object
+      required: [id, target_document, relation_type]
+      properties:
+        id:
+          type: integer
+          format: int64
+        target_document:
+          $ref: '#/components/schemas/Document'
+        relation_type:
+          type: string
+          enum: [REFERENCES, DEPENDS_ON, SUPERSEDES, RELATED]
+          description: 关系类型
+        description:
+          type: string
+          description: 关系描述
+        created_by:
+          $ref: '#/components/schemas/User'
+        created_at:
+          type: string
+          format: date-time
+
+    Task:
+      type: object
+      required: [id, title, status, priority, reporter, project_id]
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 任务ID
+        title:
+          type: string
+          description: 任务标题
+        description:
+          type: string
+          description: 任务描述
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        assignee:
+          $ref: '#/components/schemas/User'
+        reporter:
+          $ref: '#/components/schemas/User'
+        project_id:
+          type: integer
+          format: int64
+          description: 项目ID
+        parent_task_id:
+          type: integer
+          format: int64
+          description: 父任务ID
+        estimated_hours:
+          type: number
+          format: decimal
+          description: 预估工时
+        actual_hours:
+          type: number
+          format: decimal
+          description: 实际工时
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 完成进度百分比
+        start_date:
+          type: string
+          format: date
+          description: 开始日期
+        due_date:
+          type: string
+          format: date
+          description: 截止日期
+        tags:
+          type: array
+          items:
+            type: string
+          description: 标签
+        labels:
+          type: array
+          items:
+            type: string
+          description: 标签
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新时间
+        completed_at:
+          type: string
+          format: date-time
+          description: 完成时间
+
+    TaskDetail:
+      allOf:
+        - $ref: '#/components/schemas/Task'
+        - type: object
+          properties:
+            subtasks:
+              type: array
+              items:
+                $ref: '#/components/schemas/Task'
+              description: 子任务列表
+            dependencies:
+              type: array
+              items:
+                $ref: '#/components/schemas/Task'
+              description: 依赖任务
+            comments_count:
+              type: integer
+              description: 评论数量
+            attachments_count:
+              type: integer
+              description: 附件数量
+
+    TaskComment:
+      type: object
+      required: [id, content, author, created_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        content:
+          type: string
+          description: 评论内容
+        author:
+          $ref: '#/components/schemas/User'
+        parent_comment_id:
+          type: integer
+          format: int64
+          description: 父评论ID
+        is_internal:
+          type: boolean
+          description: 是否为内部评论
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新时间
+
+    ChangeRequest:
+      type: object
+      required: [id, title, status, priority, requester, project_id]
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+          description: 变更请求标题
+        description:
+          type: string
+          description: 变更描述
+        reason:
+          type: string
+          description: 变更原因
+        status:
+          $ref: '#/components/schemas/ChangeRequestStatus'
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        impact_level:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          description: 影响程度
+        requester:
+          $ref: '#/components/schemas/User'
+        assignee:
+          $ref: '#/components/schemas/User'
+        reviewer:
+          $ref: '#/components/schemas/User'
+        project_id:
+          type: integer
+          format: int64
+        estimated_effort:
+          type: integer
+          description: 预估工时（小时）
+        actual_effort:
+          type: integer
+          description: 实际工时（小时）
+        implementation_date:
+          type: string
+          format: date
+          description: 实施日期
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        submitted_at:
+          type: string
+          format: date-time
+        approved_at:
+          type: string
+          format: date-time
+        implemented_at:
+          type: string
+          format: date-time
+
+    ChangeRequestDetail:
+      allOf:
+        - $ref: '#/components/schemas/ChangeRequest'
+        - type: object
+          properties:
+            impacts:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChangeRequestImpact'
+              description: 影响分析结果
+            approval_history:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChangeApproval'
+              description: 审批历史
+            comments_count:
+              type: integer
+              description: 评论数量
+
+    ChangeRequestImpact:
+      type: object
+      required: [id, entity_type, entity_id, impact_level]
+      properties:
+        id:
+          type: integer
+          format: int64
+        entity_type:
+          type: string
+          enum: [DOCUMENT, TASK, TEST_CASE, USER_STORY]
+          description: 受影响实体类型
+        entity_id:
+          type: integer
+          format: int64
+          description: 受影响实体ID
+        entity_title:
+          type: string
+          description: 受影响实体标题
+        impact_level:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          description: 影响程度
+        impact_description:
+          type: string
+          description: 影响描述
+        confidence_score:
+          type: number
+          format: decimal
+          minimum: 0.0
+          maximum: 1.0
+          description: 置信度分数
+        is_verified:
+          type: boolean
+          description: 是否已人工验证
+        verified_by:
+          $ref: '#/components/schemas/User'
+        verified_at:
+          type: string
+          format: date-time
+
+    ChangeApproval:
+      type: object
+      required: [id, approver, approval_step, status]
+      properties:
+        id:
+          type: integer
+          format: int64
+        approver:
+          $ref: '#/components/schemas/User'
+        approval_step:
+          type: integer
+          description: 审批步骤
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED]
+          description: 审批状态
+        comments:
+          type: string
+          description: 审批意见
+        approved_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    TestCase:
+      type: object
+      required: [id, title, status, author, project_id]
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+          description: 测试用例标题
+        description:
+          type: string
+          description: 测试用例描述
+        preconditions:
+          type: string
+          description: 前置条件
+        expected_results:
+          type: string
+          description: 预期结果
+        status:
+          $ref: '#/components/schemas/TestCaseStatus'
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        test_type:
+          type: string
+          enum: [FUNCTIONAL, INTEGRATION, PERFORMANCE, SECURITY, USABILITY]
+          description: 测试类型
+        automation_level:
+          type: string
+          enum: [MANUAL, SEMI_AUTO, AUTOMATED]
+          description: 自动化程度
+        author:
+          $ref: '#/components/schemas/User'
+        reviewer:
+          $ref: '#/components/schemas/User'
+        project_id:
+          type: integer
+          format: int64
+        tags:
+          type: array
+          items:
+            type: string
+        reuse_count:
+          type: integer
+          description: 复用次数
+        template_id:
+          type: integer
+          format: int64
+          description: 基于的模板ID
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TestCaseDetail:
+      allOf:
+        - $ref: '#/components/schemas/TestCase'
+        - type: object
+          properties:
+            test_steps:
+              type: array
+              items:
+                type: object
+                properties:
+                  step_number:
+                    type: integer
+                  action:
+                    type: string
+                  expected_result:
+                    type: string
+              description: 测试步骤
+            execution_history:
+              type: array
+              items:
+                $ref: '#/components/schemas/TestExecution'
+              description: 执行历史
+            related_test_cases:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/TestCase'
+                  - type: object
+                    properties:
+                      relation_type:
+                        type: string
+                      similarity_score:
+                        type: number
+                        format: float
+              description: 相关测试用例
+
+    TestExecution:
+      type: object
+      required: [id, test_case_id, executor, status]
+      properties:
+        id:
+          type: integer
+          format: int64
+        test_case_id:
+          type: integer
+          format: int64
+        executor:
+          $ref: '#/components/schemas/User'
+        status:
+          $ref: '#/components/schemas/TestExecutionStatus'
+        actual_results:
+          type: string
+          description: 实际结果
+        failure_reason:
+          type: string
+          description: 失败原因
+        execution_time:
+          type: integer
+          description: 执行时间（秒）
+        environment:
+          type: string
+          description: 执行环境
+        browser_version:
+          type: string
+          description: 浏览器版本
+        screenshots:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: 截图URL列表
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      required: [id, type, title, recipient_id, is_read]
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        title:
+          type: string
+          description: 通知标题
+        content:
+          type: string
+          description: 通知内容
+        entity_type:
+          type: string
+          description: 相关实体类型
+        entity_id:
+          type: integer
+          format: int64
+          description: 相关实体ID
+        sender:
+          $ref: '#/components/schemas/User'
+        recipient_id:
+          type: integer
+          format: int64
+          description: 接收人ID
+        priority:
+          type: string
+          enum: [LOW, NORMAL, HIGH, URGENT]
+          description: 优先级
+        is_read:
+          type: boolean
+          description: 是否已读
+        read_at:
+          type: string
+          format: date-time
+          description: 阅读时间
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+
+    Subscription:
+      type: object
+      required: [id, entity_type, entity_id, notification_types, channels]
+      properties:
+        id:
+          type: integer
+          format: int64
+        entity_type:
+          type: string
+          enum: [PROJECT, DOCUMENT, TASK, CHANGE_REQUEST, TEST_CASE]
+          description: 订阅实体类型
+        entity_id:
+          type: integer
+          format: int64
+          description: 订阅实体ID
+        entity_title:
+          type: string
+          description: 实体标题
+        notification_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationType'
+          description: 订阅的通知类型
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+          description: 通知渠道
+        is_active:
+          type: boolean
+          description: 是否激活
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SearchResult:
+      type: object
+      required: [id, type, title, score]
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 结果ID
+        type:
+          type: string
+          enum: [document, task, change_request, test_case, user]
+          description: 结果类型
+        title:
+          type: string
+          description: 标题
+        content:
+          type: string
+          description: 内容摘要
+        project_id:
+          type: integer
+          format: int64
+          description: 项目ID
+        project_name:
+          type: string
+          description: 项目名称
+        author:
+          $ref: '#/components/schemas/User'
+        score:
+          type: number
+          format: float
+          description: 搜索相关度分数
+        highlights:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: 高亮片段
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SearchSuggestion:
+      type: object
+      required: [text, type]
+      properties:
+        text:
+          type: string
+          description: 建议文本
+        type:
+          type: string
+          enum: [completion, term, entity]
+          description: 建议类型
+        score:
+          type: number
+          format: float
+          description: 建议分数
+        context:
+          type: object
+          description: 上下文信息
+
+    ActivityLog:
+      type: object
+      required: [id, action, entity_type, created_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        user:
+          $ref: '#/components/schemas/User'
+        action:
+          type: string
+          description: 操作类型
+        entity_type:
+          type: string
+          description: 实体类型
+        entity_id:
+          type: integer
+          format: int64
+          description: 实体ID
+        entity_title:
+          type: string
+          description: 实体标题
+        project_id:
+          type: integer
+          format: int64
+        project_name:
+          type: string
+        description:
+          type: string
+          description: 操作描述
+        metadata:
+          type: object
+          description: 元数据
+        created_at:
+          type: string
+          format: date-time
+
+    # ================================
+    # 请求体模型定义
+    # ================================
+    CreateProjectRequest:
+      type: object
+      required: [name, description]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+          description: 项目名称
+        description:
+          type: string
+          description: 项目描述
+        start_date:
+          type: string
+          format: date
+          description: 开始日期
+        end_date:
+          type: string
+          format: date
+          description: 结束日期
+        budget:
+          type: number
+          format: decimal
+          description: 预算
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/ProjectStatus'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        budget:
+          type: number
+          format: decimal
+
+    CreateDocumentRequest:
+      type: object
+      required: [title, content]
+      properties:
+        title:
+          type: string
+          maxLength: 500
+          description: 文档标题
+        content:
+          type: string
+          description: 文档内容
+        content_type:
+          type: string
+          enum: [markdown, html, rich_text]
+          default: markdown
+          description: 内容类型
+        category_id:
+          type: integer
+          format: int64
+          description: 分类ID
+        tags:
+          type: array
+          items:
+            type: string
+          description: 标签
+        is_template:
+          type: boolean
+          default: false
+          description: 是否为模板
+        template_data:
+          type: object
+          description: 模板数据
+
+    UpdateDocumentRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        content_type:
+          type: string
+          enum: [markdown, html, rich_text]
+        category_id:
+          type: integer
+          format: int64
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          $ref: '#/components/schemas/DocumentStatus'
+        reviewer_id:
+          type: integer
+          format: int64
+        changelog:
+          type: string
+          description: 变更说明
+
+    CreateTaskRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          maxLength: 500
+          description: 任务标题
+        description:
+          type: string
+          description: 任务描述
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        assignee_id:
+          type: integer
+          format: int64
+          description: 指派人ID
+        parent_task_id:
+          type: integer
+          format: int64
+          description: 父任务ID
+        estimated_hours:
+          type: number
+          format: decimal
+          description: 预估工时
+        start_date:
+          type: string
+          format: date
+          description: 开始日期
+        due_date:
+          type: string
+          format: date
+          description: 截止日期
+        tags:
+          type: array
+          items:
+            type: string
+        labels:
+          type: array
+          items:
+            type: string
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        assignee_id:
+          type: integer
+          format: int64
+        estimated_hours:
+          type: number
+          format: decimal
+        actual_hours:
+          type: number
+          format: decimal
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        start_date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        tags:
+          type: array
+          items:
+            type: string
+        labels:
+          type: array
+          items:
+            type: string
+
+    CreateChangeRequestRequest:
+      type: object
+      required: [title, description, reason]
+      properties:
+        title:
+          type: string
+          maxLength: 500
+          description: 变更标题
+        description:
+          type: string
+          description: 变更描述
+        reason:
+          type: string
+          description: 变更原因
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        impact_level:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          description: 影响程度
+        assignee_id:
+          type: integer
+          format: int64
+          description: 指派人ID
+        estimated_effort:
+          type: integer
+          description: 预估工时
+        implementation_date:
+          type: string
+          format: date
+          description: 实施日期
+        tags:
+          type: array
+          items:
+            type: string
+
+    UpdateChangeRequestRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+        reason:
+          type: string
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        impact_level:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        assignee_id:
+          type: integer
+          format: int64
+        reviewer_id:
+          type: integer
+          format: int64
+        estimated_effort:
+          type: integer
+        actual_effort:
+          type: integer
+        implementation_date:
+          type: string
+          format: date
+        tags:
+          type: array
+          items:
+            type: string
+
+    CreateTestCaseRequest:
+      type: object
+      required: [title, test_steps]
+      properties:
+        title:
+          type: string
+          maxLength: 500
+          description: 测试用例标题
+        description:
+          type: string
+          description: 描述
+        preconditions:
+          type: string
+          description: 前置条件
+        test_steps:
+          type: array
+          items:
+            type: object
+            required: [action]
+            properties:
+              step_number:
+                type: integer
+              action:
+                type: string
+              expected_result:
+                type: string
+          description: 测试步骤
+        expected_results:
+          type: string
+          description: 预期结果
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        test_type:
+          type: string
+          enum: [FUNCTIONAL, INTEGRATION, PERFORMANCE, SECURITY, USABILITY]
+          description: 测试类型
+        automation_level:
+          type: string
+          enum: [MANUAL, SEMI_AUTO, AUTOMATED]
+          description: 自动化程度
+        reviewer_id:
+          type: integer
+          format: int64
+          description: 审核人ID
+        template_id:
+          type: integer
+          format: int64
+          description: 基于的模板ID
+        tags:
+          type: array
+          items:
+            type: string
+
+    UpdateTestCaseRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+        preconditions:
+          type: string
+        test_steps:
+          type: array
+          items:
+            type: object
+            properties:
+              step_number:
+                type: integer
+              action:
+                type: string
+              expected_result:
+                type: string
+        expected_results:
+          type: string
+        status:
+          $ref: '#/components/schemas/TestCaseStatus'
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        test_type:
+          type: string
+          enum: [FUNCTIONAL, INTEGRATION, PERFORMANCE, SECURITY, USABILITY]
+        automation_level:
+          type: string
+          enum: [MANUAL, SEMI_AUTO, AUTOMATED]
+        reviewer_id:
+          type: integer
+          format: int64
+        tags:
+          type: array
+          items:
+            type: string
+
+    # ================================
+    # 分析统计模型定义
+    # ================================
+    DashboardAnalytics:
+      type: object
+      properties:
+        overview:
+          type: object
+          properties:
+            total_projects:
+              type: integer
+            active_projects:
+              type: integer
+            total_documents:
+              type: integer
+            total_tasks:
+              type: integer
+            completed_tasks:
+              type: integer
+            total_test_cases:
+              type: integer
+            test_case_reuse_rate:
+              type: number
+              format: percentage
+        project_status_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+        task_status_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+        activity_timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              activity_count:
+                type: integer
+              entity_counts:
+                type: object
+                additionalProperties:
+                  type: integer
+        top_contributors:
+          type: array
+          items:
+            type: object
+            properties:
+              user:
+                $ref: '#/components/schemas/User'
+              contribution_score:
+                type: integer
+              activities_count:
+                type: integer
+
+    DocumentAnalytics:
+      type: object
+      properties:
+        creation_trend:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+              count:
+                type: integer
+        category_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+        author_statistics:
+          type: array
+          items:
+            type: object
+            properties:
+              author:
+                $ref: '#/components/schemas/User'
+              documents_count:
+                type: integer
+              total_views:
+                type: integer
+        most_viewed_documents:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Document'
+              - type: object
+                properties:
+                  view_count:
+                    type: integer
+        template_usage:
+          type: object
+          properties:
+            total_templates:
+              type: integer
+            template_usage_rate:
+              type: number
+              format: percentage
+
+    TaskAnalytics:
+      type: object
+      properties:
+        completion_trend:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+              completed_count:
+                type: integer
+              total_count:
+                type: integer
+        priority_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+        assignee_workload:
+          type: array
+          items:
+            type: object
+            properties:
+              assignee:
+                $ref: '#/components/schemas/User'
+              total_tasks:
+                type: integer
+              completed_tasks:
+                type: integer
+              in_progress_tasks:
+                type: integer
+              average_completion_time:
+                type: number
+                description: 平均完成时间（天）
+        overdue_tasks:
+          type: object
+          properties:
+            count:
+              type: integer
+            percentage:
+              type: number
+              format: percentage
+
+    TestCaseReusabilityAnalytics:
+      type: object
+      properties:
+        reuse_statistics:
+          type: object
+          properties:
+            total_test_cases:
+              type: integer
+            reused_test_cases:
+              type: integer
+            reuse_rate:
+              type: number
+              format: percentage
+            average_reuse_count:
+              type: number
+        reuse_trend:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+              new_test_cases:
+                type: integer
+              reused_test_cases:
+                type: integer
+              reuse_rate:
+                type: number
+                format: percentage
+        most_reused_test_cases:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/TestCase'
+              - type: object
+                properties:
+                  reuse_count:
+                    type: integer
+        test_type_reusability:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              total_cases:
+                type: integer
+              reused_cases:
+                type: integer
+              reuse_rate:
+                type: number
+                format: percentage

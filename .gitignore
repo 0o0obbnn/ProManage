@@ -1,0 +1,31 @@
+# IDE and OS files
+.idea/
+.vscode/
+*.iml
+*.log
+nul
+.DS_Store
+
+# Java/Maven build output
+backend/target/
+backend/pom.xml.tag
+backend/pom.xml.releaseBackup
+backend/pom.xml.versionsBackup
+backend/release.properties
+
+# Log files
+backend/promanage-api/*.log
+
+# Node.js dependencies
+frontend/node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Production build output
+frontend/dist/
+
+# Vite cache
+frontend/.vite/

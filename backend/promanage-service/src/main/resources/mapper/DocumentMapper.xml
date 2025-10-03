@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.DocumentMapper">
+
+    <!-- 根据项目ID查找文档列表 -->
+    <select id="findByProjectId" resultType="com.promanage.service.entity.Document">
+        SELECT * FROM tb_document
+        WHERE project_id = #{projectId}
+        AND deleted = false
+        ORDER BY update_time DESC
+    </select>
+
+    <!-- 根据关键词搜索文档 -->
+    <select id="searchByKeyword" resultType="com.promanage.service.entity.Document">
+        SELECT * FROM tb_document
+        WHERE deleted = false
+        AND (
+            title LIKE CONCAT('%', #{keyword}, '%')
+            OR content LIKE CONCAT('%', #{keyword}, '%')
+            OR summary LIKE CONCAT('%', #{keyword}, '%')
+        )
+        ORDER BY update_time DESC
+        LIMIT 100
+    </select>
+
+    <!-- 根据创建人ID查找文档列表 -->
+    <select id="findByCreatorId" resultType="com.promanage.service.entity.Document">
+        SELECT * FROM tb_document
+        WHERE creator_id = #{creatorId}
+        AND deleted = false
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据文档类型查找文档列表 -->
+    <select id="findByType" resultType="com.promanage.service.entity.Document">
+        SELECT * FROM tb_document
+        WHERE type = #{type}
+        AND deleted = false
+        ORDER BY update_time DESC
+    </select>
+
+    <!-- 根据文件夹ID查找文档列表 -->
+    <select id="findByFolderId" resultType="com.promanage.service.entity.Document">
+        SELECT * FROM tb_document
+        WHERE folder_id = #{folderId}
+        AND deleted = false
+        ORDER BY title ASC
+    </select>
+
+    <!-- 增加文档浏览次数 -->
+    <update id="incrementViewCount">
+        UPDATE tb_document
+        SET view_count = view_count + 1
+        WHERE id = #{id}
+        AND deleted = false
+    </update>
+
+    <!-- 统计项目文档数量 -->
+    <select id="countByProjectId" resultType="int">
+        SELECT COUNT(*) FROM tb_document
+        WHERE project_id = #{projectId}
+        AND deleted = false
+    </select>
+
+    <!-- 统计用户创建的文档数量 -->
+    <select id="countByCreatorId" resultType="int">
+        SELECT COUNT(*) FROM tb_document
+        WHERE creator_id = #{creatorId}
+        AND deleted = false
+    </select>
+
+</mapper>

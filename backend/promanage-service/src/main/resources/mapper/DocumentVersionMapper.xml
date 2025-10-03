@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.DocumentVersionMapper">
+
+    <!-- 根据文档ID查找版本列表 -->
+    <select id="findByDocumentId" resultType="com.promanage.service.entity.DocumentVersion">
+        SELECT * FROM tb_document_version
+        WHERE document_id = #{documentId}
+        AND deleted = false
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据文档ID和版本号查找版本 -->
+    <select id="findByDocumentIdAndVersion" resultType="com.promanage.service.entity.DocumentVersion">
+        SELECT * FROM tb_document_version
+        WHERE document_id = #{documentId}
+        AND version = #{version}
+        AND deleted = false
+    </select>
+
+    <!-- 获取文档的最新版本 -->
+    <select id="findLatestByDocumentId" resultType="com.promanage.service.entity.DocumentVersion">
+        SELECT * FROM tb_document_version
+        WHERE document_id = #{documentId}
+        AND deleted = false
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 统计文档的版本数量 -->
+    <select id="countByDocumentId" resultType="int">
+        SELECT COUNT(*) FROM tb_document_version
+        WHERE document_id = #{documentId}
+        AND deleted = false
+    </select>
+
+    <!-- 根据文档ID删除所有版本 -->
+    <delete id="deleteByDocumentId">
+        DELETE FROM tb_document_version
+        WHERE document_id = #{documentId}
+    </delete>
+
+</mapper>

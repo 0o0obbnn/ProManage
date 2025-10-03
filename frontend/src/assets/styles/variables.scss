@@ -1,0 +1,139 @@
+/**
+ * ProManage 设计系统 - CSS 变量定义
+ * 基于 ProManage_UIUX_Design_Part1_DesignSystem.md
+ */
+
+:root {
+  /* ==================== Primary Colors ==================== */
+  --color-primary-50: #f0f9ff;
+  --color-primary-100: #e6f7ff;
+  --color-primary-400: #69c0ff;
+  --color-primary-500: #40a9ff;
+  --color-primary-600: #1890ff;
+  --color-primary-700: #096dd9;
+
+  /* ==================== Semantic Colors ==================== */
+  --color-success: #52c41a;
+  --color-success-100: #f6ffed;
+
+  --color-warning: #faad14;
+  --color-warning-100: #fffbe6;
+
+  --color-error: #ff4d4f;
+  --color-error-100: #fff1f0;
+
+  --color-info: #13c2c2;
+  --color-info-100: #e6fffb;
+
+  /* ==================== Text Colors ==================== */
+  --color-text-primary: #262626;
+  --color-text-secondary: #595959;
+  --color-text-tertiary: #8c8c8c;
+  --color-text-disabled: #bfbfbf;
+
+  /* ==================== Background Colors ==================== */
+  --color-bg-white: #ffffff;
+  --color-bg-layout: #f0f2f5;
+  --color-bg-container: #fafafa;
+  --color-bg-hover: #f5f5f5;
+
+  /* ==================== Border Colors ==================== */
+  --color-border-base: #d9d9d9;
+  --color-border-light: #f0f0f0;
+  --color-border-dark: #bfbfbf;
+
+  /* ==================== Role Theme Colors ==================== */
+  --color-role-superadmin: #722ed1;
+  --color-role-pm: #1890ff;
+  --color-role-developer: #52c41a;
+  --color-role-tester: #fa8c16;
+  --color-role-designer: #eb2f96;
+  --color-role-ops: #13c2c2;
+  --color-role-thirdparty: #8c8c8c;
+
+  /* ==================== Spacing System ==================== */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* ==================== Border Radius ==================== */
+  --radius-none: 0px;
+  --radius-sm: 2px;
+  --radius-base: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* ==================== Shadows ==================== */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-base: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.15);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+
+  /* ==================== Animation ==================== */
+  --duration-fast: 100ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.15, 1);
+  --ease-out-back: cubic-bezier(0.12, 0.4, 0.29, 1.46);
+
+  /* ==================== Z-index ==================== */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-notification: 1080;
+  --z-loading: 1090;
+
+  /* ==================== Typography ==================== */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono',
+    Consolas, 'Courier New', monospace;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 16px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-4xl: 30px;
+  --font-size-5xl: 38px;
+
+  --line-height-tight: 1.25;
+  --line-height-base: 1.571;
+  --line-height-relaxed: 1.667;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ==================== Layout ==================== */
+  --header-height: 64px;
+  --sidebar-width: 200px;
+  --sidebar-collapsed-width: 80px;
+  --footer-height: 64px;
+}

@@ -1,0 +1,149 @@
+{
+  "hooks": {
+    "// ==================== PRE-OPERATION HOOKS ====================": "",
+    "// These hooks run BEFORE specific tools are executed": "",
+
+    "// Hook: Pre-code write validation": "",
+    "// Ensures Java files follow project conventions before writing": "",
+    "pre:Write": {
+      "command": "echo '[Hook] Validating file write...' && if echo \"$FILE_PATH\" | grep -q '\\.java$'; then echo \"[✓] Writing Java file: $FILE_PATH\"; fi",
+      "when": "always",
+      "description": "Validate file writes and show notifications"
+    },
+
+    "// Hook: Pre-edit Java file check": "",
+    "// Checks if Java file exists and shows info before editing": "",
+    "pre:Edit": {
+      "command": "echo '[Hook] Pre-edit check for: '\"$FILE_PATH\" && if [ -f \"$FILE_PATH\" ]; then echo \"[✓] File exists, proceeding with edit\"; else echo \"[!] Warning: File does not exist\"; fi",
+      "when": "always",
+      "description": "Check file existence before editing"
+    },
+
+    "// Hook: Maven build safety check": "",
+    "// Warns before running potentially long-running Maven commands": "",
+    "pre:Bash": {
+      "command": "if echo \"$BASH_COMMAND\" | grep -qE 'mvn.*(install|package|deploy|verify)' && ! echo \"$BASH_COMMAND\" | grep -q '\\-DskipTests'; then echo '[!] WARNING: Running Maven build without -DskipTests. This may take a while.'; echo '[i] Consider adding -DskipTests for faster builds during development.'; fi",
+      "when": "always",
+      "description": "Warn about long-running Maven commands"
+    },
+
+    "// ==================== POST-OPERATION HOOKS ====================": "",
+    "// These hooks run AFTER specific tools complete successfully": "",
+
+    "// Hook: Post-Java file write validation": "",
+    "// Runs basic Java syntax check after creating/modifying Java files": "",
+    "post:Write": {
+      "command": "if echo \"$FILE_PATH\" | grep -q '\\.java$'; then echo '[Hook] Validating Java syntax...' && cd backend && javac -Xlint:unchecked -cp \"$(mvn -q dependency:build-classpath -Dmdep.outputFile=/dev/stdout 2>/dev/null || echo '.')\" \"../$FILE_PATH\" -d /tmp/java-check 2>&1 | head -20 || echo '[i] Syntax check completed (may have warnings)'; rm -rf /tmp/java-check 2>/dev/null; fi",
+      "when": "success",
+      "description": "Validate Java syntax after writing files"
+    },
+
+    "// Hook: Post-edit Java file notification": "",
+    "// Shows confirmation after successful file edits": "",
+    "post:Edit": {
+      "command": "echo '[✓] Successfully edited: '\"$FILE_PATH\" && if echo \"$FILE_PATH\" | grep -q 'Controller\\.java$'; then echo '[i] Tip: Remember to update corresponding DTOs and tests'; fi",
+      "when": "success",
+      "description": "Show success message and helpful tips after editing"
+    },
+
+    "// Hook: Post-Maven test execution": "",
+    "// Summarizes test results and suggests next steps": "",
+    "post:Bash": {
+      "command": "if echo \"$BASH_COMMAND\" | grep -qE 'mvn.*test'; then echo '[Hook] Test execution completed' && echo '[i] To view detailed coverage report, run: mvn jacoco:report'; echo '[i] Report will be at: target/site/jacoco/index.html'; fi",
+      "when": "success",
+      "description": "Show test execution summary and next steps"
+    },
+
+    "// ==================== SPECIALIZED HOOKS ====================": "",
+    "// Hooks for specific development scenarios": "",
+
+    "// Hook: Code formatting check (runs before edits)": "",
+    "// Suggests running checkstyle for Java files": "",
+    "pre:Edit:java-quality": {
+      "command": "if echo \"$FILE_PATH\" | grep -q '\\.java$'; then echo '[i] Remember to run code quality checks:' && echo '    mvn checkstyle:check' && echo '    mvn spotbugs:check'; fi",
+      "when": "always",
+      "description": "Remind about code quality tools"
+    },
+
+    "// Hook: Database migration warning": "",
+    "// Warns when modifying SQL schema files": "",
+    "pre:Edit:db-schema": {
+      "command": "if echo \"$FILE_PATH\" | grep -qE '(schema|migration).*\\.sql$'; then echo '[!] WARNING: Modifying database schema' && echo '[i] Remember to:' && echo '    1. Create a migration script' && echo '    2. Update corresponding entity classes' && echo '    3. Update MyBatis mappers if needed' && echo '    4. Test with a clean database'; fi",
+      "when": "always",
+      "description": "Warn about database schema changes"
+    },
+
+    "// Hook: Test coverage reminder": "",
+    "// Reminds to write tests after creating service files": "",
+    "post:Write:test-reminder": {
+      "command": "if echo \"$FILE_PATH\" | grep -qE 'service/impl/.*\\.java$'; then echo '[i] Reminder: Write unit tests for this service' && echo '    Target coverage: ≥ 80%' && echo '    Location: backend/promanage-service/src/test/java/'; fi",
+      "when": "success",
+      "description": "Remind to write tests after creating services"
+    },
+
+    "// ==================== PROJECT-SPECIFIC HOOKS ====================": "",
+    "// Custom hooks for ProManage project workflows": "",
+
+    "// Hook: API endpoint creation checklist": "",
+    "// Shows checklist when creating controller files": "",
+    "post:Write:api-checklist": {
+      "command": "if echo \"$FILE_PATH\" | grep -q 'Controller\\.java$'; then echo '\\n[✓] Controller created. Complete these steps:' && echo '  [ ] 1. Define entity in promanage-service/entity/' && echo '  [ ] 2. Create mapper in promanage-service/mapper/' && echo '  [ ] 3. Implement service in promanage-service/service/impl/' && echo '  [ ] 4. Create DTOs in promanage-api/dto/' && echo '  [ ] 5. Add Swagger annotations (@Operation, @ApiResponse)' && echo '  [ ] 6. Write unit tests for service layer' && echo '  [ ] 7. Write integration tests for controller\\n'; fi",
+      "when": "success",
+      "description": "Show API development checklist"
+    },
+
+    "// Hook: Git commit convention reminder": "",
+    "// Reminds about commit message format before git operations": "",
+    "pre:Bash:git-commit": {
+      "command": "if echo \"$BASH_COMMAND\" | grep -q 'git commit'; then echo '[i] Commit Convention:' && echo '    <type>(<scope>): <subject>' && echo '    ' && echo '    Types: feat, fix, docs, style, refactor, test, chore' && echo '    Example: feat(user): add user registration API'; fi",
+      "when": "always",
+      "description": "Show git commit convention"
+    },
+
+    "// Hook: Spring Boot startup notification": "",
+    "// Shows useful URLs after starting the application": "",
+    "post:Bash:spring-boot-startup": {
+      "command": "if echo \"$BASH_COMMAND\" | grep -q 'spring-boot:run'; then sleep 5 && echo '\\n[✓] Application should be starting...' && echo '    Swagger UI: http://localhost:8080/swagger-ui.html' && echo '    Health Check: http://localhost:8080/actuator/health' && echo '    H2 Console (if enabled): http://localhost:8080/h2-console\\n'; fi &",
+      "when": "success",
+      "description": "Show application URLs after startup"
+    },
+
+    "// ==================== SAFETY HOOKS ====================": "",
+    "// Hooks that prevent dangerous operations": "",
+
+    "// Hook: Prevent accidental production deployments": "",
+    "// Blocks deployment commands to production without confirmation": "",
+    "pre:Bash:prod-safety": {
+      "command": "if echo \"$BASH_COMMAND\" | grep -qE '(deploy|push).*prod'; then echo '[!] BLOCKED: Production deployment detected!' && echo '[!] Please review the Production Checklist in CLAUDE.md' && echo '[!] To proceed, user must manually run this command.' && exit 1; fi",
+      "when": "always",
+      "description": "Block accidental production deployments"
+    },
+
+    "// Hook: Prevent database deletion": "",
+    "// Warns before dropping databases": "",
+    "pre:Bash:db-drop-warning": {
+      "command": "if echo \"$BASH_COMMAND\" | grep -qE 'drop (database|table)|dropdb'; then echo '[!] WARNING: Database DROP operation detected!' && echo '[!] This is a DESTRUCTIVE operation.' && echo '[?] Are you sure? (This will not block the operation)'; fi",
+      "when": "always",
+      "description": "Warn about database drop operations"
+    }
+  },
+
+  "// ==================== HOOK CONFIGURATION NOTES ====================": "",
+  "// Available variables in hooks:": "",
+  "//   - $FILE_PATH: Path to the file being operated on (Write/Edit)": "",
+  "//   - $BASH_COMMAND: The bash command being executed (Bash hooks)": "",
+  "//   - $TOOL_NAME: Name of the tool being executed": "",
+  "// ": "",
+  "// Hook timing:": "",
+  "//   - pre:*  : Runs BEFORE the operation": "",
+  "//   - post:* : Runs AFTER the operation completes": "",
+  "// ": "",
+  "// Hook conditions:": "",
+  "//   - when: \"always\"  : Always run the hook": "",
+  "//   - when: \"success\" : Only run if operation succeeded": "",
+  "//   - when: \"failure\" : Only run if operation failed": "",
+  "// ": "",
+  "// Exit codes:": "",
+  "//   - exit 0 : Hook succeeded, continue": "",
+  "//   - exit 1 : Hook failed, BLOCK the operation (for pre: hooks)": ""
+}

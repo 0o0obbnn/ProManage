@@ -1,0 +1,89 @@
+{
+  "autoApproveTools": [
+    "Read",
+    "Glob",
+    "Grep",
+    "Edit",
+    "Write",
+    "Bash(ls)",
+    "Bash(dir)",
+    "Bash(pwd)",
+    "Bash(cat:*)",
+    "Bash(head:*)",
+    "Bash(tail:*)",
+    "Bash(grep:*)",
+    "Bash(find:*)",
+    "Bash(tree:*)",
+    "Bash(echo:*)",
+    "Bash(git status)",
+    "Bash(git diff)",
+    "Bash(git log*)",
+    "Bash(git show*)",
+    "Bash(git branch)",
+    "Bash(mvn:*)",
+    "Bash(npm:*)",
+    "Bash(node:*)",
+    "Bash(java:*)"
+  ],
+  "confirmBeforeExecuting": [
+    "Bash(rm:*)",
+    "Bash(rmdir:*)",
+    "Bash(del:*)",
+    "Bash(git add*)",
+    "Bash(git commit*)",
+    "Bash(git push*)",
+    "Bash(git pull*)",
+    "Bash(git merge*)",
+    "Bash(git rebase*)",
+    "Bash(git reset*)",
+    "Bash(psql:*DROP*)",
+    "Bash(psql:*DELETE*)",
+    "Bash(psql:*TRUNCATE*)",
+    "Bash(dropdb:*)",
+    "Bash(createdb:*)"
+  ],
+  "hooks": {
+    "beforeEdit": {
+      "command": "echo 'Backing up file before edit...'",
+      "description": "Backup file before editing",
+      "enabled": false
+    },
+    "afterEdit": {
+      "command": "cd backend && mvn compile -q",
+      "description": "Compile Java code after editing",
+      "enabled": true,
+      "continueOnError": true
+    },
+    "beforeWrite": {
+      "command": "echo 'Creating new file...'",
+      "description": "Log before creating new file",
+      "enabled": false
+    },
+    "afterWrite": {
+      "command": "echo 'File created successfully'",
+      "description": "Log after file creation",
+      "enabled": false
+    },
+    "beforeBash": {
+      "command": "echo '⚡ Executing command...'",
+      "description": "Log before bash command",
+      "enabled": false
+    },
+    "afterBash": {
+      "command": "echo '✅ Command completed'",
+      "description": "Log after bash command",
+      "enabled": false
+    },
+    "onError": {
+      "command": "echo '❌ Error occurred. Check logs for details.'",
+      "description": "Handle errors gracefully",
+      "enabled": true
+    },
+    "userPromptSubmit": {
+      "command": "git status --short",
+      "description": "Show git status when user submits prompt",
+      "enabled": false
+    }
+  },
+  "description": "ProManage project configuration with hooks for automated workflows"
+}

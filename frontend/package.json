@@ -1,0 +1,50 @@
+{
+  "name": "promanage-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{vue,js,jsx,ts,tsx,json,css,scss,md}\"",
+    "type-check": "vue-tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@vueuse/core": "^13.9.0",
+    "ant-design-vue": "^4.2.3",
+    "axios": "^1.12.2",
+    "dayjs": "^1.11.18",
+    "echarts": "^5.5.0",
+    "pinia": "^3.0.3",
+    "vue": "^3.5.21",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
+    "@playwright/test": "^1.55.1",
+    "@types/node": "^24.6.0",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.8.1",
+    "dompurify": "^3.0.8",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.5.0",
+    "jsdom": "^24.1.0",
+    "lodash-es": "^4.17.21",
+    "prettier": "^3.6.2",
+    "sass": "^1.93.2",
+    "typescript": "~5.8.3",
+    "vite": "^7.1.7",
+    "vitest": "^2.1.8",
+    "vue-tsc": "^3.0.7"
+  }
+}

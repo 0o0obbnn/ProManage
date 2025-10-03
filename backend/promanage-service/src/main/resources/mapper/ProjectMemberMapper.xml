@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.ProjectMemberMapper">
+
+    <!-- 根据项目ID查找成员列表 -->
+    <select id="findByProjectId" resultType="com.promanage.service.entity.ProjectMember">
+        SELECT * FROM tb_project_member
+        WHERE project_id = #{projectId}
+        AND deleted = false
+        ORDER BY join_time DESC
+    </select>
+
+    <!-- 根据用户ID查找项目成员记录 -->
+    <select id="findByUserId" resultType="com.promanage.service.entity.ProjectMember">
+        SELECT * FROM tb_project_member
+        WHERE user_id = #{userId}
+        AND deleted = false
+        ORDER BY join_time DESC
+    </select>
+
+    <!-- 根据项目ID和用户ID查找成员记录 -->
+    <select id="findByProjectIdAndUserId" resultType="com.promanage.service.entity.ProjectMember">
+        SELECT * FROM tb_project_member
+        WHERE project_id = #{projectId}
+        AND user_id = #{userId}
+        AND deleted = false
+    </select>
+
+    <!-- 根据项目ID删除所有成员 -->
+    <delete id="deleteByProjectId">
+        DELETE FROM tb_project_member
+        WHERE project_id = #{projectId}
+    </delete>
+
+    <!-- 批量插入项目成员 -->
+    <insert id="batchInsert">
+        INSERT INTO tb_project_member (project_id, user_id, role_id, join_time, status, create_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.projectId}, #{item.userId}, #{item.roleId}, #{item.joinTime}, #{item.status}, #{item.createTime})
+        </foreach>
+    </insert>
+
+    <!-- 检查用户是否为项目成员 -->
+    <select id="existsByProjectIdAndUserId" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM tb_project_member
+        WHERE project_id = #{projectId}
+        AND user_id = #{userId}
+        AND status = 0
+        AND deleted = false
+    </select>
+
+</mapper>
