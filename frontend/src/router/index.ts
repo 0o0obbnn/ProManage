@@ -51,6 +51,27 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'projects',
+        name: 'Projects',
+        component: () => import('@/views/project/index.vue'),
+        meta: {
+          title: '项目管理',
+          requiresAuth: true,
+          icon: 'ProjectOutlined',
+          permissions: ['project:view']
+        }
+      },
+      {
+        path: 'projects/:id',
+        name: 'ProjectDetail',
+        component: () => import('@/views/project/Detail.vue'),
+        meta: {
+          title: '项目详情',
+          requiresAuth: true,
+          permissions: ['project:view']
+        }
+      },
+      {
         path: 'documents',
         name: 'Documents',
         component: () => import('@/views/document/index.vue'),
@@ -69,6 +90,16 @@ const routes: RouteRecordRaw[] = [
           title: '文档详情',
           requiresAuth: true,
           permissions: ['document:view']
+        }
+      },
+      {
+        path: 'documents/:id/edit',
+        name: 'DocumentEditor',
+        component: () => import('@/views/document/Editor.vue'),
+        meta: {
+          title: '编辑文档',
+          requiresAuth: true,
+          permissions: ['document:edit']
         }
       },
       {

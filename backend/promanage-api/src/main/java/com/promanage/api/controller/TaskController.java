@@ -22,9 +22,6 @@ import com.promanage.service.entity.TaskAttachment;
 import com.promanage.service.entity.TaskCheckItem;
 import com.promanage.service.entity.TaskComment;
 import com.promanage.common.entity.User;
-import com.promanage.service.mapper.TaskActivityMapper;
-import com.promanage.service.mapper.TaskAttachmentMapper;
-import com.promanage.service.mapper.TaskCheckItemMapper;
 import com.promanage.service.mapper.TaskCommentMapper;
 import com.promanage.service.service.ITaskService;
 import com.promanage.service.service.IUserService;
@@ -34,10 +31,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
 import java.util.List;
 import java.util.stream.Collectors;
 

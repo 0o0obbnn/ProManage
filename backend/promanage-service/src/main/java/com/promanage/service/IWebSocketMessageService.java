@@ -1,6 +1,5 @@
 package com.promanage.service;
 
-import com.promanage.common.websocket.WebSocketMessage;
 
 import java.util.Collection;
 

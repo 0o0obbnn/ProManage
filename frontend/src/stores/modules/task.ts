@@ -3,19 +3,19 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type {
-  Task,
-  TaskColumn,
-  TaskQueryParams,
-  TaskFormData,
+import {
   TaskStatus,
   TaskPriority,
-  TaskViewMode,
-  TaskGroupBy,
-  TaskStats,
-  Sprint,
-  TaskComment,
-  SubTask
+  type Task,
+  type TaskColumn,
+  type TaskQueryParams,
+  type TaskFormData,
+  type TaskViewMode,
+  type TaskGroupBy,
+  type TaskStats,
+  type Sprint,
+  type TaskComment,
+  type SubTask
 } from '@/types/task'
 import type { PageResult } from '@/types/global'
 import * as taskApi from '@/api/modules/task'

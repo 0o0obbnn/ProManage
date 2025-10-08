@@ -1,7 +1,6 @@
 package com.promanage.service.service;
 
 import com.promanage.common.domain.PageResult;
-import com.promanage.common.entity.User;
 import com.promanage.service.entity.Organization;
 
 import java.time.LocalDateTime;

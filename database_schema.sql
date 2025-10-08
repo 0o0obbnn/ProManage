@@ -502,6 +502,18 @@ CREATE TABLE task_watchers (
     PRIMARY KEY (task_id, user_id)
 );
 
+-- Task Time Tracking Table
+CREATE TABLE task_time_tracking (
+    id BIGSERIAL PRIMARY KEY,
+    task_id BIGINT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    hours_spent DECIMAL(8,2) NOT NULL,
+    logged_date DATE NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by BIGINT REFERENCES users(id)
+);
+
 -- Test Cases Table
 CREATE TABLE test_cases (
     id BIGSERIAL PRIMARY KEY,

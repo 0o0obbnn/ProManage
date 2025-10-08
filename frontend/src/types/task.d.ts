@@ -6,20 +6,32 @@
  * 任务状态枚举
  */
 export enum TaskStatus {
-  TODO = 'todo',
-  IN_PROGRESS = 'in_progress',
-  TESTING = 'testing',
-  DONE = 'done'
+  /** 待办 */
+  TODO = 0,
+  /** 进行中 */
+  IN_PROGRESS = 1,
+  /** 测试中 */
+  TESTING = 2,
+  /** 已完成 */
+  DONE = 3,
+  /** 已关闭 */
+  CLOSED = 4,
+  /** 已取消 */
+  CANCELLED = 5
 }
 
 /**
  * 任务优先级枚举
  */
 export enum TaskPriority {
-  URGENT = 'urgent',
-  HIGH = 'high',
-  MEDIUM = 'medium',
-  LOW = 'low'
+  /** 低 */
+  LOW = 0,
+  /** 中 */
+  MEDIUM = 1,
+  /** 高 */
+  HIGH = 2,
+  /** 紧急 */
+  URGENT = 3
 }
 
 /**
@@ -231,4 +243,22 @@ export interface GanttTask {
   assignee?: TaskUser
   dependencies?: number[]
   color?: string
+}
+
+/**
+ * 看板列定义
+ */
+export interface TaskColumn {
+  /** 列ID */
+  id: string
+  /** 列标题 */
+  title: string
+  /** 对应的任务状态 */
+  status: TaskStatus
+  /** 列颜色 */
+  color: string
+  /** 任务列表 */
+  tasks: Task[]
+  /** 排序 */
+  order: number
 }

@@ -2,7 +2,6 @@ package com.promanage.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.promanage.common.domain.PageResult;
-import com.promanage.dto.ProjectRequest;
 import com.promanage.dto.ProjectStatsDTO;
 import com.promanage.service.entity.Project;
 import com.promanage.dto.ProjectMemberDTO;

@@ -1,6 +1,5 @@
 package com.promanage.service.impl;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.promanage.common.domain.PageResult;
 import com.promanage.service.entity.Document;

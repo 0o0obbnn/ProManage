@@ -16,66 +16,59 @@ import type {
 import type { PageResult } from '@/types/global'
 
 /**
- * 获取任务列表
+ * 获取项目任务列表
  */
-export function getTaskList(params: TaskQueryParams) {
-  return get<PageResult<Task>>('/tasks', { params })
+export function getProjectTasks(projectId: number, params?: TaskQueryParams) {
+  return get<PageResult<Task>>(`/api/v1/projects/${projectId}/tasks`, { params })
 }
 
 /**
  * 获取任务详情
  */
 export function getTaskDetail(id: number) {
-  return get<Task>(`/tasks/${id}`)
+  return get<Task>(`/api/v1/tasks/${id}`)
 }
 
 /**
  * 创建任务
  */
-export function createTask(data: TaskFormData) {
-  return post<Task>('/tasks', data)
+export function createTask(projectId: number, data: TaskFormData) {
+  return post<Task>(`/api/v1/projects/${projectId}/tasks`, data)
 }
 
 /**
  * 更新任务
  */
 export function updateTask(id: number, data: Partial<TaskFormData>) {
-  return put<Task>(`/tasks/${id}`, data)
+  return put<Task>(`/api/v1/tasks/${id}`, data)
 }
 
 /**
  * 删除任务
  */
 export function deleteTask(id: number) {
-  return del(`/tasks/${id}`)
-}
-
-/**
- * 批量删除任务
- */
-export function batchDeleteTasks(ids: number[]) {
-  return post('/tasks/batch-delete', { ids })
+  return del(`/api/v1/tasks/${id}`)
 }
 
 /**
  * 更新任务状态
  */
-export function updateTaskStatus(id: number, status: string) {
-  return put<Task>(`/tasks/${id}/status`, { status })
+export function updateTaskStatus(id: number, status: number) {
+  return put(`/api/v1/tasks/${id}/status`, null, { params: { status } })
 }
 
 /**
  * 分配任务
  */
-export function assignTask(id: number, userId: number) {
-  return put<Task>(`/tasks/${id}/assign`, { userId })
+export function assignTask(id: number, assigneeId: number) {
+  return put(`/api/v1/tasks/${id}/assign`, null, { params: { assigneeId } })
 }
 
 /**
  * 更新任务进度
  */
 export function updateTaskProgress(id: number, progress: number) {
-  return put<Task>(`/tasks/${id}/progress`, { progress })
+  return put(`/api/v1/tasks/${id}/progress`, null, { params: { progress } })
 }
 
 /**

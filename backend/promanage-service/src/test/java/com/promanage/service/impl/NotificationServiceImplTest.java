@@ -2,7 +2,6 @@ package com.promanage.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.promanage.service.entity.Notification;
-import com.promanage.service.INotificationService;
 import com.promanage.service.mapper.NotificationMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

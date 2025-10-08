@@ -1,9 +1,6 @@
 package com.promanage.api.controller;
 
 import com.promanage.common.domain.PageResult;
-import com.promanage.service.entity.Document;
-import com.promanage.service.entity.Project;
-import com.promanage.service.entity.Task;
 import com.promanage.service.service.ISearchService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +8,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

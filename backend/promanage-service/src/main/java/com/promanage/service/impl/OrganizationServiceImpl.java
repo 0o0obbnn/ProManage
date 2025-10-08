@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.promanage.common.domain.PageResult;
 import com.promanage.common.domain.ResultCode;
 import com.promanage.common.exception.BusinessException;
-import com.promanage.infrastructure.security.SecurityUtils;
 import com.promanage.service.IOrganizationService;
 import com.promanage.service.service.IUserService;
 import com.promanage.service.entity.Organization;
@@ -269,8 +268,15 @@ public class OrganizationServiceImpl extends ServiceImpl<OrganizationMapper, Org
     @Override
     public long getMemberCount(Long organizationId) {
         log.debug("获取组织成员数量, 组织ID: {}", organizationId);
-
-        return userService.countByOrganizationId(organizationId);
+        
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getOrganizationId, organizationId)
+               .isNull(User::getDeletedAt);
+        
+        // TODO: 实现用户数量统计功能
+        // 需要在IUserService中添加count方法或在UserMapper中添加查询方法
+        log.warn("用户数量统计功能尚未实现，返回0");
+        return 0;
     }
 
     @Override

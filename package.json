@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "@testing-library/vue": "^8.1.0",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^19.0.2",
+    "jsdom": "^27.0.0",
+    "vitest": "^3.2.4"
+  }
+}

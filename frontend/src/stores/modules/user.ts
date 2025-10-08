@@ -1,5 +1,6 @@
 /**
  * 用户状态管理
+ * 已修复: 无限权限请求循环问题
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -113,13 +114,13 @@ export const useUserStore = defineStore('user', () => {
       refreshToken.value = response.refreshToken
       userInfo.value = response.userInfo
 
-      // 登录成功后获取用户权限
-      await fetchUserPermissions()
-
-      // 使用auth工具持久化 token
+      // 先持久化 token，确保后续API调用可以使用
       setToken(response.token)
       setRefreshToken(response.refreshToken)
       localStorage.setItem('userInfo', JSON.stringify(response.userInfo))
+
+      // 登录成功后获取用户权限（此时token已保存，请求拦截器可以获取）
+      await fetchUserPermissions()
 
       return response
     } catch (error) {

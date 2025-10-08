@@ -14,7 +14,6 @@ import com.promanage.common.entity.User;
 import com.promanage.service.service.ITestCaseService;
 import com.promanage.service.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

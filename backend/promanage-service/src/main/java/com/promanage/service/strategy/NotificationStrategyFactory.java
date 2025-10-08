@@ -5,7 +5,6 @@ import com.promanage.service.strategy.impl.TaskNotificationStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
 
 /**
  * 通知策略工厂

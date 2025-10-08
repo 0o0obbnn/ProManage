@@ -37,12 +37,22 @@
       </div>
 
       <div class="toolbar-right">
-        <a-input-search
-          v-model:value="searchKeyword"
-          placeholder="搜索文档名称、标签..."
-          style="width: 280px"
-          @search="handleSearch"
-        />
+        <a-input-group compact>
+          <a-select
+            v-model:value="searchScope"
+            style="width: 100px"
+          >
+            <a-select-option value="title">标题</a-select-option>
+            <a-select-option value="content">内容</a-select-option>
+            <a-select-option value="all">全部</a-select-option>
+          </a-select>
+          <a-input-search
+            v-model:value="searchKeyword"
+            placeholder="搜索文档..."
+            style="width: 200px"
+            @search="handleSearch"
+          />
+        </a-input-group>
         <a-button @click="showFilterDrawer">
           <template #icon><FilterOutlined /></template>
           筛选
@@ -163,6 +173,9 @@
                 </template>
                 <template v-else-if="column.key === 'createdAt'">
                   {{ formatDate(record.createdAt) }}
+                </template>
+                <template v-else-if="column.key === 'updatedAt'">
+                  {{ formatDate(record.updatedAt) }}
                 </template>
                 <template v-else-if="column.key === 'actions'">
                   <a-space>
@@ -306,6 +319,14 @@
       :filters="queryParams"
       @apply="handleFilterApply"
     />
+
+    <!-- 文件夹模态框 -->
+    <FolderModal
+      v-model:open="folderModalVisible"
+      :folder="currentFolder"
+      :folders="folders"
+      @success="handleFolderSuccess"
+    />
   </div>
 </template>
 
@@ -344,6 +365,7 @@ import type { Document, FileType, ViewMode } from '@/types/document'
 import CreateDocumentModal from '@/components/document/CreateDocumentModal.vue'
 import UploadModal from '@/components/document/UploadModal.vue'
 import FilterDrawer from '@/components/document/FilterDrawer.vue'
+import FolderModal from '@/components/document/FolderModal.vue'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -362,6 +384,7 @@ const {
 
 // 本地状态
 const searchKeyword = ref('')
+const searchScope = ref('title')
 const createModalVisible = ref(false)
 const uploadModalVisible = ref(false)
 const filterDrawerVisible = ref(false)
@@ -415,6 +438,13 @@ const columns = [
     title: '上传时间',
     key: 'createdAt',
     dataIndex: 'createdAt',
+    width: 180,
+    sorter: true
+  },
+  {
+    title: '更新时间',
+    key: 'updatedAt',
+    dataIndex: 'updatedAt',
     width: 180,
     sorter: true
   },
@@ -528,7 +558,17 @@ const formatDate = (date: string): string => {
 
 // 搜索
 const handleSearch = () => {
-  documentStore.setQueryParams({ keyword: searchKeyword.value })
+  const params: any = { keyword: searchKeyword.value }
+
+  // 根据搜索范围设置参数
+  if (searchScope.value === 'content') {
+    params.searchInContent = true
+  } else if (searchScope.value === 'all') {
+    params.searchInContent = true
+    params.searchInTags = true
+  }
+
+  documentStore.setQueryParams(params)
   documentStore.setPagination(1)
   documentStore.fetchDocuments()
 }
@@ -543,12 +583,20 @@ const showUploadModal = () => {
   uploadModalVisible.value = true
 }
 
+// 文件夹模态框
+const folderModalVisible = ref(false)
+const currentFolder = ref<any>(null)
+
 // 显示创建文件夹模态框
 const showCreateFolderModal = () => {
-  Modal.confirm({
-    title: '创建文件夹',
-    content: '此功能待实现'
-  })
+  currentFolder.value = null
+  folderModalVisible.value = true
+}
+
+// 文件夹操作成功
+const handleFolderSuccess = () => {
+  documentStore.fetchFolders()
+  documentStore.fetchDocuments()
 }
 
 // 显示筛选抽屉

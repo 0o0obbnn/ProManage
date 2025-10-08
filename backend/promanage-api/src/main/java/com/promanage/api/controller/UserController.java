@@ -16,7 +16,6 @@ import com.promanage.service.entity.Role;
 import com.promanage.service.entity.Permission;
 import com.promanage.common.entity.User;
 import com.promanage.service.service.IUserService;
-import com.promanage.service.service.IRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

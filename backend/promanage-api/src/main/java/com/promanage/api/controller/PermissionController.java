@@ -5,7 +5,6 @@ import com.promanage.service.dto.request.UpdatePermissionRequest;
 import com.promanage.service.dto.request.AssignPermissionsRequest;
 import com.promanage.service.dto.response.PermissionResponse;
 import com.promanage.service.dto.response.PermissionTreeResponse;
-import com.promanage.service.entity.Permission;
 import com.promanage.common.domain.Result;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.infrastructure.utils.SecurityUtils;
@@ -20,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 权限管理控制器

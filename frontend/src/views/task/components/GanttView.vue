@@ -1,397 +1,386 @@
 <template>
   <div class="gantt-view">
-    <div class="gantt-header">
-      <div class="gantt-toolbar">
-        <a-space>
-          <a-button @click="handleZoomIn">
-            <ZoomInOutlined />
-          </a-button>
-          <a-button @click="handleZoomOut">
-            <ZoomOutOutlined />
-          </a-button>
-          <a-button @click="handleToday">
-            今天
-          </a-button>
-        </a-space>
-      </div>
+    <div class="gantt-toolbar">
+      <a-space>
+        <a-button @click="handleZoomIn">
+          <template #icon><ZoomInOutlined /></template>
+          放大
+        </a-button>
+        <a-button @click="handleZoomOut">
+          <template #icon><ZoomOutOutlined /></template>
+          缩小
+        </a-button>
+        <a-button @click="handleFitToScreen">
+          <template #icon><FullscreenOutlined /></template>
+          适应屏幕
+        </a-button>
+        <a-divider type="vertical" />
+        <a-checkbox v-model:checked="showCriticalPath">
+          显示关键路径
+        </a-checkbox>
+        <a-checkbox v-model:checked="showDependencies">
+          显示依赖关系
+        </a-checkbox>
+        <a-divider type="vertical" />
+        <a-button @click="handleExportPDF">
+          <template #icon><FilePdfOutlined /></template>
+          导出PDF
+        </a-button>
+        <a-button @click="handleExportImage">
+          <template #icon><FileImageOutlined /></template>
+          导出图片
+        </a-button>
+      </a-space>
     </div>
 
-    <div class="gantt-container">
-      <div class="gantt-sidebar">
-        <div class="gantt-sidebar-header">
-          <span>任务</span>
-        </div>
-        <div
-          v-for="task in ganttTasks"
-          :key="task.id"
-          class="gantt-row-label"
-          @click="handleTaskClick(task)"
-        >
-          <div class="task-info">
-            <a-tag :color="getPriorityColor(task.priority)" size="small">
-              {{ getPriorityText(task.priority) }}
-            </a-tag>
-            <span class="task-title">{{ task.title }}</span>
-          </div>
-          <div v-if="task.assignee" class="task-assignee">
-            <a-avatar :src="task.assignee.avatar" :size="20">
-              {{ task.assignee.name.charAt(0) }}
-            </a-avatar>
-          </div>
-        </div>
-      </div>
-
-      <div class="gantt-timeline">
-        <div class="gantt-timeline-header">
-          <div
-            v-for="date in timelineDates"
-            :key="date.toString()"
-            class="gantt-date-cell"
-            :style="{ width: cellWidth + 'px' }"
-          >
-            <div class="date-label">{{ formatDate(date) }}</div>
-          </div>
-        </div>
-
-        <div class="gantt-chart">
-          <div
-            v-for="task in ganttTasks"
-            :key="task.id"
-            class="gantt-row"
-          >
-            <div
-              class="gantt-bar"
-              :style="getBarStyle(task)"
-              @click="handleTaskClick(task)"
-            >
-              <div class="gantt-bar-progress" :style="{ width: task.progress + '%' }"></div>
-              <div class="gantt-bar-label">{{ task.title }}</div>
-            </div>
-          </div>
-
-          <div class="gantt-today-line" :style="getTodayLineStyle()"></div>
-        </div>
-      </div>
-    </div>
+    <div ref="ganttContainer" class="gantt-container"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useTaskStore } from '@/stores/modules/task'
-import type { Task, GanttTask } from '@/types/task'
-import { ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons-vue'
-import dayjs from 'dayjs'
-import isBetween from 'dayjs/plugin/isBetween'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { message } from 'ant-design-vue'
+import {
+  ZoomInOutlined,
+  ZoomOutOutlined,
+  FullscreenOutlined,
+  FilePdfOutlined,
+  FileImageOutlined
+} from '@ant-design/icons-vue'
+import gantt from 'dhtmlx-gantt'
+import 'dhtmlx-gantt/codebase/dhtmlxgantt.css'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
-dayjs.extend(isBetween)
+interface Props {
+  tasks?: any[]
+  projectId?: number
+}
 
-const emit = defineEmits<{
-  taskClick: [task: GanttTask]
-}>()
+const props = withDefaults(defineProps<Props>(), {
+  tasks: () => [],
+  projectId: undefined
+})
 
-const taskStore = useTaskStore()
+const emit = defineEmits(['taskUpdate', 'taskCreate', 'taskDelete', 'linkCreate', 'linkDelete'])
 
-const cellWidth = ref(80)
-const zoomLevel = ref(1)
+const ganttContainer = ref<HTMLElement>()
+const showCriticalPath = ref(true)
+const showDependencies = ref(true)
 
-const ganttTasks = computed<GanttTask[]>(() => {
-  return taskStore.taskList
-    .filter(task => task.startDate && task.dueDate)
-    .map(task => ({
+// 初始化甘特图
+const initGantt = () => {
+  if (!ganttContainer.value) return
+
+  // 基础配置
+  gantt.config.date_format = '%Y-%m-%d %H:%i'
+  gantt.config.scale_unit = 'day'
+  gantt.config.date_scale = '%m月%d日'
+  gantt.config.subscales = [
+    { unit: 'week', step: 1, date: '第%W周' }
+  ]
+  gantt.config.duration_unit = 'day'
+  gantt.config.work_time = true
+  gantt.config.correct_work_time = true
+  gantt.config.skip_off_time = true
+
+  // 列配置
+  gantt.config.columns = [
+    {
+      name: 'text',
+      label: '任务名称',
+      width: '*',
+      tree: true,
+      resize: true
+    },
+    {
+      name: 'start_date',
+      label: '开始时间',
+      width: 100,
+      align: 'center',
+      resize: true
+    },
+    {
+      name: 'duration',
+      label: '持续时间',
+      width: 80,
+      align: 'center',
+      resize: true
+    },
+    {
+      name: 'assignee',
+      label: '负责人',
+      width: 100,
+      align: 'center',
+      resize: true,
+      template: (task: any) => task.assignee?.name || '未分配'
+    },
+    {
+      name: 'progress',
+      label: '进度',
+      width: 80,
+      align: 'center',
+      template: (task: any) => `${Math.round(task.progress * 100)}%`
+    }
+  ]
+
+  // 启用拖拽
+  gantt.config.drag_links = true
+  gantt.config.drag_progress = true
+  gantt.config.drag_resize = true
+  gantt.config.drag_move = true
+
+  // 关键路径配置
+  gantt.config.highlight_critical_path = showCriticalPath.value
+
+  // 工具提示
+  gantt.templates.tooltip_text = (start: Date, end: Date, task: any) => {
+    return `
+      <b>任务:</b> ${task.text}<br/>
+      <b>开始:</b> ${gantt.templates.tooltip_date_format(start)}<br/>
+      <b>结束:</b> ${gantt.templates.tooltip_date_format(end)}<br/>
+      <b>进度:</b> ${Math.round(task.progress * 100)}%<br/>
+      <b>负责人:</b> ${task.assignee?.name || '未分配'}
+    `
+  }
+
+  // 任务样式
+  gantt.templates.task_class = (start: Date, end: Date, task: any) => {
+    const classes = []
+    
+    if (task.priority === 'HIGH') {
+      classes.push('high-priority')
+    } else if (task.priority === 'LOW') {
+      classes.push('low-priority')
+    }
+    
+    if (task.status === 'COMPLETED') {
+      classes.push('completed')
+    } else if (task.status === 'IN_PROGRESS') {
+      classes.push('in-progress')
+    }
+    
+    return classes.join(' ')
+  }
+
+  // 事件监听
+  gantt.attachEvent('onAfterTaskUpdate', (id: string, task: any) => {
+    emit('taskUpdate', { id, task })
+  })
+
+  gantt.attachEvent('onAfterTaskAdd', (id: string, task: any) => {
+    emit('taskCreate', { id, task })
+  })
+
+  gantt.attachEvent('onAfterTaskDelete', (id: string) => {
+    emit('taskDelete', { id })
+  })
+
+  gantt.attachEvent('onAfterLinkAdd', (id: string, link: any) => {
+    emit('linkCreate', { id, link })
+  })
+
+  gantt.attachEvent('onAfterLinkDelete', (id: string) => {
+    emit('linkDelete', { id })
+  })
+
+  // 初始化
+  gantt.init(ganttContainer.value)
+  
+  // 加载数据
+  loadData()
+}
+
+// 加载数据
+const loadData = () => {
+  const ganttData = {
+    data: props.tasks.map(task => ({
       id: task.id,
-      title: task.title,
-      start: new Date(task.startDate!),
-      end: new Date(task.dueDate!),
-      progress: task.progress,
-      status: task.status,
-      priority: task.priority,
+      text: task.title,
+      start_date: task.startDate,
+      duration: task.duration || 1,
+      progress: task.progress || 0,
       assignee: task.assignee,
-      dependencies: []
-    }))
-})
-
-const startDate = computed(() => {
-  if (ganttTasks.value.length === 0) return dayjs().startOf('month')
-
-  const dates = ganttTasks.value.map(task => dayjs(task.start))
-  return dayjs.min(dates)?.startOf('week') || dayjs().startOf('month')
-})
-
-const endDate = computed(() => {
-  if (ganttTasks.value.length === 0) return dayjs().endOf('month')
-
-  const dates = ganttTasks.value.map(task => dayjs(task.end))
-  return dayjs.max(dates)?.endOf('week') || dayjs().endOf('month')
-})
-
-const timelineDates = computed(() => {
-  const dates: dayjs.Dayjs[] = []
-  let current = startDate.value
-
-  while (current.isBefore(endDate.value) || current.isSame(endDate.value)) {
-    dates.push(current)
-    current = current.add(1, 'day')
+      priority: task.priority,
+      status: task.status,
+      parent: task.parentId || 0
+    })),
+    links: props.tasks
+      .filter(task => task.dependencies && task.dependencies.length > 0)
+      .flatMap(task =>
+        task.dependencies.map((depId: number, index: number) => ({
+          id: `${task.id}_${depId}_${index}`,
+          source: depId,
+          target: task.id,
+          type: '0' // FS (Finish-to-Start)
+        }))
+      )
   }
 
-  return dates
-})
-
-const getBarStyle = (task: GanttTask) => {
-  const taskStart = dayjs(task.start)
-  const taskEnd = dayjs(task.end)
-
-  const daysFromStart = taskStart.diff(startDate.value, 'day')
-  const duration = taskEnd.diff(taskStart, 'day') + 1
-
-  const left = daysFromStart * cellWidth.value
-  const width = duration * cellWidth.value
-
-  return {
-    left: `${left}px`,
-    width: `${width}px`,
-    backgroundColor: getTaskColor(task.status)
-  }
+  gantt.parse(ganttData)
 }
 
-const getTodayLineStyle = () => {
-  const today = dayjs()
-  const daysFromStart = today.diff(startDate.value, 'day')
-  const left = daysFromStart * cellWidth.value
-
-  return {
-    left: `${left}px`
-  }
-}
-
-const getTaskColor = (status: string) => {
-  const colors: Record<string, string> = {
-    todo: '#d9d9d9',
-    in_progress: '#1890ff',
-    testing: '#faad14',
-    done: '#52c41a'
-  }
-  return colors[status] || '#d9d9d9'
-}
-
-const getPriorityColor = (priority: string) => {
-  const colors: Record<string, string> = {
-    urgent: 'red',
-    high: 'orange',
-    medium: 'blue',
-    low: 'default'
-  }
-  return colors[priority] || 'default'
-}
-
-const getPriorityText = (priority: string) => {
-  const texts: Record<string, string> = {
-    urgent: '紧急',
-    high: '高',
-    medium: '中',
-    low: '低'
-  }
-  return texts[priority] || priority
-}
-
-const formatDate = (date: dayjs.Dayjs) => {
-  return date.format('MM/DD')
-}
-
+// 放大
 const handleZoomIn = () => {
-  zoomLevel.value = Math.min(zoomLevel.value + 0.25, 2)
-  cellWidth.value = 80 * zoomLevel.value
+  gantt.ext.zoom.zoomIn()
 }
 
+// 缩小
 const handleZoomOut = () => {
-  zoomLevel.value = Math.max(zoomLevel.value - 0.25, 0.5)
-  cellWidth.value = 80 * zoomLevel.value
+  gantt.ext.zoom.zoomOut()
 }
 
-const handleToday = () => {
-  const todayLine = document.querySelector('.gantt-today-line')
-  if (todayLine) {
-    todayLine.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+// 适应屏幕
+const handleFitToScreen = () => {
+  gantt.ext.zoom.setLevel('day')
+}
+
+// 导出PDF
+const handleExportPDF = async () => {
+  try {
+    if (!ganttContainer.value) return
+
+    message.loading({ content: '正在生成PDF...', key: 'export' })
+
+    const canvas = await html2canvas(ganttContainer.value, {
+      scale: 2,
+      logging: false,
+      useCORS: true
+    })
+
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'px',
+      format: [canvas.width, canvas.height]
+    })
+
+    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height)
+    pdf.save(`gantt-chart-${Date.now()}.pdf`)
+
+    message.success({ content: 'PDF导出成功', key: 'export' })
+  } catch (error) {
+    message.error({ content: 'PDF导出失败', key: 'export' })
   }
 }
 
-const handleTaskClick = (task: GanttTask) => {
-  emit('taskClick', task)
+// 导出图片
+const handleExportImage = async () => {
+  try {
+    if (!ganttContainer.value) return
+
+    message.loading({ content: '正在生成图片...', key: 'export' })
+
+    const canvas = await html2canvas(ganttContainer.value, {
+      scale: 2,
+      logging: false,
+      useCORS: true
+    })
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `gantt-chart-${Date.now()}.png`
+        link.click()
+        URL.revokeObjectURL(url)
+        message.success({ content: '图片导出成功', key: 'export' })
+      }
+    })
+  } catch (error) {
+    message.error({ content: '图片导出失败', key: 'export' })
+  }
 }
+
+// 监听关键路径显示
+watch(showCriticalPath, (value) => {
+  gantt.config.highlight_critical_path = value
+  gantt.render()
+})
+
+// 监听依赖关系显示
+watch(showDependencies, (value) => {
+  if (value) {
+    gantt.config.show_links = true
+  } else {
+    gantt.config.show_links = false
+  }
+  gantt.render()
+})
+
+// 监听任务数据变化
+watch(() => props.tasks, () => {
+  loadData()
+}, { deep: true })
+
+onMounted(() => {
+  initGantt()
+})
+
+onUnmounted(() => {
+  if (gantt.$container) {
+    gantt.clearAll()
+  }
+})
 </script>
 
 <style scoped lang="scss">
 .gantt-view {
-  background: #ffffff;
-  border-radius: 8px;
-  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
 
-  .gantt-header {
-    padding: 16px;
-    border-bottom: 1px solid #f0f0f0;
-
-    .gantt-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+  .gantt-toolbar {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e8e8e8;
   }
 
   .gantt-container {
-    display: flex;
-    height: calc(100vh - 450px);
+    flex: 1;
     overflow: hidden;
+  }
+}
 
-    .gantt-sidebar {
-      width: 250px;
-      flex-shrink: 0;
-      border-right: 2px solid #f0f0f0;
-      overflow-y: auto;
+// 甘特图自定义样式
+:deep(.gantt_task_line) {
+  &.high-priority {
+    background-color: #ff4d4f;
+    border-color: #cf1322;
+  }
 
-      .gantt-sidebar-header {
-        height: 40px;
-        line-height: 40px;
-        padding: 0 16px;
-        font-weight: 600;
-        background: #fafafa;
-        border-bottom: 1px solid #f0f0f0;
-      }
+  &.low-priority {
+    background-color: #52c41a;
+    border-color: #389e0d;
+  }
 
-      .gantt-row-label {
-        height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 16px;
-        border-bottom: 1px solid #f0f0f0;
-        cursor: pointer;
-        transition: background 0.3s;
+  &.completed {
+    opacity: 0.6;
+  }
 
-        &:hover {
-          background: #f5f5f5;
-        }
+  &.in-progress {
+    background-color: #1890ff;
+    border-color: #096dd9;
+  }
+}
 
-        .task-info {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex: 1;
-          min-width: 0;
+:deep(.gantt_task_progress) {
+  background-color: rgba(0, 0, 0, 0.2);
+}
 
-          .task-title {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-size: 14px;
-          }
-        }
+:deep(.gantt_critical_task) {
+  background-color: #ff4d4f !important;
+  border-color: #cf1322 !important;
+}
 
-        .task-assignee {
-          flex-shrink: 0;
-          margin-left: 8px;
-        }
-      }
-    }
-
-    .gantt-timeline {
-      flex: 1;
-      overflow-x: auto;
-      overflow-y: hidden;
-
-      .gantt-timeline-header {
-        display: flex;
-        height: 40px;
-        background: #fafafa;
-        border-bottom: 1px solid #f0f0f0;
-
-        .gantt-date-cell {
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-right: 1px solid #f0f0f0;
-          font-size: 12px;
-          color: #8c8c8c;
-
-          .date-label {
-            text-align: center;
-          }
-        }
-      }
-
-      .gantt-chart {
-        position: relative;
-        overflow-y: auto;
-
-        .gantt-row {
-          height: 50px;
-          position: relative;
-          border-bottom: 1px solid #f0f0f0;
-        }
-
-        .gantt-bar {
-          position: absolute;
-          height: 32px;
-          top: 9px;
-          border-radius: 4px;
-          cursor: pointer;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          padding: 0 8px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          transition: all 0.3s;
-
-          &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          }
-
-          .gantt-bar-progress {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.3);
-            pointer-events: none;
-          }
-
-          .gantt-bar-label {
-            position: relative;
-            z-index: 1;
-            color: #ffffff;
-            font-size: 12px;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-        }
-
-        .gantt-today-line {
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          width: 2px;
-          background: #ff4d4f;
-          z-index: 10;
-          pointer-events: none;
-
-          &::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 8px;
-            height: 8px;
-            background: #ff4d4f;
-            border-radius: 50%;
-          }
-        }
-      }
-    }
+:deep(.gantt_critical_link) {
+  .gantt_line_wrapper div {
+    background-color: #ff4d4f !important;
+  }
+  
+  .gantt_link_arrow {
+    border-color: #ff4d4f !important;
   }
 }
 </style>

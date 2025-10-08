@@ -1,7 +1,7 @@
 /**
  * 认证相关 API
  */
-import { post } from '../request'
+import { get, post } from '../request'
 import type { LoginRequest, LoginResponse, UserInfo } from '@/types/global'
 
 /**

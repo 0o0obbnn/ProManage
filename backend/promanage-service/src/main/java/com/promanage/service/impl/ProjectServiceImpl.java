@@ -12,7 +12,6 @@ import com.promanage.service.IProjectActivityService;
 import com.promanage.service.IProjectService;
 import com.promanage.service.service.IUserService;
 import com.promanage.dto.ProjectMemberDTO;
-import com.promanage.dto.ProjectRequest;
 import com.promanage.dto.ProjectStatsDTO;
 import com.promanage.service.entity.Project;
 import com.promanage.service.entity.ProjectMember;

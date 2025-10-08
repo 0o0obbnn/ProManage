@@ -1,0 +1,3645 @@
+---
+trigger: model_decision
+description: 在进行promanage项目开发时生效
+---
+# ProManage 项目工程规范文档 V1.0
+
+## 文档信息
+
+| 项目名称 | ProManage 项目管理系统 | 文档版本 | V1.0 |
+|---------|----------------------|---------|------|
+| 技术负责人 | [待填写] | 创建日期 | 2025-09-30 |
+| 文档状态 | **草稿** | 最后更新 | 2025-09-30 |
+
+---
+
+## 目录
+
+1. [前端工程规范](#1-前端工程规范)
+2. [后端工程规范](#2-后端工程规范)
+3. [开发流程规范](#3-开发流程规范)
+4. [质量标准](#4-质量标准)
+5. [数据库设计规范](#5-数据库设计规范)
+6. [API设计规范](#6-api设计规范)
+7. [安全规范](#7-安全规范)
+8. [性能优化规范](#8-性能优化规范)
+9. [文档规范](#9-文档规范)
+10. [监控与运维规范](#10-监控与运维规范)
+
+---
+
+## 1. 前端工程规范
+
+### 1.1 技术栈
+
+- **核心框架**: Vue 3.4+ (Composition API)
+- **开发语言**: TypeScript 5.0+
+- **构建工具**: Vite 5.0+
+- **状态管理**: Pinia 2.0+
+- **UI组件库**: Ant Design Vue 4.0+
+- **路由管理**: Vue Router 4.0+
+- **HTTP客户端**: Axios 1.6+
+- **测试框架**: Vitest + Vue Test Utils
+- **代码规范**: ESLint + Prettier
+- **CSS方案**: SCSS + CSS Modules
+
+### 1.2 项目结构
+
+```
+frontend/
+├── public/                    # 静态资源
+├── src/
+│   ├── api/                  # API接口定义
+│   │   ├── modules/          # 按模块划分
+│   │   │   ├── auth.ts
+│   │   │   ├── document.ts
+│   │   │   └── change.ts
+│   │   ├── request.ts        # Axios封装
+│   │   └── types.ts          # API类型定义
+│   ├── assets/               # 资源文件
+│   │   ├── images/
+│   │   ├── styles/
+│   │   │   ├── variables.scss
+│   │   │   ├── mixins.scss
+│   │   │   └── global.scss
+│   │   └── icons/
+│   ├── components/           # 公共组件
+│   │   ├── common/           # 基础组件
+│   │   │   ├── Button/
+│   │   │   │   ├── index.vue
+│   │   │   │   ├── types.ts
+│   │   │   │   └── index.test.ts
+│   │   │   └── Modal/
+│   │   └── business/         # 业务组件
+│   │       ├── DocumentTree/
+│   │       └── ChangeFlow/
+│   ├── composables/          # 组合式函数
+│   │   ├── useAuth.ts
+│   │   ├── usePermission.ts
+│   │   └── useWebSocket.ts
+│   ├── config/               # 配置文件
+│   │   ├── index.ts
+│   │   └── constants.ts
+│   ├── directives/           # 自定义指令
+│   │   ├── permission.ts
+│   │   └── loading.ts
+│   ├── hooks/                # React风格Hooks (备用)
+│   ├── layouts/              # 布局组件
+│   │   ├── DefaultLayout.vue
+│   │   └── BlankLayout.vue
+│   ├── router/               # 路由配置
+│   │   ├── index.ts
+│   │   ├── routes.ts
+│   │   └── guards.ts
+│   ├── stores/               # Pinia状态管理
+│   │   ├── modules/
+│   │   │   ├── user.ts
+│   │   │   ├── document.ts
+│   │   │   └── workspace.ts
+│   │   └── index.ts
+│   ├── types/                # TypeScript类型定义
+│   │   ├── api.d.ts
+│   │   ├── business.d.ts
+│   │   └── global.d.ts
+│   ├── utils/                # 工具函数
+│   │   ├── format.ts
+│   │   ├── validate.ts
+│   │   ├── storage.ts
+│   │   └── date.ts
+│   ├── views/                # 页面组件
+│   │   ├── document/
+│   │   │   ├── index.vue
+│   │   │   ├── components/
+│   │   │   └── hooks/
+│   │   ├── change/
+│   │   └── workspace/
+│   ├── App.vue
+│   └── main.ts
+├── tests/                    # 测试文件
+│   ├── unit/
+│   └── e2e/
+├── .env.development          # 环境变量
+├── .env.production
+├── .eslintrc.js
+├── .prettierrc
+├── tsconfig.json
+├── vite.config.ts
+└── package.json
+```
+
+### 1.3 命名规范
+
+#### 1.3.1 文件命名
+
+```typescript
+// 组件文件: PascalCase
+UserProfile.vue
+DocumentTree.vue
+
+// 工具函数文件: camelCase
+formatDate.ts
+validateForm.ts
+
+// 类型定义文件: camelCase + .d.ts
+user.d.ts
+document.d.ts
+
+// 样式文件: kebab-case
+user-profile.module.scss
+document-tree.scss
+
+// 测试文件: 源文件名 + .test.ts
+UserProfile.test.ts
+formatDate.test.ts
+```
+
+#### 1.3.2 变量命名
+
+```typescript
+// 常量: UPPER_SNAKE_CASE
+const MAX_FILE_SIZE = 500 * 1024 * 1024;
+const API_BASE_URL = 'https://api.example.com';
+
+// 变量/函数: camelCase
+const userName = 'John';
+const getUserInfo = () => {};
+
+// 类/接口/类型: PascalCase
+class UserService {}
+interface UserInfo {}
+type DocumentStatus = 'draft' | 'published';
+
+// 组件实例: PascalCase
+const MyComponent = defineComponent({});
+
+// 私有变量: _前缀
+const _privateVar = 'private';
+
+// Boolean类型: is/has/can前缀
+const isVisible = true;
+const hasPermission = false;
+const canEdit = true;
+```
+
+#### 1.3.3 组件命名
+
+```typescript
+// 单文件组件: PascalCase，至少两个单词
+<UserProfile />
+<DocumentList />
+<ChangeRequestForm />
+
+// 组件注册名: PascalCase
+app.component('UserProfile', UserProfile);
+
+// 组件prop: camelCase
+<UserProfile :user-id="123" :show-avatar="true" />
+```
+
+### 1.4 Vue 组件开发规范
+
+#### 1.4.1 组件结构
+
+```vue
+<template>
+  <div class="user-profile">
+    <!-- 模板内容 -->
+  </div>
+</template>
+
+<script setup lang="ts">
+/**
+ * 用户资料组件
+ * @description 展示和编辑用户基本信息
+ * @author [开发者名称]
+ * @date 2025-09-30
+ */
+
+// 1. 导入依赖
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/modules/user';
+import type { UserInfo } from '@/types/user';
+
+// 2. 定义Props
+interface Props {
+  userId: number;
+  showAvatar?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  showAvatar: true,
+});
+
+// 3. 定义Emits
+interface Emits {
+  (e: 'update', user: UserInfo): void;
+  (e: 'delete', userId: number): void;
+}
+
+const emit = defineEmits<Emits>();
+
+// 4. 响应式数据
+const userInfo = ref<UserInfo | null>(null);
+const loading = ref(false);
+const error = ref('');
+
+// 5. 计算属性
+const fullName = computed(() => {
+  if (!userInfo.value) return '';
+  return `${userInfo.value.firstName} ${userInfo.value.lastName}`;
+});
+
+// 6. 方法
+const fetchUserInfo = async () => {
+  try {
+    loading.value = true;
+    // API调用
+  } catch (err) {
+    error.value = '获取用户信息失败';
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleUpdate = () => {
+  if (userInfo.value) {
+    emit('update', userInfo.value);
+  }
+};
+
+// 7. 生命周期钩子
+onMounted(() => {
+  fetchUserInfo();
+});
+
+// 8. 暴露给父组件的方法
+defineExpose({
+  refresh: fetchUserInfo,
+});
+</script>
+
+<style lang="scss" scoped>
+.user-profile {
+  // 样式定义
+}
+</style>
+```
+
+#### 1.4.2 Composition API 使用规范
+
+```typescript
+// ✅ 推荐: 使用 Composition API
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+
+const count = ref(0);
+const doubled = computed(() => count.value * 2);
+</script>
+
+// ❌ 避免: 不使用 Options API (除非必要)
+<script lang="ts">
+export default {
+  data() {
+    return { count: 0 };
+  },
+  computed: {
+    doubled() {
+      return this.count * 2;
+    }
+  }
+};
+</script>
+```
+
+#### 1.4.3 组件通信规范
+
+```typescript
+// 1. Props传递 (父 -> 子)
+// 父组件
+<UserProfile :user-id="userId" :show-avatar="true" />
+
+// 子组件
+interface Props {
+  userId: number;
+  showAvatar?: boolean;
+}
+const props = defineProps<Props>();
+
+// 2. Emit事件 (子 -> 父)
+// 子组件
+const emit = defineEmits<{
+  (e: 'update', value: string): void;
+}>();
+emit('update', newValue);
+
+// 父组件
+<UserProfile @update="handleUpdate" />
+
+// 3. Provide/Inject (跨层级)
+// 祖先组件
+provide('theme', ref('dark'));
+
+// 后代组件
+const theme = inject<Ref<string>>('theme');
+
+// 4. Pinia Store (全局状态)
+// Store定义
+export const useUserStore = defineStore('user', () => {
+  const userInfo = ref<UserInfo | null>(null);
+  return { userInfo };
+});
+
+// 组件使用
+import { useUserStore } from '@/stores/modules/user';
+const userStore = useUserStore();
+```
+
+### 1.5 TypeScript 使用规范
+
+#### 1.5.1 类型定义
+
+```typescript
+// ✅ 推荐: 明确的类型定义
+interface UserInfo {
+  id: number;
+  name: string;
+  email: string;
+  role: 'admin' | 'user' | 'guest';
+  createdAt: Date;
+}
+
+// ✅ 推荐: 使用泛型
+interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data: T;
+}
+
+// ✅ 推荐: 使用联合类型
+type DocumentStatus = 'draft' | 'review' | 'published' | 'archived';
+
+// ✅ 推荐: 使用工具类型
+type PartialUser = Partial<UserInfo>;
+type ReadonlyUser = Readonly<UserInfo>;
+type UserWithoutId = Omit<UserInfo, 'id'>;
+
+// ❌ 避免: 使用 any
+const data: any = {}; // 不推荐
+
+// ✅ 推荐: 使用 unknown 或具体类型
+const data: unknown = {};
+```
+
+#### 1.5.2 类型守卫
+
+```typescript
+// 类型守卫函数
+function isUserInfo(obj: unknown): obj is UserInfo {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'name' in obj
+  );
+}
+
+// 使用类型守卫
+const data: unknown = await api.getUserInfo();
+if (isUserInfo(data)) {
+  console.log(data.name); // TypeScript 知道这是 UserInfo
+}
+```
+
+### 1.6 状态管理规范 (Pinia)
+
+#### 1.6.1 Store 定义
+
+```typescript
+// stores/modules/user.ts
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import type { UserInfo } from '@/types/user';
+
+export const useUserStore = defineStore('user', () => {
+  // State
+  const userInfo = ref<UserInfo | null>(null);
+  const token = ref<string>('');
+  const permissions = ref<string[]>([]);
+
+  // Getters
+  const isLoggedIn = computed(() => !!token.value);
+  const hasPermission = (permission: string) => {
+    return permissions.value.includes(permission);
+  };
+
+  // Actions
+  const login = async (username: string, password: string) => {
+    try {
+      const response = await api.login({ username, password });
+      token.value = response.token;
+      userInfo.value = response.userInfo;
+      permissions.value = response.permissions;
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    token.value = '';
+    userInfo.value = null;
+    permissions.value = [];
+  };
+
+  return {
+    // State
+    userInfo,
+    token,
+    permissions,
+    // Getters
+    isLoggedIn,
+    hasPermission,
+    // Actions
+    login,
+    logout,
+  };
+});
+```
+
+#### 1.6.2 Store 使用规范
+
+```typescript
+// ✅ 推荐: 在组件中使用
+<script setup lang="ts">
+import { useUserStore } from '@/stores/modules/user';
+
+const userStore = useUserStore();
+
+// 访问state
+console.log(userStore.userInfo);
+
+// 访问getters
+console.log(userStore.isLoggedIn);
+
+// 调用actions
+await userStore.login('username', 'password');
+</script>
+
+// ✅ 推荐: 解构时使用 storeToRefs
+import { storeToRefs } from 'pinia';
+const { userInfo, isLoggedIn } = storeToRefs(userStore);
+const { login, logout } = userStore; // actions 不需要 storeToRefs
+```
+
+### 1.7 API 调用规范
+
+#### 1.7.1 Axios 封装
+
+```typescript
+// api/request.ts
+import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import { message } from 'ant-design-vue';
+import { useUserStore } from '@/stores/modules/user';
+
+// 创建实例
+const service: AxiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// 请求拦截器
+service.interceptors.request.use(
+  (config) => {
+    const userStore = useUserStore();
+    // 添加token
+    if (userStore.token) {
+      config.headers.Authorization = `Bearer ${userStore.token}`;
+    }
+    return config;
+  },
+  (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// 响应拦截器
+service.interceptors.response.use(
+  (response) => {
+    const { code, message: msg, data } = response.data;
+
+    if (code === 200) {
+      return data;
+    } else {
+      message.error(msg || '请求失败');
+      return Promise.reject(new Error(msg || '请求失败'));
+    }
+  },
+  (error) => {
+    if (error.response) {
+      const { status } = error.response;
+
+      switch (status) {
+        case 401:
+          message.error('未授权,请重新登录');
+          // 跳转登录页
+          break;
+        case 403:
+          message.error('权限不足');
+          break;
+        case 404:
+          message.error('请求资源不存在');
+          break;
+        case 500:
+          message.error('服务器错误');
+          break;
+        default:
+          message.error('请求失败');
+      }
+    } else {
+      message.error('网络错误');
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default service;
+```
+
+#### 1.7.2 API 模块定义
+
+```typescript
+// api/modules/document.ts
+import request from '../request';
+import type { DocumentInfo, CreateDocumentDto, UpdateDocumentDto } from '@/types/document';
+
+export interface DocumentListParams {
+  page: number;
+  pageSize: number;
+  keyword?: string;
+  status?: string;
+}
+
+export interface DocumentListResponse {
+  list: DocumentInfo[];
+  total: number;
+}
+
+// 获取文档列表
+export const getDocumentList = (params: DocumentListParams) => {
+  return request.get<DocumentListResponse>('/api/documents', { params });
+};
+
+// 获取文档详情
+export const getDocumentDetail = (id: number) => {
+  return request.get<DocumentInfo>(`/api/documents/${id}`);
+};
+
+// 创建文档
+export const createDocument = (data: CreateDocumentDto) => {
+  return request.post<DocumentInfo>('/api/documents', data);
+};
+
+// 更新文档
+export const updateDocument = (id: number, data: UpdateDocumentDto) => {
+  return request.put<DocumentInfo>(`/api/documents/${id}`, data);
+};
+
+// 删除文档
+export const deleteDocument = (id: number) => {
+  return request.delete(`/api/documents/${id}`);
+};
+```
+
+#### 1.7.3 API 调用规范
+
+```typescript
+// ✅ 推荐: 在组件中使用
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { getDocumentList } from '@/api/modules/document';
+import type { DocumentInfo } from '@/types/document';
+
+const documentList = ref<DocumentInfo[]>([]);
+const loading = ref(false);
+const error = ref('');
+
+const fetchDocuments = async () => {
+  try {
+    loading.value = true;
+    error.value = '';
+
+    const response = await getDocumentList({
+      page: 1,
+      pageSize: 20,
+    });
+
+    documentList.value = response.list;
+  } catch (err) {
+    error.value = '获取文档列表失败';
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchDocuments();
+});
+</script>
+```
+
+### 1.8 路由规范
+
+#### 1.8.1 路由配置
+
+```typescript
+// router/routes.ts
+import type { RouteRecordRaw } from 'vue-router';
+
+const routes: RouteRecordRaw[] = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/auth/Login.vue'),
+    meta: {
+      title: '登录',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/',
+    component: () => import('@/layouts/DefaultLayout.vue'),
+    redirect: '/workspace',
+    children: [
+      {
+        path: 'workspace',
+        name: 'Workspace',
+        component: () => import('@/views/workspace/index.vue'),
+        meta: {
+          title: '我的工作台',
+          requiresAuth: true,
+          icon: 'workspace',
+        },
+      },
+      {
+        path: 'documents',
+        name: 'Documents',
+        component: () => import('@/views/document/index.vue'),
+        meta: {
+          title: '文档管理',
+          requiresAuth: true,
+          permissions: ['document:view'],
+        },
+      },
+      {
+        path: 'documents/:id',
+        name: 'DocumentDetail',
+        component: () => import('@/views/document/Detail.vue'),
+        meta: {
+          title: '文档详情',
+          requiresAuth: true,
+          permissions: ['document:view'],
+        },
+      },
+    ],
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/error/404.vue'),
+  },
+];
+
+export default routes;
+```
+
+#### 1.8.2 路由守卫
+
+```typescript
+// router/guards.ts
+import type { Router } from 'vue-router';
+import { useUserStore } from '@/stores/modules/user';
+
+export function setupRouterGuards(router: Router) {
+  // 全局前置守卫
+  router.beforeEach(async (to, from, next) => {
+    const userStore = useUserStore();
+
+    // 设置页面标题
+    document.title = `${to.meta.title || ''} - ProManage`;
+
+    // 检查是否需要登录
+    if (to.meta.requiresAuth && !userStore.isLoggedIn) {
+      next({ name: 'Login', query: { redirect: to.fullPath } });
+      return;
+    }
+
+    // 检查权限
+    if (to.meta.permissions) {
+      const hasPermission = (to.meta.permissions as string[]).every(
+        (permission) => userStore.hasPermission(permission)
+      );
+
+      if (!hasPermission) {
+        next({ name: 'Forbidden' });
+        return;
+      }
+    }
+
+    next();
+  });
+
+  // 全局后置钩子
+  router.afterEach(() => {
+    // 滚动到顶部
+    window.scrollTo(0, 0);
+  });
+}
+```
+
+### 1.9 样式规范
+
+#### 1.9.1 SCSS 使用规范
+
+```scss
+// ✅ 推荐: 使用 BEM 命名规范
+.document-list {
+  padding: 20px;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  &__title {
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  &__item {
+    padding: 12px;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+
+    &--active {
+      border-color: #1890ff;
+      background-color: #e6f7ff;
+    }
+
+    &:hover {
+      border-color: #1890ff;
+    }
+  }
+}
+
+// ✅ 推荐: 使用变量
+.button {
+  color: $primary-color;
+  background-color: $background-color;
+  padding: $spacing-md;
+}
+
+// ✅ 推荐: 使用混合
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.header {
+  @include flex-center;
+}
+
+// ❌ 避免: 深层嵌套 (超过3层)
+.a {
+  .b {
+    .c {
+      .d {  // 不推荐
+        color: red;
+      }
+    }
+  }
+}
+```
+
+#### 1.9.2 CSS Modules
+
+```vue
+<template>
+  <div :class="$style.container">
+    <h1 :class="$style.title">标题</h1>
+  </div>
+</template>
+
+<style module lang="scss">
+.container {
+  padding: 20px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+}
+</style>
+```
+
+### 1.10 错误处理规范
+
+#### 1.10.1 全局错误处理
+
+```typescript
+// main.ts
+import { createApp } from 'vue';
+import App from './App.vue';
+
+const app = createApp(App);
+
+// 全局错误处理
+app.config.errorHandler = (err, instance, info) => {
+  console.error('Global error:', err);
+  console.error('Error info:', info);
+
+  // 上报错误到监控平台
+  reportError(err, {
+    component: instance?.$options.name,
+    info,
+  });
+};
+
+// 全局警告处理
+app.config.warnHandler = (msg, instance, trace) => {
+  console.warn('Global warning:', msg);
+};
+```
+
+#### 1.10.2 组件错误处理
+
+```typescript
+<script setup lang="ts">
+import { ref, onErrorCaptured } from 'vue';
+
+// 捕获子组件错误
+onErrorCaptured((err, instance, info) => {
+  console.error('Component error:', err);
+  // 返回 false 阻止错误继续传播
+  return false;
+});
+
+// 业务错误处理
+const handleSubmit = async () => {
+  try {
+    await submitForm();
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      message.error('表单验证失败');
+    } else if (error instanceof NetworkError) {
+      message.error('网络请求失败');
+    } else {
+      message.error('操作失败');
+    }
+  }
+};
+</script>
+```
+
+### 1.11 性能优化规范
+
+#### 1.11.1 组件懒加载
+
+```typescript
+// ✅ 推荐: 路由懒加载
+const routes = [
+  {
+    path: '/documents',
+    component: () => import('@/views/document/index.vue'),
+  },
+];
+
+// ✅ 推荐: 组件懒加载
+<script setup lang="ts">
+import { defineAsyncComponent } from 'vue';
+
+const HeavyComponent = defineAsyncComponent(() =>
+  import('@/components/HeavyComponent.vue')
+);
+</script>
+```
+
+#### 1.11.2 列表优化
+
+```vue
+<template>
+  <!-- ✅ 推荐: 使用虚拟滚动 -->
+  <VirtualList
+    :data-source="longList"
+    :item-height="50"
+    :height="500"
+  >
+    <template #default="{ item }">
+      <div>{{ item.name }}</div>
+    </template>
+  </VirtualList>
+
+  <!-- ✅ 推荐: 使用 key -->
+  <div v-for="item in list" :key="item.id">
+    {{ item.name }}
+  </div>
+</template>
+```
+
+#### 1.11.3 计算属性与侦听器优化
+
+```typescript
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
+
+// ✅ 推荐: 使用计算属性缓存
+const filteredList = computed(() => {
+  return list.value.filter(item => item.status === 'active');
+});
+
+// ✅ 推荐: 使用 watchEffect
+watchEffect(() => {
+  console.log(count.value);
+});
+
+// ✅ 推荐: 使用深度监听时注意性能
+watch(
+  () => largeObject.value,
+  (newVal, oldVal) => {
+    // 处理
+  },
+  { deep: true } // 谨慎使用
+);
+</script>
+```
+
+### 1.12 测试规范
+
+#### 1.12.1 单元测试
+
+```typescript
+// components/Button/index.test.ts
+import { describe, it, expect } from 'vitest';
+import { mount } from '@vue/test-utils';
+import Button from './index.vue';
+
+describe('Button Component', () => {
+  it('renders properly', () => {
+    const wrapper = mount(Button, {
+      props: {
+        type: 'primary',
+      },
+      slots: {
+        default: 'Click me',
+      },
+    });
+
+    expect(wrapper.text()).toContain('Click me');
+    expect(wrapper.classes()).toContain('button--primary');
+  });
+
+  it('emits click event', async () => {
+    const wrapper = mount(Button);
+    await wrapper.trigger('click');
+
+    expect(wrapper.emitted('click')).toBeTruthy();
+    expect(wrapper.emitted('click')).toHaveLength(1);
+  });
+
+  it('is disabled when loading', () => {
+    const wrapper = mount(Button, {
+      props: {
+        loading: true,
+      },
+    });
+
+    expect(wrapper.attributes('disabled')).toBeDefined();
+  });
+});
+```
+
+#### 1.12.2 测试覆盖率要求
+
+- **单元测试覆盖率**: ≥ 80%
+- **关键业务逻辑覆盖率**: 100%
+- **工具函数覆盖率**: 100%
+
+---
+
+## 2. 后端工程规范
+
+### 2.1 技术栈
+
+- **核心框架**: Spring Boot 3.2+
+- **开发语言**: Java 17+
+- **构建工具**: Maven 3.9+
+- **ORM框架**: MyBatis Plus 3.5+
+- **数据库**: PostgreSQL 15+
+- **缓存**: Redis 7.0+
+- **搜索引擎**: Elasticsearch 8.0+
+- **消息队列**: RabbitMQ 3.12+
+- **文件存储**: MinIO / AWS S3
+- **API文档**: SpringDoc OpenAPI 3
+- **测试框架**: JUnit 5 + Mockito
+- **代码质量**: SonarQube + Checkstyle
+
+### 2.2 项目结构
+
+```
+backend/
+├── promanage-common/              # 公共模块
+│   ├── src/main/java/com/promanage/common/
+│   │   ├── constant/              # 常量定义
+│   │   ├── exception/             # 异常定义
+│   │   ├── util/                  # 工具类
+│   │   ├── domain/                # 公共领域对象
+│   │   └── config/                # 公共配置
+│   └── pom.xml
+├── promanage-api/                 # API模块
+│   ├── src/main/java/com/promanage/api/
+│   │   ├── controller/            # 控制器
+│   │   │   ├── AuthController.java
+│   │   │   ├── DocumentController.java
+│   │   │   └── ChangeController.java
+│   │   ├── dto/                   # 数据传输对象
+│   │   │   ├── request/
+│   │   │   └── response/
+│   │   ├── vo/                    # 视图对象
+│   │   └── validation/            # 参数校验
+│   └── pom.xml
+├── promanage-service/             # 业务服务模块
+│   ├── src/main/java/com/promanage/service/
+│   │   ├── service/               # 服务接口
+│   │   │   ├── IUserService.java
+│   │   │   ├── IDocumentService.java
+│   │   │   └── IChangeService.java
+│   │   ├── impl/                  # 服务实现
+│   │   ├── mapper/                # MyBatis Mapper
+│   │   ├── entity/                # 实体类
+│   │   ├── enums/                 # 枚举
+│   │   └── converter/             # 对象转换器
+│   └── pom.xml
+├── promanage-infrastructure/      # 基础设施模块
+│   ├── src/main/java/com/promanage/infrastructure/
+│   │   ├── config/                # 配置类
+│   │   │   ├── RedisConfig.java
+│   │   │   ├── ElasticsearchConfig.java
+│   │   │   └── RabbitMQConfig.java
+│   │   ├── security/              # 安全配置
+│   │   │   ├── SecurityConfig.java
+│   │   │   └── JwtTokenProvider.java
+│   │   ├── cache/                 # 缓存管理
+│   │   ├── mq/                    # 消息队列
+│   │   └── storage/               # 文件存储
+│   └── pom.xml
+├── promanage-gateway/             # 网关模块
+├── promanage-job/                 # 定时任务模块
+├── promanage-search/              # 搜索服务模块
+└── pom.xml                        # 父POM
+```
+
+### 2.3 命名规范
+
+#### 2.3.1 包命名
+
+```java
+// 基础包名
+com.promanage
+
+// 控制器包
+com.promanage.api.controller
+
+// 服务包
+com.promanage.service.service
+com.promanage.service.impl
+
+// 实体包
+com.promanage.service.entity
+
+// DTO包
+com.promanage.api.dto.request
+com.promanage.api.dto.response
+```
+
+#### 2.3.2 类命名
+
+```java
+// 实体类: 名词，PascalCase
+public class User {}
+public class Document {}
+
+// 控制器: XXXController
+public class UserController {}
+public class DocumentController {}
+
+// 服务接口: IXXXService
+public interface IUserService {}
+public interface IDocumentService {}
+
+// 服务实现: XXXServiceImpl
+public class UserServiceImpl implements IUserService {}
+
+// Mapper接口: XXXMapper
+public interface UserMapper extends BaseMapper<User> {}
+
+// DTO: XXXRequest / XXXResponse / XXXDTO
+public class CreateUserRequest {}
+public class UserResponse {}
+public class UserDTO {}
+
+// VO: XXXVO
+public class UserVO {}
+
+// 工具类: XXXUtil / XXXUtils
+public class StringUtils {}
+public class DateUtil {}
+
+// 常量类: XXXConstant
+public class SystemConstant {}
+
+// 枚举: XXXEnum
+public enum UserStatusEnum {}
+
+// 异常类: XXXException
+public class BusinessException extends RuntimeException {}
+```
+
+#### 2.3.3 方法命名
+
+```java
+// 查询方法: get/find/query/list
+public User getById(Long id) {}
+public User findByUsername(String username) {}
+public List<User> listByStatus(Integer status) {}
+public PageResult<User> queryPage(UserQueryDTO dto) {}
+
+// 保存方法: save/insert/create/add
+public void save(User user) {}
+public Long create(CreateUserRequest request) {}
+
+// 更新方法: update/modify
+public void update(User user) {}
+public void updateStatus(Long id, Integer status) {}
+
+// 删除方法: delete/remove
+public void deleteById(Long id) {}
+public void removeByIds(List<Long> ids) {}
+
+// 判断方法: is/has/exists/check
+public boolean existsByUsername(String username) {}
+public boolean hasPermission(Long userId, String permission) {}
+
+// 转换方法: to/convert/transform
+public UserVO toVO(User user) {}
+public User toEntity(CreateUserRequest request) {}
+
+// 业务方法: 动词开头
+public void approveChangeRequest(Long id) {}
+public void publishDocument(Long documentId) {}
+```
+
+#### 2.3.4 变量命名
+
+```java
+// 变量: camelCase
+private String userName;
+private Integer userAge;
+
+// 常量: UPPER_SNAKE_CASE
+public static final String DEFAULT_ENCODING = "UTF-8";
+public static final int MAX_PAGE_SIZE = 100;
+
+// Boolean变量: is/has/can/should
+private boolean isActive;
+private boolean hasPermission;
+private boolean canEdit;
+
+// 集合变量: 复数形式
+private List<User> userList;
+private Set<String> roleSet;
+private Map<String, Object> paramMap;
+```
+
+### 2.4 代码规范
+
+#### 2.4.1 Controller 规范
+
+```java
+package com.promanage.api.controller;
+
+import com.promanage.api.dto.request.CreateDocumentRequest;
+import com.promanage.api.dto.request.UpdateDocumentRequest;
+import com.promanage.api.dto.response.DocumentResponse;
+import com.promanage.common.domain.Result;
+import com.promanage.common.domain.PageResult;
+import com.promanage.service.service.IDocumentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+
+/**
+ * 文档管理控制器
+ *
+ * @author ProManage Team
+ * @date 2025-09-30
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/documents")
+@RequiredArgsConstructor
+@Tag(name = "文档管理", description = "文档管理相关接口")
+public class DocumentController {
+
+    private final IDocumentService documentService;
+
+    /**
+     * 获取文档列表
+     */
+    @GetMapping
+    @Operation(summary = "获取文档列表", description = "分页查询文档列表")
+    public Result<PageResult<DocumentResponse>> listDocuments(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
+            @RequestParam(required = false) String keyword
+    ) {
+        log.info("查询文档列表, page={}, pageSize={}, keyword={}", page, pageSize, keyword);
+        PageResult<DocumentResponse> result = documentService.listDocuments(page, pageSize, keyword);
+        return Result.success(result);
+    }
+
+    /**
+     * 获取文档详情
+     */
+    @GetMapping("/{id}")
+    @Operation(summary = "获取文档详情", description = "根据ID获取文档详细信息")
+    public Result<DocumentResponse> getDocumentById(@PathVariable Long id) {
+        log.info("查询文档详情, id={}", id);
+        DocumentResponse document = documentService.getDocumentById(id);
+        return Result.success(document);
+    }
+
+    /**
+     * 创建文档
+     */
+    @PostMapping
+    @Operation(summary = "创建文档", description = "创建新文档")
+    public Result<Long> createDocument(@Valid @RequestBody CreateDocumentRequest request) {
+        log.info("创建文档, request={}", request);
+        Long documentId = documentService.createDocument(request);
+        return Result.success(documentId);
+    }
+
+    /**
+     * 更新文档
+     */
+    @PutMapping("/{id}")
+    @Operation(summary = "更新文档", description = "更新文档信息")
+    public Result<Void> updateDocument(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateDocumentRequest request
+    ) {
+        log.info("更新文档, id={}, request={}", id, request);
+        documentService.updateDocument(id, request);
+        return Result.success();
+    }
+
+    /**
+     * 删除文档
+     */
+    @DeleteMapping("/{id}")
+    @Operation(summary = "删除文档", description = "根据ID删除文档")
+    public Result<Void> deleteDocument(@PathVariable Long id) {
+        log.info("删除文档, id={}", id);
+        documentService.deleteDocument(id);
+        return Result.success();
+    }
+}
+```
+
+#### 2.4.2 Service 规范
+
+```java
+package com.promanage.service.service;
+
+import com.promanage.api.dto.request.CreateDocumentRequest;
+import com.promanage.api.dto.request.UpdateDocumentRequest;
+import com.promanage.api.dto.response.DocumentResponse;
+import com.promanage.common.domain.PageResult;
+
+/**
+ * 文档服务接口
+ *
+ * @author ProManage Team
+ * @date 2025-09-30
+ */
+public interface IDocumentService {
+
+    /**
+     * 分页查询文档列表
+     *
+     * @param page     页码
+     * @param pageSize 每页数量
+     * @param keyword  关键词
+     * @return 文档分页结果
+     */
+    PageResult<DocumentResponse> listDocuments(Integer page, Integer pageSize, String keyword);
+
+    /**
+     * 根据ID获取文档详情
+     *
+     * @param id 文档ID
+     * @return 文档详情
+     */
+    DocumentResponse getDocumentById(Long id);
+
+    /**
+     * 创建文档
+     *
+     * @param request 创建请求
+     * @return 文档ID
+     */
+    Long createDocument(CreateDocumentRequest request);
+
+    /**
+     * 更新文档
+     *
+     * @param id      文档ID
+     * @param request 更新请求
+     */
+    void updateDocument(Long id, UpdateDocumentRequest request);
+
+    /**
+     * 删除文档
+     *
+     * @param id 文档ID
+     */
+    void deleteDocument(Long id);
+}
+```
+
+```java
+package com.promanage.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.promanage.api.dto.request.CreateDocumentRequest;
+import com.promanage.api.dto.request.UpdateDocumentRequest;
+import com.promanage.api.dto.response.DocumentResponse;
+import com.promanage.common.domain.PageResult;
+import com.promanage.common.exception.BusinessException;
+import com.promanage.service.converter.DocumentConverter;
+import com.promanage.service.entity.Document;
+import com.promanage.service.mapper.DocumentMapper;
+import com.promanage.service.service.IDocumentService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * 文档服务实现类
+ *
+ * @author ProManage Team
+ * @date 2025-09-30
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class DocumentServiceImpl implements IDocumentService {
+
+    private final DocumentMapper documentMapper;
+    private final DocumentConverter documentConverter;
+
+    @Override
+    public PageResult<DocumentResponse> listDocuments(Integer page, Integer pageSize, String keyword) {
+        // 构建查询条件
+        LambdaQueryWrapper<Document> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Document::getDeleted, false);
+
+        if (StringUtils.hasText(keyword)) {
+            wrapper.and(w -> w
+                .like(Document::getTitle, keyword)
+                .or()
+                .like(Document::getContent, keyword)
+            );
+        }
+
+        wrapper.orderByDesc(Document::getCreateTime);
+
+        // 分页查询
+        IPage<Document> pageResult = documentMapper.selectPage(
+            new Page<>(page, pageSize),
+            wrapper
+        );
+
+        // 转换结果
+        List<DocumentResponse> records = pageResult.getRecords().stream()
+            .map(documentConverter::toResponse)
+            .collect(Collectors.toList());
+
+        return PageResult.<DocumentResponse>builder()
+            .list(records)
+            .total(pageResult.getTotal())
+            .page(page)
+            .pageSize(pageSize)
+            .build();
+    }
+
+    @Override
+    @Cacheable(value = "document", key = "#id")
+    public DocumentResponse getDocumentById(Long id) {
+        Document document = documentMapper.selectById(id);
+        if (document == null || document.getDeleted()) {
+            throw new BusinessException("文档不存在");
+        }
+        return documentConverter.toResponse(document);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long createDocument(CreateDocumentRequest request) {
+        // 转换实体
+        Document document = documentConverter.toEntity(request);
+
+        // 保存文档
+        documentMapper.insert(document);
+
+        log.info("创建文档成功, id={}", document.getId());
+        return document.getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "document", key = "#id")
+    public void updateDocument(Long id, UpdateDocumentRequest request) {
+        // 检查文档是否存在
+        Document existingDocument = documentMapper.selectById(id);
+        if (existingDocument == null || existingDocument.getDeleted()) {
+            throw new BusinessException("文档不存在");
+        }
+
+        // 更新文档
+        Document document = documentConverter.toEntity(request);
+        document.setId(id);
+        documentMapper.updateById(document);
+
+        log.info("更新文档成功, id={}", id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "document", key = "#id")
+    public void deleteDocument(Long id) {
+        // 检查文档是否存在
+        Document document = documentMapper.selectById(id);
+        if (document == null || document.getDeleted()) {
+            throw new BusinessException("文档不存在");
+        }
+
+        // 逻辑删除
+        document.setDeleted(true);
+        documentMapper.updateById(document);
+
+        log.info("删除文档成功, id={}", id);
+    }
+}
+```
+
+#### 2.4.3 Entity 规范
+
+```java
+package com.promanage.service.entity;
+
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+/**
+ * 文档实体类
+ *
+ * @author ProManage Team
+ * @date 2025-09-30
+ */
+@Data
+@TableName("tb_document")
+public class Document {
+
+    /**
+     * 主键ID
+     */
+    @TableId(type = IdType.AUTO)
+    private Long id;
+
+    /**
+     * 文档标题
+     */
+    private String title;
+
+    /**
+     * 文档内容
+     */
+    private String content;
+
+    /**
+     * 文档类型
+     */
+    private String type;
+
+    /**
+     * 文档状态: 0-草稿, 1-发布, 2-归档
+     */
+    private Integer status;
+
+    /**
+     * 项目ID
+     */
+    private Long projectId;
+
+    /**
+     * 创建人ID
+     */
+    private Long creatorId;
+
+    /**
+     * 更新人ID
+     */
+    private Long updaterId;
+
+    /**
+     * 是否删除: 0-否, 1-是
+     */
+    @TableLogic
+    private Boolean deleted;
+
+    /**
+     * 创建时间
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    /**
+     * 更新时间
+     */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+}
+```
+
+#### 2.4.4 DTO 规范
+
+```java
+package com.promanage.api.dto.request;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+/**
+ * 创建文档请求DTO
+ *
+ * @author ProManage Team
+ * @date 2025-09-30
+ */
+@Data
+@Schema(description = "创建文档请求")
+public class CreateDocumentRequest {
+
+    @NotBlank(message = "文档标题不能为空")
+    @Size(max = 200, message = "文档标题长度不能超过200")
+    @Schema(description = "文档标题", example = "项目需求文档")
+    private String title;
+
+    @NotBlank(message = "文档内容不能为空")
+    @Schema(description = "文档内容")
+    private String content;
+
+    @Schema(description = "内容类型", example = "markdown")
+    private String contentType = "markdown";
+
+    @Size(max = 500, message = "文档摘要长度不能超过500")
+    @Schema(description = "文档摘要")
+    private String summary;
+
+    @NotBlank(message = "文档类型不能为空")
+    @Schema(description = "文档类型", example = "PRD")
+    private String type;
+
+    @Schema(description = "分类ID")
+    private Long categoryId;
+
+    @Schema(description = "标签列表")
+    private List<String> tags;
+
+    @Schema(description = "是否为模板", example = "false")
+    private Boolean isTemplate = false;
+
+    @NotNull(message = "项目ID不能为空")
+    @Schema(description = "项目ID", example = "1")
+    private Long projectId;
+
+    @Schema(description = "优先级")
+    private Integer priority;
+}
+```
+
+```java
+package com.promanage.api.dto.response;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * 文档响应DTO
+ *
+ * @author ProManage Team
+ * @date 2025-09-30
+ */
+@Data
+@Schema(description = "文档响应")
+public class DocumentResponse {
+
+    @Schema(description = "文档ID")
+    private Long id;
+
+    @Schema(description = "文档标题")
+    private String title;
+
+    @Schema(description = "文档内容")
+    private String content;
+
+    @Schema(description = "内容类型")
+    private String contentType;
+
+    @Schema(description = "文档摘要")
+    private String summary;
+
+    @Schema(description = "文档类型")
+    private String type;
+
+    @Schema(description = "文档状态")
+    private Integer status;
+
+    @Schema(description = "分类ID")
+    private Long categoryId;
+
+    @Schema(description = "项目ID")
+    private Long projectId;
+
+    @Schema(description = "创建人ID")
+    private Long creatorId;
+
+    @Schema(description = "创建人名称")
+    private String creatorName;
+
+    @Schema(description = "创建时间")
+    private LocalDateTime createTime;
+
+    @Schema(description = "更新时间")
+    private LocalDateTime updateTime;
+
+    /**
+     * 从Document实体创建DocumentResponse
+     *
+     * @param document Document实体
+     * @return DocumentResponse对象
+     */
+    public static DocumentResponse fromEntity(Document document) {
+        if (document == null) {
+            return null;
+        }
+
+        DocumentResponse response = new DocumentResponse();
+        response.setId(document.getId());
+        response.setTitle(document.getTitle());
+        response.setContent(document.getContent());
+        response.setContentType(document.getContentType());
+        response.setSummary(document.getSummary());
+        response.setType(document.getType());
+        response.setStatus(document.getStatus());
+        response.setCategoryId(document.getCategoryId());
+        response.setProjectId(document.getProjectId());
+        response.setCreatorId(document.getCreatorId());
+        response.setCreateTime(document.getCreateTime());
+        response.setUpdateTime(document.getUpdateTime());
+        return response;
+    }
+}
+```
+
+```java
+package com.promanage.api.dto.response;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.List;
+
+/**
+ * 文档详情响应DTO
+ *
+ * @author ProManage Team
+ * @date 2025-09-30
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Schema(description = "文档详情响应")
+public class DocumentDetailResponse extends DocumentResponse {
+
+    @Schema(description = "版本历史列表")
+    private List<DocumentVersionResponse> versions;
+
+    @Schema(description = "关联文档列表")
+    private List<DocumentResponse> relatedDocuments;
+
+    @Schema(description = "文档统计信息")
+    private DocumentStatistics statistics;
+
+    /**
+     * 从Document实体创建DocumentDetailResponse
+     *
+     * @param document Document实体
+     * @return DocumentDetailResponse对象
+     */
+    public static DocumentDetailResponse fromEntity(Document document) {
+        if (document == null) {
+            return null;
+        }
+
+        DocumentDetailResponse response = new DocumentDetailResponse();
+        // 复制父类属性
+        DocumentResponse baseResponse = DocumentResponse.fromEntity(document);
+        // 这里应该使用反射或手动复制属性
+        // 为简化示例，这里手动设置属性
+        response.setId(baseResponse.getId());
+        response.setTitle(baseResponse.getTitle());
+        response.setContent(baseResponse.getContent());
+        response.setContentType(baseResponse.getContentType());
+        response.setSummary(baseResponse.getSummary());
+        response.setType(baseResponse.getType());
+        response.setStatus(baseResponse.getStatus());
+        response.setCategoryId(baseResponse.getCategoryId());
+        response.setProjectId(baseResponse.getProjectId());
+        response.setCreatorId(baseResponse.getCreatorId());
+        response.setCreateTime(baseResponse.getCreateTime());
+        response.setUpdateTime(baseResponse.getUpdateTime());
+        
+        // TODO: 设置版本历史、关联文档和统计信息
+        return response;
+    }
+}
+```
+
+### 2.5 异常处理规范
+
+#### 2.5.1 自定义异常
+
+```java
+package com.promanage.common.exception;
+
+import lombok.Getter;
+
+/**
+ * 业务异常
+ *
+ * @author ProManage Team
+ * @date 2025-09-30
+ */
+@Getter
+public class BusinessException extends RuntimeException {
+
+    private Integer code;
+    private String message;
+
+    public BusinessException(String message) {
+        super(message);
+        this.code = 500;
+        this.message = message;
+    }
+
+    public BusinessException(Integer code, String message) {
+        super(message);
+        this.code = code;
+        this.message = message;
+    }
+
+    public BusinessException(ErrorCode errorCode) {
+        super(errorCode.getMessage());
+        this.code = errorCode.getCode();
+        this.message = errorCode.getMessage();
+    }
+}
+```
+
+#### 2.5.2 全局异常处理
+
+```java
+package com.promanage.common.handler;
+
+import com.promanage.common.domain.Result;
+import com.promanage.common.exception.BusinessException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import java.util.stream.Collectors;
+
+/**
+ * 全局异常处理器
+ *
+ * @author ProManage Team
+ * @date 2025-09-30
+ */
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    /**
+     * 业务异常
+     */
+    @ExceptionHandler(BusinessException.class)
+    public Result<Void> handleBusinessException(BusinessException e) {
+        log.error("业务异常: {}", e.getMessage());
+        return Result.error(e.getCode(), e.getMessage());
+    }
+
+    /**
+     * 参数校验异常 - @Valid
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldErrors().stream()
+            .map(FieldError::getDefaultMessage)
+            .collect(Collectors.joining(", "));
+        log.error("参数校验异常: {}", message);
+        return Result.error(400, message);
+    }
+
+    /**
+     * 参数绑定异常
+     */
+    @ExceptionHandler(BindException.class)
+    public Result<Void> handleBindException(BindException e) {
+        String message = e.getFieldErrors().stream()
+            .map(FieldError::getDefaultMessage)
+            .collect(Collectors.joining(", "));
+        log.error("参数绑定异常: {}", message);
+        return Result.error(400, message);
+    }
+
+    /**
+     * 参数校验异常 - @Validated
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public Result<Void> handleConstraintViolationException(ConstraintViolationException e) {
+        String message = e.getConstraintViolations().stream()
+            .map(ConstraintViolation::getMessage)
+            .collect(Collectors.joining(", "));
+        log.error("参数校验异常: {}", message);
+        return Result.error(400, message);
+    }
+
+    /**
+     * 系统异常
+     */
+    @ExceptionHandler(Exception.class)
+    public Result<Void> handleException(Exception e) {
+        log.error("系统异常", e);
+        return Result.error(500, "系统内部错误");
+    }
+}
+```
+
+### 2.6 日志规范
+
+```java
+@Slf4j
+public class DocumentServiceImpl implements IDocumentService {
+
+    @Override
+    public Long createDocument(CreateDocumentRequest request) {
+        // ✅ 推荐: 使用占位符
+        log.info("创建文档, title={}, type={}", request.getTitle(), request.getType());
+
+        try {
+            // 业务逻辑
+            Long documentId = saveDocument(request);
+            log.info("创建文档成功, documentId={}", documentId);
+            return documentId;
+        } catch (Exception e) {
+            // ✅ 推荐: 记录异常堆栈
+            log.error("创建文档失败, request={}", request, e);
+            throw new BusinessException("创建文档失败");
+        }
+    }
+
+    // ❌ 避免: 字符串拼接
+    log.info("创建文档, title=" + request.getTitle());
+
+    // ❌ 避免: 打印敏感信息
+    log.info("用户登录, password={}", password); // 不要记录密码
+}
+```
+
+**日志级别使用**:
+- **ERROR**: 系统错误、异常
+- **WARN**: 警告信息、潜在问题
+- **INFO**: 业务关键节点、重要操作
+- **DEBUG**: 调试信息、详细流程
+- **TRACE**: 最详细的追踪信息
+
+### 2.7 事务管理规范
+
+```java
+@Service
+public class DocumentServiceImpl implements IDocumentService {
+
+    // ✅ 推荐: 明确指定回滚异常
+    @Transactional(rollbackFor = Exception.class)
+    public void createDocument(CreateDocumentRequest request) {
+        // 保存文档
+        documentMapper.insert(document);
+
+        // 保存关联关系
+        relationMapper.insert(relation);
+
+        // 发送通知
+        notificationService.send(notification);
+    }
+
+    // ✅ 推荐: 只读事务
+    @Transactional(readOnly = true)
+    public DocumentResponse getDocumentById(Long id) {
+        return documentMapper.selectById(id);
+    }
+
+    // ❌ 避免: 事务范围过大
+    @Transactional
+    public void processDocument() {
+        // 大量操作...
+        // 外部API调用...
+        // 文件IO操作...
+
+
+    }
+}
+```
+
+### 2.8 缓存使用规范
+
+```java
+@Service
+public class DocumentServiceImpl implements IDocumentService {
+
+    // ✅ 推荐: 使用Spring Cache注解
+    @Cacheable(value = "document", key = "#id", unless = "#result == null")
+    public DocumentResponse getDocumentById(Long id) {
+        Document document = documentMapper.selectById(id);
+        return documentConverter.toResponse(document);
+    }
+
+    @CacheEvict(value = "document", key = "#id")
+    public void updateDocument(Long id, UpdateDocumentRequest request) {
+        // 更新逻辑
+    }
+
+    @CacheEvict(value = "document", allEntries = true)
+    public void clearAllCache() {
+        // 清空所有缓存
+    }
+
+    // ✅ 推荐: 手动使用Redis
+    public DocumentResponse getDocumentWithCache(Long id) {
+        String cacheKey = "document:" + id;
+
+        // 先查缓存
+        DocumentResponse cached = redisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        // 查数据库
+        Document document = documentMapper.selectById(id);
+        DocumentResponse response = documentConverter.toResponse(document);
+
+        // 写入缓存
+        redisTemplate.opsForValue().set(cacheKey, response, 30, TimeUnit.MINUTES);
+
+        return response;
+    }
+}
+```
+
+**缓存策略**:
+- **热点数据**: 使用缓存，设置合理过期时间
+- **实时性要求高的数据**: 不使用缓存或使用短期缓存
+- **缓存key设计**: 业务前缀 + 标识符，如 `document:123`
+- **缓存更新**: 更新数据时及时删除或更新缓存
+- **缓存雪崩防护**: 设置随机过期时间
+- **缓存穿透防护**: 使用布隆过滤器或缓存空对象
+
+---
+
+## 3. 开发流程规范
+
+### 3.1 Git 工作流
+
+#### 3.1.1 分支策略
+
+```
+master (main)          # 主分支，生产环境代码
+├── develop            # 开发分支，集成测试代码
+│   ├── feature/xxx    # 功能分支
+│   ├── bugfix/xxx     # Bug修复分支
+│   └── hotfix/xxx     # 紧急修复分支
+└── release/v1.0.0     # 发布分支
+```
+
+**分支命名规范**:
+- `feature/document-upload` - 功能开发
+- `bugfix/fix-login-error` - Bug修复
+- `hotfix/fix-security-issue` - 紧急修复
+- `release/v1.0.0` - 版本发布
+
+#### 3.1.2 提交规范
+
+```bash
+# Commit Message 格式
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Type 类型**:
+- `feat`: 新功能
+- `fix`: Bug修复
+- `docs`: 文档更新
+- `style`: 代码格式调整
+- `refactor`: 代码重构
+- `perf`: 性能优化
+- `test`: 测试相关
+- `chore`: 构建/工具链相关
+
+**示例**:
+```bash
+feat(document): 实现文档上传功能
+
+- 支持拖拽上传
+- 支持多文件上传
+- 添加进度显示
+
+Closes #123
+```
+
+#### 3.1.3 工作流程
+
+```bash
+# 1. 从develop创建功能分支
+git checkout develop
+git pull origin develop
+git checkout -b feature/document-upload
+
+# 2. 开发并提交
+git add .
+git commit -m "feat(document): 实现文档上传功能"
+
+# 3. 推送到远程
+git push origin feature/document-upload
+
+# 4. 创建Pull Request到develop
+
+# 5. Code Review通过后合并
+
+# 6. 删除功能分支
+git branch -d feature/document-upload
+git push origin --delete feature/document-upload
+```
+
+### 3.2 Code Review 规范
+
+#### 3.2.1 Review检查清单
+
+**功能完整性**:
+- [ ] 功能实现是否符合需求
+- [ ] 边界条件是否处理
+- [ ] 异常情况是否处理
+
+**代码质量**:
+- [ ] 代码是否符合规范
+- [ ] 命名是否清晰
+- [ ] 逻辑是否清晰
+- [ ] 是否有重复代码
+
+**性能**:
+- [ ] 是否有性能问题
+- [ ] 数据库查询是否优化
+- [ ] 是否有内存泄漏风险
+
+**安全**:
+- [ ] 是否有SQL注入风险
+- [ ] 是否有XSS风险
+- [ ] 敏感数据是否加密
+
+**测试**:
+- [ ] 是否有单元测试
+- [ ] 测试覆盖率是否达标
+- [ ] 是否有集成测试
+
+#### 3.2.2 Review反馈规范
+
+```
+✅ 推荐: 建设性反馈
+"这里建议使用Stream API简化代码，可以提高可读性"
+
+❌ 避免: 主观批评
+"这代码写得太烂了"
+```
+
+### 3.3 环境管理
+
+#### 3.3.1 环境划分
+
+| 环境 | 用途 | 分支 | 部署方式 |
+|------|------|------|----------|
+| **开发环境** | 开发调试 | develop | 自动部署 |
+| **测试环境** | 功能测试 | develop | 自动部署 |
+| **预发布环境** | 验收测试 | release | 手动部署 |
+| **生产环境** | 正式服务 | master | 手动部署 |
+
+#### 3.3.2 环境配置
+
+```yaml
+# application-dev.yml (开发环境)
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/promanage_dev
+  redis:
+    host: localhost
+    port: 6379
+
+# application-prod.yml (生产环境)
+spring:
+  datasource:
+    url: ${DB_URL}  # 使用环境变量
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+```
+
+### 3.4 CI/CD 流程
+
+#### 3.4.1 CI 流程
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Run Tests
+        run: mvn test
+
+      - name: Code Coverage
+        run: mvn jacoco:report
+
+      - name: SonarQube Scan
+        run: mvn sonar:sonar
+```
+
+#### 3.4.2 CD 流程
+
+```yaml
+# .github/workflows/cd.yml
+name: CD
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: docker build -t promanage:latest .
+
+      - name: Push to Registry
+        run: docker push promanage:latest
+
+      - name: Deploy to Production
+        run: kubectl apply -f k8s/
+```
+
+---
+
+## 4. 质量标准
+
+### 4.1 代码质量标准
+
+#### 4.1.1 SonarQube 指标
+
+| 指标 | 要求 |
+|------|------|
+| **代码覆盖率** | ≥ 80% |
+| **单元测试覆盖率** | ≥ 80% |
+| **重复代码率** | ≤ 3% |
+| **代码复杂度** | ≤ 10 |
+| **严重Bug** | 0个 |
+| **代码异味** | ≤ 10个 |
+
+#### 4.1.2 Checkstyle 规则
+
+```xml
+<!-- checkstyle.xml -->
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+          "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+          "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+    <!-- 文件长度检查 -->
+    <module name="FileLength">
+        <property name="max" value="500"/>
+    </module>
+
+    <!-- 行长度检查 -->
+    <module name="LineLength">
+        <property name="max" value="120"/>
+    </module>
+
+    <module name="TreeWalker">
+        <!-- 命名检查 -->
+        <module name="TypeName"/>
+        <module name="MethodName"/>
+        <module name="ConstantName"/>
+
+        <!-- 复杂度检查 -->
+        <module name="CyclomaticComplexity">
+            <property name="max" value="10"/>
+        </module>
+
+        <!-- 方法长度检查 -->
+        <module name="MethodLength">
+            <property name="max" value="50"/>
+        </module>
+    </module>
+</module>
+```
+
+### 4.2 测试规范
+
+#### 4.2.1 单元测试
+
+```java
+package com.promanage.service.impl;
+
+import com.promanage.service.entity.Document;
+import com.promanage.service.mapper.DocumentMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+/**
+ * DocumentService 单元测试
+ */
+@ExtendWith(MockitoExtension.class)
+class DocumentServiceImplTest {
+
+    @Mock
+    private DocumentMapper documentMapper;
+
+    @InjectMocks
+    private DocumentServiceImpl documentService;
+
+    private Document mockDocument;
+
+    @BeforeEach
+    void setUp() {
+        mockDocument = new Document();
+        mockDocument.setId(1L);
+        mockDocument.setTitle("测试文档");
+        mockDocument.setContent("测试内容");
+    }
+
+    @Test
+    void testGetDocumentById_Success() {
+        // Given
+        when(documentMapper.selectById(1L)).thenReturn(mockDocument);
+
+        // When
+        DocumentResponse result = documentService.getDocumentById(1L);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("测试文档", result.getTitle());
+        verify(documentMapper, times(1)).selectById(1L);
+    }
+
+    @Test
+    void testGetDocumentById_NotFound() {
+        // Given
+        when(documentMapper.selectById(999L)).thenReturn(null);
+
+        // When & Then
+        assertThrows(BusinessException.class, () -> {
+            documentService.getDocumentById(999L);
+        });
+    }
+
+    @Test
+    void testCreateDocument_Success() {
+        // Given
+        CreateDocumentRequest request = new CreateDocumentRequest();
+        request.setTitle("新文档");
+        request.setContent("新内容");
+
+        when(documentMapper.insert(any(Document.class))).thenReturn(1);
+
+        // When
+        Long documentId = documentService.createDocument(request);
+
+        // Then
+        assertNotNull(documentId);
+        verify(documentMapper, times(1)).insert(any(Document.class));
+    }
+}
+```
+
+#### 4.2.2 集成测试
+
+```java
+package com.promanage.api.controller;
+
+import com.promanage.api.dto.request.CreateDocumentRequest;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+/**
+ * DocumentController 集成测试
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+class DocumentControllerIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void testCreateDocument() throws Exception {
+        String requestBody = """
+            {
+                "title": "测试文档",
+                "content": "测试内容",
+                "type": "PRD",
+                "projectId": 1
+            }
+            """;
+
+        mockMvc.perform(post("/api/documents")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").exists());
+    }
+
+    @Test
+    void testGetDocumentList() throws Exception {
+        mockMvc.perform(get("/api/documents")
+                .param("page", "1")
+                .param("pageSize", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.list").isArray());
+    }
+}
+```
+
+### 4.3 性能测试
+
+#### 4.3.1 JMeter 测试计划
+
+```xml
+<!-- 并发用户测试 -->
+<ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup">
+    <stringProp name="ThreadGroup.num_threads">500</stringProp>
+    <stringProp name="ThreadGroup.ramp_time">60</stringProp>
+    <stringProp name="ThreadGroup.duration">300</stringProp>
+</ThreadGroup>
+```
+
+#### 4.3.2 性能指标要求
+
+| 指标 | 要求 |
+|------|------|
+| **API响应时间 P95** | ≤ 300ms |
+| **API响应时间 P99** | ≤ 500ms |
+| **页面加载时间** | ≤ 3s |
+| **并发用户数** | ≥ 500 |
+| **TPS** | ≥ 1000 |
+| **错误率** | ≤ 0.1% |
+
+---
+
+## 5. 数据库设计规范
+
+### 5.1 表设计规范
+
+#### 5.1.1 命名规范
+
+```sql
+-- ✅ 推荐: 表名使用 tb_ 前缀，小写+下划线
+CREATE TABLE tb_document (
+    id BIGINT PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    create_time TIMESTAMP NOT NULL
+);
+
+-- ❌ 避免: 大小写混用
+CREATE TABLE Document (
+    ID BIGINT PRIMARY KEY,
+    Title VARCHAR(200)
+);
+```
+
+#### 5.1.2 字段规范
+
+```sql
+CREATE TABLE tb_document (
+    -- 主键: 使用 BIGINT，自增
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+
+    -- 外键: 以 _id 结尾
+    project_id BIGINT NOT NULL,
+    creator_id BIGINT NOT NULL,
+
+    -- 字符串: 使用 VARCHAR，指定长度
+    title VARCHAR(200) NOT NULL COMMENT '文档标题',
+    content TEXT COMMENT '文档内容',
+
+    -- 枚举: 使用 TINYINT 或 VARCHAR
+    status TINYINT NOT NULL DEFAULT 0 COMMENT '状态: 0-草稿, 1-发布, 2-归档',
+
+    -- 布尔: 使用 BOOLEAN 或 TINYINT
+    deleted BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否删除',
+
+    -- 时间: 使用 TIMESTAMP 或 DATETIME
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    -- 索引
+    INDEX idx_project_id (project_id),
+    INDEX idx_creator_id (creator_id),
+    INDEX idx_status (status),
+    INDEX idx_create_time (create_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文档表';
+```
+
+#### 5.1.3 索引规范
+
+```sql
+-- ✅ 推荐: 为外键、查询条件、排序字段创建索引
+CREATE INDEX idx_project_id ON tb_document(project_id);
+CREATE INDEX idx_status_create_time ON tb_document(status, create_time);
+
+-- ✅ 推荐: 联合索引遵循最左前缀原则
+CREATE INDEX idx_project_status_time ON tb_document(project_id, status, create_time);
+
+-- ❌ 避免: 过多索引影响写入性能
+-- ❌ 避免: 在低区分度字段上建索引
+CREATE INDEX idx_deleted ON tb_document(deleted); -- 不推荐
+```
+
+### 5.2 SQL 编写规范
+
+```sql
+-- ✅ 推荐: 明确指定字段
+SELECT id, title, content FROM tb_document WHERE id = 1;
+
+-- ❌ 避免: SELECT *
+SELECT * FROM tb_document WHERE id = 1;
+
+-- ✅ 推荐: 使用 LIMIT 限制返回数量
+SELECT id, title FROM tb_document ORDER BY create_time DESC LIMIT 20;
+
+-- ✅ 推荐: 使用索引字段作为查询条件
+SELECT * FROM tb_document WHERE project_id = 1 AND status = 1;
+
+-- ❌ 避免: 在索引字段上使用函数
+SELECT * FROM tb_document WHERE DATE(create_time) = '2025-09-30'; -- 不走索引
+
+-- ✅ 推荐: 改写查询条件
+SELECT * FROM tb_document
+WHERE create_time >= '2025-09-30 00:00:00'
+  AND create_time < '2025-10-01 00:00:00';
+
+-- ❌ 避免: 使用 OR 连接多个条件
+SELECT * FROM tb_document WHERE status = 0 OR status = 1;
+
+-- ✅ 推荐: 使用 IN
+SELECT * FROM tb_document WHERE status IN (0, 1);
+```
+
+### 5.3 数据库迁移规范
+
+#### 5.3.1 Flyway 版本管理
+
+```
+db/migration/
+├── V1.0.0__init_schema.sql
+├── V1.0.1__add_document_table.sql
+├── V1.0.2__add_change_table.sql
+└── V1.1.0__add_test_case_table.sql
+```
+
+#### 5.3.2 迁移脚本示例
+
+```sql
+-- V1.0.1__add_document_table.sql
+CREATE TABLE tb_document (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL COMMENT '文档标题',
+    content TEXT COMMENT '文档内容',
+    type VARCHAR(50) NOT NULL COMMENT '文档类型',
+    status TINYINT NOT NULL DEFAULT 0 COMMENT '状态',
+    project_id BIGINT NOT NULL COMMENT '项目ID',
+    creator_id BIGINT NOT NULL COMMENT '创建人ID',
+    deleted BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否删除',
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_project_id (project_id),
+    INDEX idx_creator_id (creator_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文档表';
+
+-- 回滚脚本 (可选)
+-- DROP TABLE IF EXISTS tb_document;
+```
+
+---
+
+## 6. API设计规范
+
+### 6.1 RESTful API 规范
+
+#### 6.1.1 URL 设计
+
+```
+✅ 推荐
+GET    /api/documents              # 获取文档列表
+GET    /api/documents/{id}         # 获取文档详情
+POST   /api/documents              # 创建文档
+PUT    /api/documents/{id}         # 更新文档
+DELETE /api/documents/{id}         # 删除文档
+
+GET    /api/documents/{id}/versions    # 获取文档版本列表
+POST   /api/documents/{id}/publish     # 发布文档
+
+❌ 避免
+GET    /api/getDocuments
+POST   /api/createDocument
+GET    /api/document/list
+```
+
+#### 6.1.2 HTTP 方法
+
+| 方法 | 用途 | 幂等性 |
+|------|------|--------|
+| GET | 查询资源 | ✅ |
+| POST | 创建资源 | ❌ |
+| PUT | 更新资源(全量) | ✅ |
+| PATCH | 更新资源(部分) | ❌ |
+| DELETE | 删除资源 | ✅ |
+
+#### 6.1.3 状态码
+
+| 状态码 | 说明 | 使用场景 |
+|--------|------|----------|
+| 200 | OK | 请求成功 |
+| 201 | Created | 资源创建成功 |
+| 204 | No Content | 删除成功 |
+| 400 | Bad Request | 参数错误 |
+| 401 | Unauthorized | 未授权 |
+| 403 | Forbidden | 权限不足 |
+| 404 | Not Found | 资源不存在 |
+| 500 | Internal Server Error | 服务器错误 |
+
+### 6.2 响应格式
+
+#### 6.2.1 统一响应结构
+
+```json
+{
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "id": 1,
+    "title": "文档标题"
+  },
+  "timestamp": 1727654400000
+}
+```
+
+#### 6.2.2 分页响应
+
+```json
+{
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "title": "文档1"
+      },
+      {
+        "id": 2,
+        "title": "文档2"
+      }
+    ],
+    "total": 100,
+    "page": 1,
+    "pageSize": 20,
+    "totalPages": 5
+  }
+}
+```
+
+#### 6.2.3 错误响应
+
+```json
+{
+  "code": 400,
+  "message": "参数错误: 文档标题不能为空",
+  "timestamp": 1727654400000
+}
+```
+
+### 6.3 API 文档规范
+
+#### 6.3.1 OpenAPI 注解
+
+```java
+@RestController
+@RequestMapping("/api/documents")
+@Tag(name = "文档管理", description = "文档管理相关接口")
+public class DocumentController {
+
+    @PostMapping
+    @Operation(
+        summary = "创建文档",
+        description = "创建新文档，需要document:create权限"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "创建成功"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "403", description = "权限不足")
+    })
+    public Result<Long> createDocument(
+        @Parameter(description = "创建文档请求", required = true)
+        @Valid @RequestBody CreateDocumentRequest request
+    ) {
+        // 实现
+    }
+}
+```
+
+---
+
+## 7. 安全规范
+
+### 7.1 认证与授权
+
+#### 7.1.1 JWT 认证
+
+```java
+@Component
+public class JwtTokenProvider {
+
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.expiration}")
+    private Long expiration;
+
+    /**
+     * 生成Token
+     */
+    public String generateToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", userDetails.getUsername());
+        claims.put("authorities", userDetails.getAuthorities());
+
+        return Jwts.builder()
+            .setClaims(claims)
+            .setSubject(userDetails.getUsername())
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
+            .signWith(SignatureAlgorithm.HS512, secret)
+            .compact();
+    }
+
+    /**
+     * 验证Token
+     */
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+}
+```
+
+#### 7.1.2 权限控制
+
+```java
+@RestController
+@RequestMapping("/api/documents")
+public class DocumentController {
+
+    // 方法级权限控制
+    @PreAuthorize("hasAuthority('document:create')")
+    @PostMapping
+    public Result<Long> createDocument(@RequestBody CreateDocumentRequest request) {
+        // 实现
+    }
+
+    // 数据级权限控制
+    @PreAuthorize("@permissionService.hasDocumentPermission(#id, 'WRITE')")
+    @PutMapping("/{id}")
+    public Result<Void> updateDocument(
+        @PathVariable Long id,
+        @RequestBody UpdateDocumentRequest request
+    ) {
+        // 实现
+    }
+}
+```
+
+### 7.2 数据安全
+
+#### 7.2.1 SQL 注入防护
+
+```java
+// ✅ 推荐: 使用参数化查询
+@Select("SELECT * FROM tb_document WHERE id = #{id}")
+Document selectById(@Param("id") Long id);
+
+// ❌ 避免: 字符串拼接
+@Select("SELECT * FROM tb_document WHERE id = " + id) // 不安全
+```
+
+#### 7.2.2 XSS 防护
+
+```java
+// 输入校验
+@NotBlank(message = "标题不能为空")
+@Pattern(regexp = "^[\\u4e00-\\u9fa5a-zA-Z0-9_-]{1,200}$", message = "标题格式不正确")
+private String title;
+
+// 输出转义
+import org.springframework.web.util.HtmlUtils;
+
+String safeContent = HtmlUtils.htmlEscape(content);
+```
+
+#### 7.2.3 敏感数据加密
+
+```java
+@Component
+public class EncryptionUtil {
+
+    /**
+     * AES加密
+     */
+    public String encrypt(String data, String key) throws Exception {
+        SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        byte[] encrypted = cipher.doFinal(data.getBytes());
+        return Base64.getEncoder().encodeToString(encrypted);
+    }
+
+    /**
+     * AES解密
+     */
+    public String decrypt(String encryptedData, String key) throws Exception {
+        SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, secretKey);
+        byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(encryptedData));
+        return new String(decrypted);
+    }
+}
+```
+
+### 7.3 接口安全
+
+#### 7.3.1 请求限流
+
+```java
+@Configuration
+public class RateLimitConfig {
+
+    @Bean
+    public RateLimiter rateLimiter() {
+        return RateLimiter.create(100); // 每秒100个请求
+    }
+}
+
+@RestController
+public class DocumentController {
+
+    @Autowired
+    private RateLimiter rateLimiter;
+
+    @GetMapping("/api/documents")
+    public Result<?> listDocuments() {
+        if (!rateLimiter.tryAcquire()) {
+            throw new BusinessException(429, "请求过于频繁");
+        }
+        // 处理请求
+    }
+}
+```
+
+#### 7.3.2 防重放攻击
+
+```java
+@Component
+public class ReplayAttackFilter extends OncePerRequestFilter {
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Override
+    protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain
+    ) throws ServletException, IOException {
+        String timestamp = request.getHeader("X-Timestamp");
+        String nonce = request.getHeader("X-Nonce");
+
+        // 检查时间戳 (5分钟内有效)
+        long requestTime = Long.parseLong(timestamp);
+        if (System.currentTimeMillis() - requestTime > 300000) {
+            throw new BusinessException("请求已过期");
+        }
+
+        // 检查nonce是否已使用
+        String nonceKey = "nonce:" + nonce;
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(nonceKey))) {
+            throw new BusinessException("重复请求");
+        }
+
+        // 记录nonce
+        redisTemplate.opsForValue().set(nonceKey, "1", 5, TimeUnit.MINUTES);
+
+        filterChain.doFilter(request, response);
+    }
+}
+```
+
+---
+
+## 8. 性能优化规范
+
+### 8.1 数据库优化
+
+#### 8.1.1 查询优化
+
+```sql
+-- ✅ 推荐: 使用覆盖索引
+SELECT id, title FROM tb_document WHERE project_id = 1;
+CREATE INDEX idx_project_id_title ON tb_document(project_id, title);
+
+-- ✅ 推荐: 分页查询使用延迟关联
+SELECT d.* FROM tb_document d
+INNER JOIN (
+    SELECT id FROM tb_document
+    WHERE project_id = 1
+    ORDER BY create_time DESC
+    LIMIT 1000, 20
+) t ON d.id = t.id;
+
+-- ❌ 避免: 深分页
+SELECT * FROM tb_document LIMIT 1000000, 20; -- 性能差
+
+-- ✅ 推荐: 使用游标分页
+SELECT * FROM tb_document
+WHERE id > #{lastId}
+ORDER BY id
+LIMIT 20;
+```
+
+#### 8.1.2 批量操作
+
+```java
+// ✅ 推荐: 批量插入
+<insert id="batchInsert" parameterType="java.util.List">
+    INSERT INTO tb_document (title, content, project_id)
+    VALUES
+    <foreach collection="list" item="item" separator=",">
+        (#{item.title}, #{item.content}, #{item.projectId})
+    </foreach>
+</insert>
+
+// ❌ 避免: 循环单条插入
+for (Document doc : documentList) {
+    documentMapper.insert(doc); // 性能差
+}
+```
+
+### 8.2 缓存优化
+
+#### 8.2.1 多级缓存
+
+```java
+@Service
+public class DocumentServiceImpl implements IDocumentService {
+
+    // 本地缓存
+    private final Cache<Long, DocumentResponse> localCache =
+        Caffeine.newBuilder()
+            .maximumSize(1000)
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .build();
+
+    // Redis缓存
+    @Autowired
+    private RedisTemplate<String, DocumentResponse> redisTemplate;
+
+    public DocumentResponse getDocumentById(Long id) {
+        // 1. 查询本地缓存
+        DocumentResponse cached = localCache.getIfPresent(id);
+        if (cached != null) {
+            return cached;
+        }
+
+        // 2. 查询Redis缓存
+        String cacheKey = "document:" + id;
+        cached = redisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) {
+            localCache.put(id, cached);
+            return cached;
+        }
+
+        // 3. 查询数据库
+        Document document = documentMapper.selectById(id);
+        DocumentResponse response = documentConverter.toResponse(document);
+
+        // 4. 写入缓存
+        redisTemplate.opsForValue().set(cacheKey, response, 30, TimeUnit.MINUTES);
+        localCache.put(id, response);
+
+        return response;
+    }
+}
+```
+
+#### 8.2.2 缓存预热
+
+```java
+@Component
+public class CacheWarmer implements ApplicationRunner {
+
+    @Autowired
+    private DocumentService documentService;
+
+    @Override
+    public void run(ApplicationArguments args) {
+        log.info("开始缓存预热");
+
+        // 预加载热门文档
+        List<Long> hotDocumentIds = documentService.getHotDocumentIds();
+        for (Long id : hotDocumentIds) {
+            documentService.getDocumentById(id);
+        }
+
+        log.info("缓存预热完成");
+    }
+}
+```
+
+### 8.3 异步处理
+
+#### 8.3.1 异步方法
+
+```java
+@Service
+public class NotificationService {
+
+    @Async("taskExecutor")
+    public CompletableFuture<Void> sendNotification(Long userId, String message) {
+        try {
+            // 发送通知逻辑
+            log.info("发送通知给用户: {}", userId);
+            return CompletableFuture.completedFuture(null);
+        } catch (Exception e) {
+            log.error("发送通知失败", e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+}
+
+@Configuration
+@EnableAsync
+public class AsyncConfig {
+
+    @Bean("taskExecutor")
+    public Executor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(20);
+        executor.setQueueCapacity(200);
+        executor.setThreadNamePrefix("async-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.initialize();
+        return executor;
+    }
+}
+```
+
+#### 8.3.2 消息队列
+
+```java
+@Service
+public class DocumentService {
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    public void publishDocument(Long documentId) {
+        // 发布文档
+        documentMapper.updateStatus(documentId, DocumentStatus.PUBLISHED);
+
+        // 异步发送通知
+        DocumentPublishedEvent event = new DocumentPublishedEvent(documentId);
+        rabbitTemplate.convertAndSend("document.exchange", "document.published", event);
+    }
+}
+
+@Component
+public class DocumentEventListener {
+
+    @RabbitListener(queues = "document.published.queue")
+    public void handleDocumentPublished(DocumentPublishedEvent event) {
+        log.info("处理文档发布事件: {}", event.getDocumentId());
+
+        // 发送通知
+        notificationService.sendNotification(event);
+
+        // 更新搜索索引
+        searchService.updateIndex(event.getDocumentId());
+    }
+}
+```
+
+---
+
+## 9. 文档规范
+
+### 9.1 代码注释规范
+
+#### 9.1.1 类注释
+
+```java
+/**
+ * 文档服务实现类
+ * <p>
+ * 提供文档的CRUD操作，包括：
+ * <ul>
+ *   <li>文档创建、更新、删除</li>
+ *   <li>文档查询、搜索</li>
+ *   <li>文档版本管理</li>
+ * </ul>
+ * </p>
+ *
+ * @author ProManage Team
+ * @version 1.0
+ * @date 2025-09-30
+ * @see IDocumentService
+ */
+@Service
+public class DocumentServiceImpl implements IDocumentService {
+    // 实现
+}
+```
+
+#### 9.1.2 方法注释
+
+```java
+/**
+ * 根据ID获取文档详情
+ * <p>
+ * 该方法会先从缓存中查询，如果缓存未命中则从数据库查询
+ * </p>
+ *
+ * @param id 文档ID，不能为null
+ * @return 文档详情，如果文档不存在则抛出异常
+ * @throws BusinessException 当文档不存在或已删除时抛出
+ */
+public DocumentResponse getDocumentById(Long id) {
+    // 实现
+}
+```
+
+#### 9.1.3 关键代码注释
+
+```java
+public void processDocument(Long documentId) {
+    // 1. 校验文档权限
+    checkPermission(documentId);
+
+    // 2. 加载文档内容
+    Document document = loadDocument(documentId);
+
+    // 3. 处理文档 (核心业务逻辑)
+    // 注意: 这里需要处理大文件的内存问题
+    processContent(document);
+
+    // 4. 保存处理结果
+    saveResult(document);
+}
+```
+
+### 9.2 API 文档
+
+#### 9.2.1 使用 SpringDoc 生成
+
+```java
+@Configuration
+public class OpenApiConfig {
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+            .info(new Info()
+                .title("ProManage API")
+                .version("1.0")
+                .description("ProManage 项目管理系统 API 文档")
+                .contact(new Contact()
+                    .name("ProManage Team")
+                    .email("support@promanage.com")))
+            .externalDocs(new ExternalDocumentation()
+                .description("ProManage 文档")
+                .url("https://docs.promanage.com"));
+    }
+}
+```
+
+访问地址: `http://localhost:8080/swagger-ui.html`
+
+### 9.3 README 文档
+
+```markdown
+# ProManage - 项目管理系统
+
+## 项目简介
+
+ProManage 是一个智能、集成的项目管理系统，提供文档管理、变更管理、测试用例管理等功能。
+
+## 技术栈
+
+- **前端**: Vue 3 + TypeScript + Vite + Ant Design Vue
+- **后端**: Spring Boot 3 + MyBatis Plus + PostgreSQL
+- **缓存**: Redis
+- **搜索**: Elasticsearch
+- **消息队列**: RabbitMQ
+
+## 快速开始
+
+### 环境要求
+
+- JDK 17+
+- Node.js 18+
+- PostgreSQL 15+
+- Redis 7+
+
+### 安装步骤
+
+1. 克隆项目
+\`\`\`bash
+git clone https://github.com/promanage/promanage.git
+cd promanage
+\`\`\`
+
+2. 启动后端
+\`\`\`bash
+cd backend
+mvn clean install
+mvn spring-boot:run
+\`\`\`
+
+3. 启动前端
+\`\`\`bash
+cd frontend
+npm install
+npm run dev
+\`\`\`
+
+4. 访问应用
+- 前端: http://localhost:5173
+- 后端: http://localhost:8080
+- API文档: http://localhost:8080/swagger-ui.html
+
+## 项目结构
+
+见 [项目结构文档](docs/project-structure.md)
+
+## 开发规范
+
+见 [工程规范文档](docs/engineering-spec.md)
+
+## 贡献指南
+
+见 [贡献指南](CONTRIBUTING.md)
+
+## 许可证
+
+MIT License
+```
+
+---
+
+## 10. 监控与运维规范
+
+### 10.1 日志监控
+
+#### 10.1.1 日志配置
+
+```xml
+<!-- logback-spring.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 文件输出 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/promanage.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/promanage.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ERROR日志 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/error.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+</configuration>
+```
+
+### 10.2 性能监控
+
+#### 10.2.1 Spring Boot Actuator
+
+```yaml
+# application.yml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+```
+
+#### 10.2.2 自定义监控指标
+
+```java
+@Component
+public class CustomMetrics {
+
+    private final MeterRegistry registry;
+
+    public CustomMetrics(MeterRegistry registry) {
+        this.registry = registry;
+    }
+
+    /**
+     * 记录文档创建次数
+     */
+    public void recordDocumentCreation() {
+        Counter.builder("document.created")
+            .description("文档创建次数")
+            .register(registry)
+            .increment();
+    }
+
+    /**
+     * 记录API响应时间
+     */
+    public void recordApiDuration(String api, long duration) {
+        Timer.builder("api.duration")
+            .tag("api", api)
+            .description("API响应时间")
+            .register(registry)
+            .record(duration, TimeUnit.MILLISECONDS);
+    }
+}
+```
+
+### 10.3 告警规范
+
+#### 10.3.1 告警规则
+
+```yaml
+# prometheus-alert-rules.yml
+groups:
+  - name: promanage-alerts
+    rules:
+      # API响应时间告警
+      - alert: HighApiResponseTime
+        expr: histogram_quantile(0.95, api_duration_seconds) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API响应时间过高"
+          description: "{{ $labels.api }} P95响应时间超过500ms"
+
+      # 错误率告警
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status="5xx"}[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "错误率过高"
+          description: "5xx错误率超过1%"
+
+      # 系统资源告警
+      - alert: HighCpuUsage
+        expr: system_cpu_usage > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU使用率过高"
+          description: "CPU使用率超过80%"
+```
+
+### 10.4 部署规范
+
+#### 10.4.1 Docker 部署
+
+```dockerfile
+# Dockerfile
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+COPY target/promanage.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  promanage:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:postgresql://postgres:5432/promanage
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - promanage-network
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=promanage
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - promanage-network
+
+  redis:
+    image: redis:7
+    networks:
+      - promanage-network
+
+volumes:
+  postgres-data:
+
+networks:
+  promanage-network:
+```
+
+#### 10.4.2 Kubernetes 部署
+
+```yaml
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promanage
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: promanage
+  template:
+    metadata:
+      labels:
+        app: promanage
+    spec:
+      containers:
+      - name: promanage
+        image: promanage:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: promanage-service
+spec:
+  selector:
+    app: promanage
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
+```
+
+---
+
+## 附录
+
+### A. 常用工具与插件
+
+#### A.1 IDEA 插件
+
+- **Lombok**: 简化Java代码
+- **MyBatisX**: MyBatis增强工具
+- **SonarLint**: 代码质量检查
+- **CheckStyle-IDEA**: 代码风格检查
+- **Vue.js**: Vue开发支持
+
+#### A.2 VSCode 插件
+
+- **Volar**: Vue 3 开发支持
+- **ESLint**: 代码质量检查
+- **Prettier**: 代码格式化
+- **GitLens**: Git增强工具
+
+### B. 参考资料
+
+- [Vue 3 官方文档](https://cn.vuejs.org/)
+- [Spring Boot 官方文档](https://spring.io/projects/spring-boot)
+- [Ant Design Vue 文档](https://antdv.com/)
+- [MyBatis Plus 文档](https://baomidou.com/)
+- [阿里巴巴Java开发手册](https://github.com/alibaba/p3c)
+
+---
+
+## 文档变更记录
+
+| 版本 | 日期 | 修订内容 | 修订人 |
+|------|------|----------|--------|
+| V1.0 | 2025-09-30 | 初始版本 | ProManage Team |
+
+---
+
+**文档状态**: 待评审
+
+**评审人**: [待填写]
+
+**批准人**: [待填写]

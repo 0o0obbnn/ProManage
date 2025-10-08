@@ -40,7 +40,13 @@
       "Bash(psql -h 192.168.18.7 -U postgres -d promanage -c \"\\d tb_user\")",
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_wait_for",
-      "Bash(pg_ctl:*)"
+      "Bash(pg_ctl:*)",
+      "Bash(psql:*)",
+      "WebSearch",
+      "Bash(jar:*)",
+      "Read(//d/maven-repo/com/promanage/promanage-service/**)",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__activate_project"
     ],
     "deny": [],
     "ask": []

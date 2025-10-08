@@ -1,6 +1,5 @@
 package com.promanage.api.controller;
 
-import com.promanage.api.dto.response.LoginResponse;
 import com.promanage.common.entity.User;
 import com.promanage.service.service.IAuthService;
 import com.promanage.service.service.IUserService;

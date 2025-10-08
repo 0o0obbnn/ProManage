@@ -8,7 +8,6 @@ import com.promanage.common.domain.PageResult;
 import com.promanage.common.domain.ResultCode;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.dto.TaskTimeTrackingDTO;
-import com.promanage.infrastructure.security.SecurityUtils;
 import com.promanage.service.ITaskTimeTrackingService;
 import com.promanage.service.service.ITaskService;
 import com.promanage.service.entity.Task;
@@ -16,14 +15,12 @@ import com.promanage.service.entity.TaskTimeTracking;
 import com.promanage.service.mapper.TaskTimeTrackingMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 

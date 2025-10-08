@@ -29,3 +29,6 @@ frontend/dist/
 
 # Vite cache
 frontend/.vite/
+
+.gemini/
+gha-creds-*.json
