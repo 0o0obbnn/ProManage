@@ -4,14 +4,14 @@
 <mapper namespace="com.promanage.service.mapper.UserMapper">
 
     <!-- 根据用户名查找用户 -->
-    <select id="findByUsername" resultType="com.promanage.service.entity.User">
+    <select id="findByUsername" resultType="com.promanage.common.entity.User">
         SELECT * FROM tb_user
         WHERE username = #{username}
         AND deleted = false
     </select>
 
     <!-- 根据邮箱查找用户 -->
-    <select id="findByEmail" resultType="com.promanage.service.entity.User">
+    <select id="findByEmail" resultType="com.promanage.common.entity.User">
         SELECT * FROM tb_user
         WHERE email = #{email}
         AND deleted = false

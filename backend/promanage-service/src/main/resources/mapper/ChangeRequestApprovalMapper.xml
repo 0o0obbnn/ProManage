@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.ChangeRequestApprovalMapper">
+
+    <!-- 根据变更请求ID查询审批历史 -->
+    <select id="findByChangeRequestId" resultType="com.promanage.service.entity.ChangeRequestApproval">
+        SELECT * FROM tb_change_request_approval
+        WHERE change_request_id = #{changeRequestId}
+        AND deleted = false
+        ORDER BY approved_at DESC, create_time DESC
+    </select>
+
+    <!-- 根据审批人ID查询审批记录 -->
+    <select id="findByApproverId" resultType="com.promanage.service.entity.ChangeRequestApproval">
+        SELECT * FROM tb_change_request_approval
+        WHERE approver_id = #{approverId}
+        AND deleted = false
+        ORDER BY approved_at DESC, create_time DESC
+    </select>
+
+    <!-- 统计变更请求的审批记录数量 -->
+    <select id="countByChangeRequestId" resultType="int">
+        SELECT COUNT(*) FROM tb_change_request_approval
+        WHERE change_request_id = #{changeRequestId}
+        AND deleted = false
+    </select>
+
+</mapper>
+

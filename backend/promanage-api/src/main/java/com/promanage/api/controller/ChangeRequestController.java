@@ -5,13 +5,15 @@ import com.promanage.api.dto.request.CreateChangeRequestRequest;
 import com.promanage.api.dto.request.UpdateChangeRequestRequest;
 import com.promanage.api.dto.response.ChangeRequestResponse;
 import com.promanage.api.dto.response.ChangeRequestImpactResponse;
+import com.promanage.api.dto.response.ChangeRequestApprovalResponse;
 import com.promanage.common.domain.PageResult;
 import com.promanage.common.domain.Result;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.infrastructure.utils.SecurityUtils;
 import com.promanage.service.entity.ChangeRequest;
 import com.promanage.service.entity.ChangeRequestImpact;
-import com.promanage.service.entity.User;
+import com.promanage.service.entity.ChangeRequestApproval;
+import com.promanage.common.entity.User;
 import com.promanage.service.service.IChangeRequestService;
 import com.promanage.service.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,8 +54,12 @@ public class ChangeRequestController {
      * @param size 每页大小
      * @param status 变更请求状态
      * @param priority 变更请求优先级
+     * @param impactLevel 影响程度
      * @param assigneeId 指派人ID
      * @param requesterId 请求人ID
+     * @param reviewerId 审核人ID
+     * @param keyword 关键词搜索（标题、描述）
+     * @param tags 标签
      * @return 变更请求列表
      */
     @GetMapping("/projects/{projectId}/change-requests")
@@ -64,14 +70,18 @@ public class ChangeRequestController {
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer priority,
+            @RequestParam(required = false) String impactLevel,
             @RequestParam(required = false) Long assigneeId,
-            @RequestParam(required = false) Long requesterId) {
+            @RequestParam(required = false) Long requesterId,
+            @RequestParam(required = false) Long reviewerId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String tags) {
 
         Long userId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new BusinessException("请先登录"));
 
-        log.info("获取变更请求列表请求, projectId={}, userId={}, page={}, size={}, status={}, priority={}, assigneeId={}, requesterId={}",
-                projectId, userId, page, size, status, priority, assigneeId, requesterId);
+        log.info("获取变更请求列表请求, projectId={}, userId={}, page={}, size={}, status={}, priority={}, impactLevel={}, assigneeId={}, requesterId={}, reviewerId={}, keyword={}, tags={}",
+                projectId, userId, page, size, status, priority, impactLevel, assigneeId, requesterId, reviewerId, keyword, tags);
 
         // 检查权限
         if (!changeRequestService.hasChangeRequestViewPermission(projectId, userId)) {
@@ -79,7 +89,7 @@ public class ChangeRequestController {
         }
 
         PageResult<ChangeRequest> changeRequestPage = changeRequestService.listChangeRequests(
-                projectId, page, size, status, priority, assigneeId, requesterId);
+                projectId, page, size, status, priority, impactLevel, assigneeId, requesterId, reviewerId, keyword, tags);
 
         List<ChangeRequestResponse> changeRequestResponses = changeRequestPage.getList().stream()
                 .map(this::convertToChangeRequestResponse)
@@ -366,6 +376,35 @@ public class ChangeRequestController {
         return Result.success(response);
     }
 
+    /**
+     * 获取变更请求审批历史
+     *
+     * @param changeRequestId 变更请求ID
+     * @return 审批历史列表
+     */
+    @GetMapping("/change-requests/{changeRequestId}/approvals")
+    @Operation(summary = "获取审批历史", description = "获取变更请求的审批历史记录")
+    public Result<List<ChangeRequestApprovalResponse>> getChangeRequestApprovalHistory(@PathVariable Long changeRequestId) {
+        Long userId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException("请先登录"));
+
+        log.info("获取变更请求审批历史请求, changeRequestId={}, userId={}", changeRequestId, userId);
+
+        // 检查权限
+        if (!changeRequestService.hasChangeRequestViewPermission(changeRequestId, userId)) {
+            throw new BusinessException("没有权限查看此变更请求的审批历史");
+        }
+
+        List<ChangeRequestApproval> approvals = changeRequestService.getChangeRequestApprovalHistory(changeRequestId);
+
+        List<ChangeRequestApprovalResponse> response = approvals.stream()
+                .map(this::convertToApprovalResponse)
+                .collect(Collectors.toList());
+
+        log.info("获取变更请求审批历史成功, changeRequestId={}, approvalCount={}", changeRequestId, response.size());
+        return Result.success(response);
+    }
+
     // 辅助方法
 
     private ChangeRequestResponse convertToChangeRequestResponse(ChangeRequest changeRequest) {
@@ -423,6 +462,25 @@ public class ChangeRequestController {
                 .isVerified(impact.getIsVerified())
                 .verifiedBy(verifiedByName)
                 .verifiedAt(impact.getVerifiedAt())
+                .build();
+    }
+
+    private ChangeRequestApprovalResponse convertToApprovalResponse(ChangeRequestApproval approval) {
+        User approver = approval.getApproverId() != null ? userService.getById(approval.getApproverId()) : null;
+
+        return ChangeRequestApprovalResponse.builder()
+                .id(approval.getId())
+                .changeRequestId(approval.getChangeRequestId())
+                .approverId(approval.getApproverId())
+                .approverName(approver != null ? approver.getRealName() : approval.getApproverName())
+                .approverAvatar(approver != null ? approver.getAvatar() : null)
+                .approvalStep(approval.getApprovalStep())
+                .approvalLevel(approval.getApprovalLevel())
+                .status(approval.getStatus())
+                .comments(approval.getComments())
+                .approvedAt(approval.getApprovedAt())
+                .createTime(approval.getCreateTime())
+                .updateTime(approval.getUpdateTime())
                 .build();
     }
 }

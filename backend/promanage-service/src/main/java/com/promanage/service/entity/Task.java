@@ -83,13 +83,13 @@ public class Task extends BaseEntity {
     /**
      * 预估工时（小时）
      */
-    @Schema(description = "预估工时（小时）", example = "8.0")
+    @Schema(description = "预估工时（小时）", example = "16.0")
     private Double estimatedHours;
 
     /**
-     * 实际工时（小时）
+     * 已用工时（小时）
      */
-    @Schema(description = "实际工时（小时）", example = "6.5")
+    @Schema(description = "已用工时（小时）", example = "4.0")
     private Double actualHours;
 
     /**

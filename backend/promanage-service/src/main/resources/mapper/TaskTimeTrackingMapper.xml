@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.TaskTimeTrackingMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.promanage.service.entity.TaskTimeTracking">
+        <id column="id" property="id"/>
+        <result column="task_id" property="taskId"/>
+        <result column="user_id" property="userId"/>
+        <result column="estimated_hours" property="estimatedHours"/>
+        <result column="actual_hours" property="actualHours"/>
+        <result column="work_date" property="workDate"/>
+        <result column="description" property="description"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, task_id, user_id, estimated_hours, actual_hours, work_date, description, 
+        start_time, end_time, status, create_time, update_time, create_by, update_by, deleted
+    </sql>
+
+    <!-- 根据任务ID获取时间追踪记录 -->
+    <select id="selectByTaskId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM tb_task_time_tracking
+        WHERE task_id = #{taskId}
+        AND deleted = 0
+        ORDER BY work_date DESC
+    </select>
+
+    <!-- 根据用户ID获取时间追踪记录 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM tb_task_time_tracking
+        WHERE user_id = #{userId}
+        AND deleted = 0
+        ORDER BY work_date DESC
+    </select>
+
+    <!-- 根据任务ID和用户ID获取时间追踪记录 -->
+    <select id="selectByTaskIdAndUserId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM tb_task_time_tracking
+        WHERE task_id = #{taskId}
+        AND user_id = #{userId}
+        AND deleted = 0
+        ORDER BY work_date DESC
+    </select>
+
+    <!-- 统计任务的总预估工时 -->
+    <select id="sumEstimatedHoursByTaskId" resultType="java.lang.Double">
+        SELECT COALESCE(SUM(estimated_hours), 0)
+        FROM tb_task_time_tracking
+        WHERE task_id = #{taskId}
+        AND deleted = 0
+    </select>
+
+    <!-- 统计任务的总实际工时 -->
+    <select id="sumActualHoursByTaskId" resultType="java.lang.Double">
+        SELECT COALESCE(SUM(actual_hours), 0)
+        FROM tb_task_time_tracking
+        WHERE task_id = #{taskId}
+        AND deleted = 0
+    </select>
+
+    <!-- 统计用户在指定时间范围内的工时 -->
+    <select id="sumHoursByUserIdAndTimeRange" resultType="java.lang.Double">
+        SELECT COALESCE(SUM(actual_hours), 0)
+        FROM tb_task_time_tracking
+        WHERE user_id = #{userId}
+        AND work_date >= #{startTime}
+        AND work_date &lt;= #{endTime}
+        AND deleted = 0
+    </select>
+
+</mapper>

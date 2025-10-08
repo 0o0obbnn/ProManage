@@ -9,16 +9,19 @@ import com.promanage.common.domain.ResultCode;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.service.entity.Permission;
 import com.promanage.service.entity.Role;
-import com.promanage.service.entity.User;
+import com.promanage.common.entity.User;
 import com.promanage.service.entity.UserRole;
 import com.promanage.service.mapper.PermissionMapper;
 import com.promanage.service.mapper.RoleMapper;
 import com.promanage.service.mapper.UserMapper;
 import com.promanage.service.mapper.UserRoleMapper;
+import com.promanage.service.service.IPasswordService;
 import com.promanage.service.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,9 +56,11 @@ public class UserServiceImpl implements IUserService {
     private final PermissionMapper permissionMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserProperties userProperties;
+    private final CacheManager cacheManager;
+    private final IPasswordService passwordService;
 
     @Override
-    @Cacheable(value = "users", key = "#id", unless = "#result == null")
+    @Cacheable(value = "users:id", key = "#id", unless = "#result == null")
     public User getById(Long id) {
         log.info("查询用户详情, id={}", id);
 
@@ -91,8 +95,8 @@ public class UserServiceImpl implements IUserService {
             return Collections.emptyMap();
         }
 
-        // 使用MyBatis-Plus的selectBatchIds方法批量查询
-        List<User> users = userMapper.selectBatchIds(uniqueIds);
+        // 使用MyBatis-Plus的selectByIds方法批量查询
+        List<User> users = userMapper.selectByIds(uniqueIds);
 
         // 转换为Map，方便按ID查找
         Map<Long, User> userMap = users.stream()
@@ -104,7 +108,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    @Cacheable(value = "users", key = "'username:' + #username", unless = "#result == null")
+    @Cacheable(value = "users:username", key = "#username", unless = "#result == null")
     public User getByUsername(String username) {
         log.info("根据用户名查询用户, username={}", username);
 
@@ -116,7 +120,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    @Cacheable(value = "users", key = "'email:' + #email", unless = "#result == null")
+    @Cacheable(value = "users:email", key = "#email", unless = "#result == null")
     public User getByEmail(String email) {
         log.info("根据邮箱查询用户, email={}", email);
 
@@ -160,8 +164,15 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    public long countByOrganizationId(Long organizationId) {
+        log.debug("统计组织成员数量, organizationId={}", organizationId);
+        return userMapper.selectCount(new LambdaQueryWrapper<User>()
+            .eq(User::getOrganizationId, organizationId)
+            .isNull(User::getDeletedAt));
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "users", allEntries = true)
     public Long create(User user) {
         log.info("创建用户, username={}", user.getUsername());
 
@@ -197,7 +208,6 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "users", allEntries = true)
     public Long register(User user) {
         log.info("用户注册, username={}", user.getUsername());
 
@@ -214,12 +224,15 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "users", key = "#id")
     public void update(Long id, User user) {
         log.info("更新用户信息, id={}", id);
 
         // 检查用户是否存在
         User existingUser = getById(id);
+
+        // 记录旧的用户名和邮箱，用于清除缓存
+        String oldUsername = existingUser.getUsername();
+        String oldEmail = existingUser.getEmail();
 
         // 更新字段
         if (StringUtils.isNotBlank(user.getEmail())) {
@@ -243,12 +256,49 @@ public class UserServiceImpl implements IUserService {
         // 保存更新
         userMapper.updateById(existingUser);
 
+        // 手动清除缓存
+        evictUserCache(id, oldUsername, oldEmail);
+        // 如果邮箱或用户名发生变化，也清除新的缓存键
+        if (user.getEmail() != null && !user.getEmail().equals(oldEmail)) {
+            evictCacheByKey("users:email", user.getEmail());
+        }
+
         log.info("更新用户信息成功, id={}", id);
+    }
+
+    /**
+     * 清除用户相关缓存
+     */
+    private void evictUserCache(Long userId, String username, String email) {
+        evictCacheByKey("users:id", userId);
+        if (username != null) {
+            evictCacheByKey("users:username", username);
+        }
+        if (email != null) {
+            evictCacheByKey("users:email", email);
+        }
+        evictCacheByKey("userRoles", userId);
+        evictCacheByKey("userPermissions", userId);
+    }
+
+    /**
+     * 清除指定缓存键
+     */
+    private void evictCacheByKey(String cacheName, Object key) {
+        try {
+            Cache cache = cacheManager.getCache(cacheName);
+            if (cache != null) {
+                cache.evict(key);
+                log.debug("清除缓存: cacheName={}, key={}", cacheName, key);
+            }
+        } catch (Exception e) {
+            log.warn("清除缓存失败: cacheName={}, key={}, error={}", cacheName, key, e.getMessage());
+        }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "users:id", key = "#id")
     public void updatePassword(Long id, String oldPassword, String newPassword) {
         log.info("修改密码, userId={}", id);
 
@@ -275,7 +325,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "users:id", key = "#id")
     public void resetPassword(Long id, String newPassword) {
         log.info("重置密码, userId={}", id);
 
@@ -296,7 +346,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "users:id", key = "#id")
     public void updateStatus(Long id, Integer status) {
         log.info("更新用户状态, userId={}, status={}", id, status);
 
@@ -317,7 +367,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "users:id", key = "#id")
     public void updateLastLogin(Long id, String ip) {
         log.info("更新最后登录信息, userId={}, ip={}", id, ip);
 
@@ -337,22 +387,23 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "users", key = "#id")
     public void delete(Long id) {
         log.info("删除用户, id={}", id);
 
         // 检查用户是否存在
-        getById(id);
+        User user = getById(id);
 
         // 逻辑删除
         userMapper.deleteById(id);
+
+        // 清除缓存
+        evictUserCache(id, user.getUsername(), user.getEmail());
 
         log.info("删除用户成功, id={}", id);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "users", allEntries = true)
     public int batchDelete(List<Long> ids) {
         log.info("批量删除用户, ids={}", ids);
 
@@ -360,7 +411,15 @@ public class UserServiceImpl implements IUserService {
             return 0;
         }
 
+        // 先获取用户信息用于清除缓存
+        Map<Long, User> users = getByIds(ids);
+
         int count = userMapper.deleteByIds(ids);
+
+        // 清除缓存
+        users.values().forEach(user ->
+            evictUserCache(user.getId(), user.getUsername(), user.getEmail())
+        );
 
         log.info("批量删除用户成功, count={}", count);
         return count;
@@ -368,12 +427,27 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = {"users", "roles"}, allEntries = true)
     public void assignRoles(Long userId, List<Long> roleIds) {
         log.info("为用户分配角色, userId={}, roleIds={}", userId, roleIds);
 
         // 检查用户是否存在
         getById(userId);
+
+        // 验证角色是否存在
+        if (roleIds != null && !roleIds.isEmpty()) {
+            for (Long roleId : roleIds) {
+                Role role = roleMapper.selectById(roleId);
+                if (role == null || role.getDeleted()) {
+                    log.warn("角色不存在或已删除, roleId={}", roleId);
+                    throw new BusinessException(ResultCode.PARAM_ERROR, "角色不存在: " + roleId);
+                }
+                // 检查角色状态
+                if (role.getStatus() != null && role.getStatus() != 0) {
+                    log.warn("角色已禁用, roleId={}, status={}", roleId, role.getStatus());
+                    throw new BusinessException(ResultCode.PARAM_ERROR, "角色已禁用: " + role.getRoleName());
+                }
+            }
+        }
 
         // 先删除现有角色
         userRoleMapper.deleteByUserId(userId);
@@ -391,17 +465,33 @@ public class UserServiceImpl implements IUserService {
             userRoleMapper.batchInsert(userRoles);
         }
 
+        // 清除用户角色和权限缓存
+        evictCacheByKey("userRoles", userId);
+        evictCacheByKey("userPermissions", userId);
+
         log.info("分配角色成功, userId={}, roleCount={}", userId, roleIds == null ? 0 : roleIds.size());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = {"users", "roles"}, allEntries = true)
     public void addRole(Long userId, Long roleId) {
         log.info("为用户添加角色, userId={}, roleId={}", userId, roleId);
 
         // 检查用户是否存在
         getById(userId);
+
+        // 验证角色是否存在
+        Role role = roleMapper.selectById(roleId);
+        if (role == null || role.getDeleted()) {
+            log.warn("角色不存在或已删除, roleId={}", roleId);
+            throw new BusinessException(ResultCode.PARAM_ERROR, "角色不存在: " + roleId);
+        }
+
+        // 检查角色状态
+        if (role.getStatus() != null && role.getStatus() != 0) {
+            log.warn("角色已禁用, roleId={}, status={}", roleId, role.getStatus());
+            throw new BusinessException(ResultCode.PARAM_ERROR, "角色已禁用: " + role.getRoleName());
+        }
 
         // 检查是否已有该角色
         if (userRoleMapper.existsByUserIdAndRoleId(userId, roleId)) {
@@ -416,12 +506,15 @@ public class UserServiceImpl implements IUserService {
         userRole.setCreateTime(LocalDateTime.now());
         userRoleMapper.insert(userRole);
 
+        // 清除用户角色和权限缓存
+        evictCacheByKey("userRoles", userId);
+        evictCacheByKey("userPermissions", userId);
+
         log.info("添加角色成功, userId={}, roleId={}", userId, roleId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = {"users", "roles"}, allEntries = true)
     public void removeRole(Long userId, Long roleId) {
         log.info("移除用户角色, userId={}, roleId={}", userId, roleId);
 
@@ -430,6 +523,10 @@ public class UserServiceImpl implements IUserService {
         queryWrapper.eq(UserRole::getUserId, userId)
                    .eq(UserRole::getRoleId, roleId);
         userRoleMapper.delete(queryWrapper);
+
+        // 清除用户角色和权限缓存
+        evictCacheByKey("userRoles", userId);
+        evictCacheByKey("userPermissions", userId);
 
         log.info("移除角色成功, userId={}, roleId={}", userId, roleId);
     }
@@ -541,126 +638,11 @@ public class UserServiceImpl implements IUserService {
 
         // 验证密码强度
         if (isCreate && StringUtils.isNotBlank(user.getPassword())) {
-            validatePasswordStrength(user.getPassword());
+            passwordService.validatePasswordStrength(
+                user.getPassword(),
+                userProperties.getPasswordMinLength(),
+                userProperties.getPasswordMaxLength()
+            );
         }
-    }
-
-    /**
-     * 验证密码强度
-     *
-     * @param password 密码
-     */
-    private void validatePasswordStrength(String password) {
-        // 检查密码长度
-        if (password.length() < userProperties.getPasswordMinLength()) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, 
-                "密码长度至少" + userProperties.getPasswordMinLength() + "位");
-        }
-
-        if (password.length() > userProperties.getPasswordMaxLength()) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, 
-                "密码长度不能超过" + userProperties.getPasswordMaxLength() + "位");
-        }
-
-        // 检查密码复杂度
-        int complexity = 0;
-
-        // 包含小写字母
-        if (password.matches(".*[a-z].*")) {
-            complexity++;
-        }
-
-        // 包含大写字母
-        if (password.matches(".*[A-Z].*")) {
-            complexity++;
-        }
-
-        // 包含数字
-        if (password.matches(".*\\d.*")) {
-            complexity++;
-        }
-
-        // 包含特殊字符
-        if (password.matches(".*[^a-zA-Z0-9].*")) {
-            complexity++;
-        }
-
-        // 至少包含3种类型的字符
-        if (complexity < 3) {
-            throw new BusinessException(ResultCode.PARAM_ERROR,
-                "密码必须包含大小写字母、数字、特殊字符中的至少3种");
-        }
-
-        // 检查常见弱密码
-        String[] weakPasswords = {
-            "password", "12345678", "qwerty123", "admin123", "Password123",
-            "abc123456", "11111111", "00000000", "password1", "123456789"
-        };
-
-        String lowerPassword = password.toLowerCase();
-        for (String weakPwd : weakPasswords) {
-            if (lowerPassword.equals(weakPwd.toLowerCase())) {
-                throw new BusinessException(ResultCode.PARAM_ERROR,
-                    "密码过于常见，请使用更强的密码");
-            }
-        }
-
-        // 检查是否包含连续字符（如：123456, abcdef）
-        if (hasSequentialChars(password)) {
-            throw new BusinessException(ResultCode.PARAM_ERROR,
-                "密码不能包含过多连续字符");
-        }
-
-        // 检查是否包含重复字符（如：aaaaaa, 111111）
-        if (hasRepeatingChars(password)) {
-            throw new BusinessException(ResultCode.PARAM_ERROR,
-                "密码不能包含过多重复字符");
-        }
-    }
-
-    /**
-     * 检查是否包含连续字符
-     *
-     * @param password 密码
-     * @return true if has sequential chars
-     */
-    private boolean hasSequentialChars(String password) {
-        int sequentialCount = 0;
-        for (int i = 0; i < password.length() - 1; i++) {
-            char current = password.charAt(i);
-            char next = password.charAt(i + 1);
-
-            // 检查是否连续（ASCII值相差1）
-            if (Math.abs(current - next) == 1) {
-                sequentialCount++;
-                if (sequentialCount >= 3) {
-                    return true;
-                }
-            } else {
-                sequentialCount = 0;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 检查是否包含重复字符
-     *
-     * @param password 密码
-     * @return true if has repeating chars
-     */
-    private boolean hasRepeatingChars(String password) {
-        int repeatCount = 1;
-        for (int i = 0; i < password.length() - 1; i++) {
-            if (password.charAt(i) == password.charAt(i + 1)) {
-                repeatCount++;
-                if (repeatCount >= 4) {
-                    return true;
-                }
-            } else {
-                repeatCount = 1;
-            }
-        }
-        return false;
     }
 }

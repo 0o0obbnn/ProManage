@@ -1,10 +1,14 @@
 package com.promanage.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.promanage.service.dto.SearchResultDTO;
 import com.promanage.service.entity.Document;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -107,4 +111,85 @@ public interface DocumentMapper extends BaseMapper<Document> {
      * @return 文档数量
      */
     int countByCreatorId(@Param("creatorId") Long creatorId);
+
+    /**
+     * 根据多个条件搜索文档
+     *
+     * @param page 页码
+     * @param size 每页大小
+     * @param projectId 项目ID（可选）
+     * @param status 文档状态（可选）
+     * @param keyword 搜索关键词（可选）
+     * @param folderId 文件夹ID（可选）
+     * @param creatorId 创建人ID（可选）
+     * @param type 文档类型（可选）
+     * @param startTime 创建时间开始（可选）
+     * @param endTime 创建时间结束（可选）
+     * @return 分页结果
+     */
+    IPage<Document> searchDocuments(Page<Document> page,
+                                   @Param("projectId") Long projectId,
+                                   @Param("status") Integer status,
+                                   @Param("keyword") String keyword,
+                                   @Param("folderId") Long folderId,
+                                   @Param("creatorId") Long creatorId,
+                                   @Param("type") String type,
+                                   @Param("startTime") LocalDateTime startTime,
+                                   @Param("endTime") LocalDateTime endTime);
+
+    /**
+     * 搜索文档（用于搜索服务）
+     *
+     * @param params 搜索参数
+     * @return 文档列表
+     */
+    List<Document> searchDocuments(@Param("params") java.util.Map<String, Object> params);
+
+    /**
+     * 统计搜索文档数量
+     *
+     * @param params 搜索参数
+     * @return 文档数量
+     */
+    long countSearchDocuments(@Param("params") java.util.Map<String, Object> params);
+
+    /**
+     * 根据关键词获取不重复的文档标题
+     *
+     * @param keyword 关键词
+     * @param limit 限制数量
+     * @return 文档标题列表
+     */
+    List<String> getDistinctTitlesByKeyword(@Param("keyword") String keyword, @Param("limit") Integer limit);
+
+    /**
+     * 搜索文档（用于搜索服务）
+     *
+     * @param keyword 关键词
+     * @param projectId 项目ID（可选）
+     * @param offset 偏移量
+     * @param limit 限制数量
+     * @return 文档搜索结果列表
+     */
+    List<SearchResultDTO> searchDocuments(@Param("keyword") String keyword, 
+                                         @Param("projectId") Long projectId, 
+                                         @Param("offset") Integer offset, 
+                                         @Param("limit") Integer limit);
+
+    /**
+     * 统计搜索文档数量
+     *
+     * @param keyword 关键词
+     * @param projectId 项目ID（可选）
+     * @return 文档数量
+     */
+    Long countSearchDocuments(@Param("keyword") String keyword, @Param("projectId") Long projectId);
+
+    /**
+     * 根据关键词获取不重复的文档标题（用于搜索建议）
+     *
+     * @param keyword 关键词
+     * @return 文档标题列表
+     */
+    List<String> getDistinctTitlesByKeyword(@Param("keyword") String keyword);
 }

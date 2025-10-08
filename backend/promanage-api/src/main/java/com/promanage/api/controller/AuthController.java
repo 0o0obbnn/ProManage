@@ -13,11 +13,12 @@ import com.promanage.service.dto.PasswordStrengthResponse;
 import com.promanage.common.domain.Result;
 import com.promanage.common.domain.ResultCode;
 import com.promanage.common.exception.BusinessException;
+import com.promanage.common.util.IpUtils;
 import com.promanage.infrastructure.security.JwtTokenProvider;
 import com.promanage.infrastructure.security.TokenBlacklistService;
 import com.promanage.infrastructure.utils.SecurityUtils;
 import com.promanage.service.entity.Role;
-import com.promanage.service.entity.User;
+import com.promanage.common.entity.User;
 import com.promanage.service.service.IAuthService;
 import com.promanage.service.service.IUserService;
 import com.promanage.service.service.IPasswordService;
@@ -31,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -113,7 +113,7 @@ public class AuthController {
         }
 
         // 更新最后登录信息
-        String ipAddress = getClientIpAddress(request);
+        String ipAddress = IpUtils.getClientIpAddress(request);
         authService.updateLastLogin(user.getId(), ipAddress);
 
         // 转换角色信息
@@ -366,32 +366,7 @@ public class AuthController {
         return Result.success(userResponse);
     }
 
-    /**
-     * 获取客户端IP地址
-     *
-     * @param request HTTP请求
-     * @return IP地址
-     */
-    private String getClientIpAddress(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        // 处理多级代理的情况，取第一个IP
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
-    }
+
 
     /**
      * 从HTTP请求中提取JWT令牌

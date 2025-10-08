@@ -1,5 +1,7 @@
 package com.promanage.service.impl;
 
+import com.promanage.common.domain.ResultCode;
+import com.promanage.common.exception.BusinessException;
 import com.promanage.service.dto.PasswordStrengthResponse;
 import com.promanage.service.service.IPasswordService;
 import lombok.extern.slf4j.Slf4j;
@@ -114,5 +116,123 @@ public class PasswordServiceImpl implements IPasswordService {
                 .meetsRequirements(meetsRequirements)
                 .suggestion(suggestion)
                 .build();
+    }
+
+    @Override
+    public void validatePasswordStrength(String password, int minLength, int maxLength) {
+        log.debug("验证密码强度, minLength={}, maxLength={}", minLength, maxLength);
+
+        // 检查密码长度
+        if (password == null || password.length() < minLength) {
+            throw new BusinessException(ResultCode.PARAM_ERROR,
+                "密码长度至少" + minLength + "位");
+        }
+
+        if (password.length() > maxLength) {
+            throw new BusinessException(ResultCode.PARAM_ERROR,
+                "密码长度不能超过" + maxLength + "位");
+        }
+
+        // 检查密码复杂度
+        int complexity = 0;
+
+        // 包含小写字母
+        if (LOWERCASE_PATTERN.matcher(password).find()) {
+            complexity++;
+        }
+
+        // 包含大写字母
+        if (UPPERCASE_PATTERN.matcher(password).find()) {
+            complexity++;
+        }
+
+        // 包含数字
+        if (NUMBER_PATTERN.matcher(password).find()) {
+            complexity++;
+        }
+
+        // 包含特殊字符
+        if (SPECIAL_CHAR_PATTERN.matcher(password).find()) {
+            complexity++;
+        }
+
+        // 至少包含3种类型的字符
+        if (complexity < 3) {
+            throw new BusinessException(ResultCode.PARAM_ERROR,
+                "密码必须包含大小写字母、数字、特殊字符中的至少3种");
+        }
+
+        // 检查常见弱密码
+        String[] weakPasswords = {
+            "password", "12345678", "qwerty123", "admin123", "Password123",
+            "abc123456", "11111111", "00000000", "password1", "123456789"
+        };
+
+        String lowerPassword = password.toLowerCase();
+        for (String weakPwd : weakPasswords) {
+            if (lowerPassword.equals(weakPwd.toLowerCase())) {
+                throw new BusinessException(ResultCode.PARAM_ERROR,
+                    "密码过于常见，请使用更强的密码");
+            }
+        }
+
+        // 检查是否包含连续字符（如：123456, abcdef）
+        if (hasSequentialChars(password)) {
+            throw new BusinessException(ResultCode.PARAM_ERROR,
+                "密码不能包含过多连续字符");
+        }
+
+        // 检查是否包含重复字符（如：aaaaaa, 111111）
+        if (hasRepeatingChars(password)) {
+            throw new BusinessException(ResultCode.PARAM_ERROR,
+                "密码不能包含过多重复字符");
+        }
+
+        log.debug("密码强度验证通过");
+    }
+
+    /**
+     * 检查是否包含连续字符
+     *
+     * @param password 密码
+     * @return true if has sequential chars
+     */
+    private boolean hasSequentialChars(String password) {
+        int sequentialCount = 0;
+        for (int i = 0; i < password.length() - 1; i++) {
+            char current = password.charAt(i);
+            char next = password.charAt(i + 1);
+
+            if (next == current + 1) {
+                sequentialCount++;
+                if (sequentialCount >= 3) {
+                    return true;
+                }
+            } else {
+                sequentialCount = 0;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 检查是否包含重复字符
+     *
+     * @param password 密码
+     * @return true if has repeating chars
+     */
+    private boolean hasRepeatingChars(String password) {
+        int repeatCount = 1;
+        for (int i = 0; i < password.length() - 1; i++) {
+            if (password.charAt(i) == password.charAt(i + 1)) {
+                repeatCount++;
+                if (repeatCount >= 4) {
+                    return true;
+                }
+            } else {
+                repeatCount = 1;
+            }
+        }
+        return false;
     }
 }

@@ -2,6 +2,9 @@ package com.promanage.service.service;
 
 import com.promanage.common.domain.PageResult;
 import com.promanage.service.entity.Task;
+import com.promanage.service.entity.TaskActivity;
+import com.promanage.service.entity.TaskAttachment;
+import com.promanage.service.entity.TaskCheckItem;
 import com.promanage.service.entity.TaskComment;
 
 import java.util.List;
@@ -201,6 +204,79 @@ public interface ITaskService {
     TaskComment getTaskCommentById(Long commentId);
 
     /**
+     * 获取任务活动列表
+     *
+     * @param taskId 任务ID
+     * @param page 页码
+     * @param size 每页大小
+     * @return 分页结果
+     */
+    PageResult<TaskActivity> listTaskActivities(Long taskId, Integer page, Integer size);
+
+    /**
+     * 添加任务活动
+     *
+     * @param activity 活动实体
+     * @return 活动ID
+     */
+    Long addTaskActivity(TaskActivity activity);
+
+    /**
+     * 获取任务附件列表
+     *
+     * @param taskId 任务ID
+     * @return 附件列表
+     */
+    List<TaskAttachment> listTaskAttachments(Long taskId);
+
+    /**
+     * 添加任务附件
+     *
+     * @param attachment 附件实体
+     * @return 附件ID
+     */
+    Long addTaskAttachment(TaskAttachment attachment);
+
+    /**
+     * 删除任务附件
+     *
+     * @param attachmentId 附件ID
+     * @param userId 操作人ID
+     */
+    void deleteTaskAttachment(Long attachmentId, Long userId);
+
+    /**
+     * 获取任务检查项列表
+     *
+     * @param taskId 任务ID
+     * @return 检查项列表
+     */
+    List<TaskCheckItem> listTaskCheckItems(Long taskId);
+
+    /**
+     * 添加任务检查项
+     *
+     * @param checkItem 检查项实体
+     * @return 检查项ID
+     */
+    Long addTaskCheckItem(TaskCheckItem checkItem);
+
+    /**
+     * 更新任务检查项
+     *
+     * @param checkItem 检查项实体
+     */
+    void updateTaskCheckItem(TaskCheckItem checkItem);
+
+    /**
+     * 删除任务检查项
+     *
+     * @param checkItemId 检查项ID
+     * @param userId 操作人ID
+     */
+    void deleteTaskCheckItem(Long checkItemId, Long userId);
+
+    /**
      * 检查用户是否有权限操作任务
      *
      * @param taskId 任务ID
@@ -217,4 +293,37 @@ public interface ITaskService {
      * @return 是否有权限
      */
     boolean hasTaskViewPermission(Long taskId, Long userId);
+
+    /**
+     * 批量更新任务
+     *
+     * @param taskIds 任务ID列表
+     * @param status 新状态（可选）
+     * @param priority 新优先级（可选）
+     * @param assigneeId 新指派人ID（可选）
+     * @param tags 标签（可选）
+     * @param userId 操作人ID
+     * @return 成功更新的任务数量
+     */
+    int batchUpdateTasks(List<Long> taskIds, Integer status, Integer priority,
+                        Long assigneeId, String tags, Long userId);
+
+    /**
+     * 批量删除任务
+     *
+     * @param taskIds 任务ID列表
+     * @param userId 操作人ID
+     * @return 成功删除的任务数量
+     */
+    int batchDeleteTasks(List<Long> taskIds, Long userId);
+
+    /**
+     * 批量分配任务
+     *
+     * @param taskIds 任务ID列表
+     * @param assigneeId 指派人ID
+     * @param userId 操作人ID
+     * @return 成功分配的任务数量
+     */
+    int batchAssignTasks(List<Long> taskIds, Long assigneeId, Long userId);
 }

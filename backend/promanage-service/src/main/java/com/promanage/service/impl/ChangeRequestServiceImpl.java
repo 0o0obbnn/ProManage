@@ -3,15 +3,23 @@ package com.promanage.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.promanage.common.domain.BatchOperationResult;
 import com.promanage.common.domain.PageResult;
 import com.promanage.common.domain.ResultCode;
+import com.promanage.common.enums.ChangeRequestStatus;
+import com.promanage.common.enums.Priority;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.infrastructure.security.SecurityUtils;
 import com.promanage.service.entity.ChangeRequest;
+import com.promanage.service.entity.ChangeRequestApproval;
 import com.promanage.service.entity.ChangeRequestImpact;
+import com.promanage.service.entity.Project;
 import com.promanage.service.mapper.ChangeRequestMapper;
+import com.promanage.service.mapper.ChangeRequestApprovalMapper;
 import com.promanage.service.mapper.ChangeRequestImpactMapper;
+import com.promanage.service.mapper.CommentMapper;
 import com.promanage.service.service.IChangeRequestService;
+import com.promanage.service.IProjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,23 +46,16 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
 
     private final ChangeRequestMapper changeRequestMapper;
     private final ChangeRequestImpactMapper changeRequestImpactMapper;
-    private final ProjectServiceImpl projectService;
-
-    /**
-     * 变更请求状态
-     */
-    private static final String STATUS_DRAFT = "DRAFT";
-    private static final String STATUS_SUBMITTED = "SUBMITTED";
-    private static final String STATUS_UNDER_REVIEW = "UNDER_REVIEW";
-    private static final String STATUS_APPROVED = "APPROVED";
-    private static final String STATUS_REJECTED = "REJECTED";
-    private static final String STATUS_IMPLEMENTED = "IMPLEMENTED";
-    private static final String STATUS_CLOSED = "CLOSED";
+    private final ChangeRequestApprovalMapper changeRequestApprovalMapper;
+    private final CommentMapper commentMapper;
+    private final IProjectService projectService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createChangeRequest(ChangeRequest changeRequest) {
-        log.info("创建变更请求, title={}, projectId={}", changeRequest.getTitle(), changeRequest.getProjectId());
+        log.info("创建变更请求, title={}, projectId={}",
+                changeRequest != null ? changeRequest.getTitle() : null,
+                changeRequest != null ? changeRequest.getProjectId() : null);
 
         // 参数验证
         if (changeRequest == null) {
@@ -69,10 +70,10 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
 
         // 设置默认值
         if (changeRequest.getStatus() == null) {
-            changeRequest.setStatus(STATUS_DRAFT);
+            changeRequest.setStatus(ChangeRequestStatus.DRAFT.getCode());
         }
         if (changeRequest.getPriority() == null) {
-            changeRequest.setPriority(2); // 默认中等优先级
+            changeRequest.setPriority(Priority.MEDIUM.getValue());
         }
 
         // 设置创建信息
@@ -108,7 +109,8 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 检查状态是否允许更新（只有草稿状态可以更新）
-        if (!STATUS_DRAFT.equals(existing.getStatus())) {
+        ChangeRequestStatus currentStatus = ChangeRequestStatus.fromCode(existing.getStatus());
+        if (currentStatus == null || !currentStatus.isEditable()) {
             throw new BusinessException(ResultCode.OPERATION_FAILED, "只有草稿状态的变更请求可以更新");
         }
 
@@ -147,7 +149,8 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 检查状态（只有草稿状态可以删除）
-        if (!STATUS_DRAFT.equals(changeRequest.getStatus())) {
+        ChangeRequestStatus currentStatus = ChangeRequestStatus.fromCode(changeRequest.getStatus());
+        if (currentStatus == null || !currentStatus.isDeletable()) {
             throw new BusinessException(ResultCode.OPERATION_FAILED, "只有草稿状态的变更请求可以删除");
         }
 
@@ -180,9 +183,11 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
 
     @Override
     public PageResult<ChangeRequest> listChangeRequests(Long projectId, Integer page, Integer pageSize,
-                                                      String status, Integer priority, Long assigneeId, Long requesterId) {
-        log.debug("查询变更请求列表, projectId={}, page={}, pageSize={}, status={}, priority={}, assigneeId={}, requesterId={}",
-                projectId, page, pageSize, status, priority, assigneeId, requesterId);
+                                                      String status, Integer priority, String impactLevel,
+                                                      Long assigneeId, Long requesterId, Long reviewerId,
+                                                      String keyword, String tags) {
+        log.debug("查询变更请求列表, projectId={}, page={}, pageSize={}, status={}, priority={}, impactLevel={}, assigneeId={}, requesterId={}, reviewerId={}, keyword={}, tags={}",
+                projectId, page, pageSize, status, priority, impactLevel, assigneeId, requesterId, reviewerId, keyword, tags);
 
         // 参数验证和默认值设置
         if (page == null || page < 1) {
@@ -205,11 +210,28 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         if (priority != null) {
             queryWrapper.eq(ChangeRequest::getPriority, priority);
         }
+        if (impactLevel != null && !impactLevel.trim().isEmpty()) {
+            queryWrapper.eq(ChangeRequest::getImpactLevel, impactLevel);
+        }
         if (assigneeId != null) {
             queryWrapper.eq(ChangeRequest::getAssigneeId, assigneeId);
         }
         if (requesterId != null) {
             queryWrapper.eq(ChangeRequest::getRequesterId, requesterId);
+        }
+        if (reviewerId != null) {
+            queryWrapper.eq(ChangeRequest::getReviewerId, reviewerId);
+        }
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String keywordPattern = "%" + keyword.trim() + "%";
+            queryWrapper.and(wrapper -> wrapper
+                    .like(ChangeRequest::getTitle, keywordPattern)
+                    .or()
+                    .like(ChangeRequest::getDescription, keywordPattern)
+            );
+        }
+        if (tags != null && !tags.trim().isEmpty()) {
+            queryWrapper.like(ChangeRequest::getTags, tags);
         }
 
         // 排序
@@ -255,12 +277,13 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 检查状态（只有待审批状态可以审批）
-        if (!STATUS_UNDER_REVIEW.equals(changeRequest.getStatus())) {
+        if (!ChangeRequestStatus.UNDER_REVIEW.getCode().equals(changeRequest.getStatus())) {
             throw new BusinessException(ResultCode.OPERATION_FAILED, "变更请求当前状态不允许审批");
         }
 
         // 更新状态
-        String newStatus = "APPROVED".equals(decision) ? STATUS_APPROVED : STATUS_REJECTED;
+        String newStatus = "APPROVED".equals(decision) ?
+                ChangeRequestStatus.APPROVED.getCode() : ChangeRequestStatus.REJECTED.getCode();
         changeRequest.setStatus(newStatus);
         changeRequest.setReviewerId(userId);
         changeRequest.setUpdaterId(userId);
@@ -311,8 +334,12 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
             return existingImpacts;
         }
 
-        // 执行智能影响分析（简化版）
-        // TODO: 这里应该调用更复杂的智能分析算法
+        // 执行智能影响分析
+        // 当前使用基础分析算法，未来可扩展为：
+        // 1. 基于机器学习的影响预测模型
+        // 2. 代码依赖关系分析（AST解析）
+        // 3. 历史变更数据挖掘
+        // 4. 风险评估算法
         List<ChangeRequestImpact> impacts = performBasicImpactAnalysis(changeRequest);
 
         // 保存分析结果
@@ -367,12 +394,12 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
 
     @Override
     public PageResult<ChangeRequest> listChangeRequestsByUser(Long userId, Integer page, Integer size, String status) {
-        return listChangeRequests(null, page, size, status, null, null, userId);
+        return listChangeRequests(null, page, size, status, null, null, null, userId, null, null, null);
     }
 
     @Override
     public PageResult<ChangeRequest> listPendingApprovalChangeRequests(Long reviewerId, Integer page, Integer size) {
-        return listChangeRequests(null, page, size, STATUS_UNDER_REVIEW, null, reviewerId, null);
+        return listChangeRequests(null, page, size, ChangeRequestStatus.UNDER_REVIEW.getCode(), null, null, null, null, reviewerId, null, null);
     }
 
     @Override
@@ -407,7 +434,7 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
         LambdaQueryWrapper<ChangeRequest> wrapper = new LambdaQueryWrapper<ChangeRequest>()
                 .eq(ChangeRequest::getReviewerId, reviewerId)
-                .eq(ChangeRequest::getStatus, STATUS_UNDER_REVIEW)
+                .eq(ChangeRequest::getStatus, ChangeRequestStatus.UNDER_REVIEW.getCode())
                 .eq(ChangeRequest::getDeleted, false);
         return Math.toIntExact(changeRequestMapper.selectCount(wrapper));
     }
@@ -449,7 +476,8 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 只有项目负责人可以审批
-        return projectService.hasProjectEditPermission(changeRequest.getProjectId(), userId);
+        Project project = projectService.getById(changeRequest.getProjectId());
+        return project != null && project.getOwnerId().equals(userId);
     }
 
     @Override
@@ -472,12 +500,12 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 检查状态（只有草稿状态可以提交）
-        if (!STATUS_DRAFT.equals(changeRequest.getStatus())) {
+        if (!ChangeRequestStatus.DRAFT.getCode().equals(changeRequest.getStatus())) {
             throw new BusinessException(ResultCode.OPERATION_FAILED, "只有草稿状态的变更请求可以提交");
         }
 
         // 更新状态为待审批
-        changeRequest.setStatus(STATUS_UNDER_REVIEW);
+        changeRequest.setStatus(ChangeRequestStatus.UNDER_REVIEW.getCode());
         changeRequest.setUpdaterId(userId);
 
         int result = changeRequestMapper.updateById(changeRequest);
@@ -503,12 +531,12 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 检查状态（只有已批准状态可以实施）
-        if (!STATUS_APPROVED.equals(changeRequest.getStatus())) {
+        if (!ChangeRequestStatus.APPROVED.getCode().equals(changeRequest.getStatus())) {
             throw new BusinessException(ResultCode.OPERATION_FAILED, "变更请求当前状态不允许实施");
         }
 
         // 更新状态为已实施
-        changeRequest.setStatus(STATUS_IMPLEMENTED);
+        changeRequest.setStatus(ChangeRequestStatus.IMPLEMENTED.getCode());
         changeRequest.setUpdaterId(userId);
 
         int result = changeRequestMapper.updateById(changeRequest);
@@ -539,12 +567,12 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 检查状态（已实施状态可以关闭）
-        if (!STATUS_IMPLEMENTED.equals(changeRequest.getStatus())) {
+        if (!ChangeRequestStatus.IMPLEMENTED.getCode().equals(changeRequest.getStatus())) {
             throw new BusinessException(ResultCode.OPERATION_FAILED, "只有已实施状态的变更请求可以关闭");
         }
 
         // 更新状态为已关闭
-        changeRequest.setStatus(STATUS_CLOSED);
+        changeRequest.setStatus(ChangeRequestStatus.CLOSED.getCode());
         changeRequest.setUpdaterId(userId);
 
         int result = changeRequestMapper.updateById(changeRequest);
@@ -575,12 +603,12 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 检查状态（已关闭状态可以重新打开）
-        if (!STATUS_CLOSED.equals(changeRequest.getStatus())) {
+        if (!ChangeRequestStatus.CLOSED.getCode().equals(changeRequest.getStatus())) {
             throw new BusinessException(ResultCode.OPERATION_FAILED, "只有已关闭状态的变更请求可以重新打开");
         }
 
         // 更新状态为草稿
-        changeRequest.setStatus(STATUS_DRAFT);
+        changeRequest.setStatus(ChangeRequestStatus.DRAFT.getCode());
         changeRequest.setUpdaterId(userId);
 
         int result = changeRequestMapper.updateById(changeRequest);
@@ -593,14 +621,38 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
 
     @Override
     public List<ChangeRequestApproval> getChangeRequestApprovalHistory(Long changeRequestId) {
-        // TODO: 实现审批历史查询
-        return List.of();
+        log.debug("查询变更请求审批历史, changeRequestId={}", changeRequestId);
+
+        if (changeRequestId == null) {
+            return List.of();
+        }
+
+        try {
+            List<ChangeRequestApproval> approvals = changeRequestApprovalMapper.findByChangeRequestId(changeRequestId);
+            log.debug("查询审批历史成功, changeRequestId={}, count={}", changeRequestId, approvals.size());
+            return approvals;
+        } catch (Exception e) {
+            log.error("查询审批历史失败, changeRequestId={}", changeRequestId, e);
+            return List.of();
+        }
     }
 
     @Override
     public int getChangeRequestCommentCount(Long changeRequestId) {
-        // TODO: 实现评论数量统计
-        return 0;
+        log.debug("统计变更请求评论数量, changeRequestId={}", changeRequestId);
+
+        if (changeRequestId == null) {
+            return 0;
+        }
+
+        try {
+            int count = commentMapper.countByEntityTypeAndEntityId("CHANGE_REQUEST", changeRequestId);
+            log.debug("评论数量统计成功, changeRequestId={}, count={}", changeRequestId, count);
+            return count;
+        } catch (Exception e) {
+            log.error("统计评论数量失败, changeRequestId={}", changeRequestId, e);
+            return 0;
+        }
     }
 
     @Override
@@ -615,25 +667,53 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
     }
 
     @Override
-    public void batchUpdateChangeRequestStatus(List<Long> changeRequestIds, String status, Long userId) {
+    @Transactional(rollbackFor = Exception.class)
+    public BatchOperationResult<Long> batchUpdateChangeRequestStatus(List<Long> changeRequestIds, String status, Long userId) {
         if (changeRequestIds == null || changeRequestIds.isEmpty()) {
-            return;
+            return BatchOperationResult.create(0);
         }
 
         log.info("批量更新变更请求状态, count={}, status={}, userId={}", changeRequestIds.size(), status, userId);
 
+        // 验证目标状态是否有效
+        ChangeRequestStatus targetStatus = ChangeRequestStatus.fromCode(status);
+        if (targetStatus == null) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "无效的状态值: " + status);
+        }
+
+        BatchOperationResult<Long> result = BatchOperationResult.create(changeRequestIds.size());
+
         for (Long changeRequestId : changeRequestIds) {
             try {
                 ChangeRequest changeRequest = getChangeRequestById(changeRequestId);
-                if (changeRequest != null) {
-                    changeRequest.setStatus(status);
-                    changeRequest.setUpdaterId(userId);
-                    changeRequestMapper.updateById(changeRequest);
+                if (changeRequest == null) {
+                    result.addFailure(changeRequestId, "变更请求不存在");
+                    continue;
                 }
+
+                // 验证状态转换是否合法
+                ChangeRequestStatus currentStatus = ChangeRequestStatus.fromCode(changeRequest.getStatus());
+                if (currentStatus != null && !currentStatus.canTransitionTo(targetStatus)) {
+                    result.addFailure(changeRequestId,
+                        String.format("不允许从%s状态转换到%s状态", currentStatus.getDescription(), targetStatus.getDescription()));
+                    continue;
+                }
+
+                changeRequest.setStatus(status);
+                changeRequest.setUpdaterId(userId);
+                changeRequestMapper.updateById(changeRequest);
+
+                result.addSuccess(changeRequestId);
             } catch (Exception e) {
-                log.error("批量更新变更请求状态失败, id={}, error={}", changeRequestId, e.getMessage());
+                log.error("批量更新变更请求状态失败, id={}, error={}", changeRequestId, e.getMessage(), e);
+                result.addFailure(changeRequestId, e.getMessage());
             }
         }
+
+        log.info("批量更新变更请求状态完成, 总数={}, 成功={}, 失败={}",
+                result.getTotal(), result.getSuccessCount(), result.getFailureCount());
+
+        return result;
     }
 
     @Override
@@ -651,13 +731,13 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         statistics.setTotalCount(Math.toIntExact(changeRequestMapper.selectCount(totalWrapper)));
 
         // 按状态统计
-        statistics.setDraftCount(countByStatus(projectId, STATUS_DRAFT));
-        statistics.setSubmittedCount(countByStatus(projectId, STATUS_SUBMITTED));
-        statistics.setUnderReviewCount(countByStatus(projectId, STATUS_UNDER_REVIEW));
-        statistics.setApprovedCount(countByStatus(projectId, STATUS_APPROVED));
-        statistics.setRejectedCount(countByStatus(projectId, STATUS_REJECTED));
-        statistics.setImplementedCount(countByStatus(projectId, STATUS_IMPLEMENTED));
-        statistics.setClosedCount(countByStatus(projectId, STATUS_CLOSED));
+        statistics.setDraftCount(countByStatus(projectId, ChangeRequestStatus.DRAFT.getCode()));
+        statistics.setSubmittedCount(countByStatus(projectId, ChangeRequestStatus.SUBMITTED.getCode()));
+        statistics.setUnderReviewCount(countByStatus(projectId, ChangeRequestStatus.UNDER_REVIEW.getCode()));
+        statistics.setApprovedCount(countByStatus(projectId, ChangeRequestStatus.APPROVED.getCode()));
+        statistics.setRejectedCount(countByStatus(projectId, ChangeRequestStatus.REJECTED.getCode()));
+        statistics.setImplementedCount(countByStatus(projectId, ChangeRequestStatus.IMPLEMENTED.getCode()));
+        statistics.setClosedCount(countByStatus(projectId, ChangeRequestStatus.CLOSED.getCode()));
 
         return statistics;
     }

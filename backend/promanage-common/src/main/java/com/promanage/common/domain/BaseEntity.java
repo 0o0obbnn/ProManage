@@ -60,6 +60,14 @@ public abstract class BaseEntity implements Serializable {
     private Boolean deleted;
 
     /**
+     * 删除时间
+     */
+    @TableField(fill = FieldFill.UPDATE)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @Schema(description = "删除时间", example = "2025-09-30 10:00:00")
+    private LocalDateTime deletedAt;
+
+    /**
      * 创建人ID
      */
     @TableField(fill = FieldFill.INSERT)

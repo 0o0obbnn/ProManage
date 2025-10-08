@@ -20,22 +20,6 @@ import java.util.List;
 public interface ProjectConverter {
 
     /**
-     * 实体转实体 (用于复制属性)
-     *
-     * @param source 源Project对象
-     * @return 新Project对象
-     */
-    Project toEntity(Project source);
-
-    /**
-     * 批量转换实体列表
-     *
-     * @param projects 项目列表
-     * @return 项目列表
-     */
-    List<Project> toEntityList(List<Project> projects);
-
-    /**
      * 更新实体属性 (将source的非空属性复制到target)
      *
      * @param source 源Project对象
@@ -45,6 +29,5 @@ public interface ProjectConverter {
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "deleted", ignore = true)
-    // 项目编码字段不存在，已移除
     void updateEntity(Project source, @MappingTarget Project target);
 }

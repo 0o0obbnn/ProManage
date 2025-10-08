@@ -147,14 +147,34 @@ public enum ResultCode {
     EMAIL_EXISTS(2006, "邮箱已存在"),
 
     /**
+     * 用户名已存在
+     */
+    USERNAME_ALREADY_EXISTS(2007, "用户名已存在"),
+
+    /**
+     * 邮箱已存在
+     */
+    EMAIL_ALREADY_EXISTS(2008, "邮箱已存在"),
+
+    /**
+     * 不能删除自己
+     */
+    CANNOT_DELETE_SELF(2009, "不能删除自己的账号"),
+
+    /**
+     * 不能禁用自己
+     */
+    CANNOT_DISABLE_SELF(2010, "不能禁用自己的账号"),
+
+    /**
      * Token无效
      */
-    INVALID_TOKEN(2007, "Token无效或已过期"),
+    INVALID_TOKEN(2011, "Token无效或已过期"),
 
     /**
      * 密码不正确
      */
-    WRONG_PASSWORD(2008, "密码不正确"),
+    WRONG_PASSWORD(2012, "密码不正确"),
 
     // ========== 文档相关错误 3xxx ==========
     /**
@@ -222,7 +242,28 @@ public enum ResultCode {
     /**
      * 权限不存在
      */
-    PERMISSION_NOT_FOUND(5003, "权限不存在");
+    PERMISSION_NOT_FOUND(5003, "权限不存在"),
+
+    /**
+     * 权限编码已存在
+     */
+    PERMISSION_CODE_ALREADY_EXISTS(5004, "权限编码已存在"),
+
+    /**
+     * 权限有子权限，无法删除
+     */
+    PERMISSION_HAS_CHILDREN(5005, "权限有子权限，无法删除"),
+
+    // ========== 测试用例相关错误 6xxx ==========
+    /**
+     * 测试用例不存在
+     */
+    TEST_CASE_NOT_FOUND(6001, "测试用例不存在"),
+
+    /**
+     * 测试用例已存在
+     */
+    TEST_CASE_ALREADY_EXISTS(6002, "测试用例已存在");
 
     /**
      * 响应码

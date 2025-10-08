@@ -1,8 +1,12 @@
 package com.promanage.api.dto.response;
 
+import com.promanage.api.dto.response.TaskActivityResponse;
+import com.promanage.api.dto.response.TaskAttachmentResponse;
+import com.promanage.api.dto.response.TaskCheckItemResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
@@ -19,6 +23,7 @@ import java.util.List;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper=false)
 @Schema(description = "任务详情响应")
 public class TaskDetailResponse extends TaskResponse {
 
@@ -32,16 +37,16 @@ public class TaskDetailResponse extends TaskResponse {
     private List<TaskCommentResponse> recentComments;
 
     @Schema(description = "最近的动态列表")
-    private List<ActivityResponse> recentActivities;
+    private List<TaskActivityResponse> recentActivities;
 
     @Schema(description = "任务描述（完整HTML格式）")
     private String fullDescription;
 
     @Schema(description = "任务附件列表")
-    private List<AttachmentResponse> attachments;
+    private List<TaskAttachmentResponse> attachments;
 
     @Schema(description = "任务检查项列表")
-    private List<TaskCheckItem> checkItems;
+    private List<TaskCheckItemResponse> checkItems;
 }
 
 /**

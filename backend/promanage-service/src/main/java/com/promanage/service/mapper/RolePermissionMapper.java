@@ -2,6 +2,8 @@ package com.promanage.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.promanage.service.entity.RolePermission;
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -9,58 +11,42 @@ import java.util.List;
 
 /**
  * 角色权限关联Mapper接口
- * <p>
- * 提供角色权限关联数据访问方法,管理角色和权限的多对多关系
- * </p>
  *
  * @author ProManage Team
- * @date 2025-09-30
+ * @date 2025-10-08
  */
 @Mapper
 public interface RolePermissionMapper extends BaseMapper<RolePermission> {
-
+    
     /**
-     * 根据角色ID删除所有权限关联
-     * <p>
-     * 用于重新分配角色权限时先清空现有权限
-     * </p>
-     *
-     * @param roleId 角色ID
-     * @return 删除的记录数
-     */
-    int deleteByRoleId(@Param("roleId") Long roleId);
-
-    /**
-     * 根据权限ID删除所有角色关联
-     * <p>
-     * 用于删除权限时清理关联关系
-     * </p>
-     *
+     * 根据权限ID删除角色权限关联记录
+     * 
      * @param permissionId 权限ID
-     * @return 删除的记录数
+     * @return 删除记录数
      */
-    int deleteByPermissionId(@Param("permissionId") Long permissionId);
-
+    @Delete("DELETE FROM role_permissions WHERE permission_id = #{permissionId}")
+    int deleteByPermissionId(Long permissionId);
+    
     /**
-     * 批量插入角色权限关联
-     * <p>
-     * 用于为角色批量分配权限
-     * </p>
-     *
-     * @param rolePermissions 角色权限关联列表
-     * @return 插入的记录数
+     * 根据角色ID删除角色权限关联记录
+     * 
+     * @param roleId 角色ID
+     * @return 删除记录数
      */
+    @Delete("DELETE FROM role_permissions WHERE role_id = #{roleId}")
+    int deleteByRoleId(Long roleId);
+    
+    /**
+     * 批量插入角色权限关联记录
+     * 
+     * @param rolePermissions 角色权限关联记录列表
+     * @return 插入记录数
+     */
+    @Insert("<script>" +
+            "INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at) VALUES " +
+            "<foreach collection='list' item='item' separator=','>" +
+            "(#{item.roleId}, #{item.permissionId}, #{item.createdAt}, #{item.updatedAt})" +
+            "</foreach>" +
+            "</script>")
     int batchInsert(@Param("list") List<RolePermission> rolePermissions);
-
-    /**
-     * 检查角色是否拥有指定权限
-     * <p>
-     * 用于权限验证
-     * </p>
-     *
-     * @param roleId 角色ID
-     * @param permissionId 权限ID
-     * @return true表示拥有,false表示不拥有
-     */
-    boolean existsByRoleIdAndPermissionId(@Param("roleId") Long roleId, @Param("permissionId") Long permissionId);
 }

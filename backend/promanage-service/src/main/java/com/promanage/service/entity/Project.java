@@ -65,6 +65,12 @@ public class Project extends BaseEntity {
     private Long ownerId;
 
     /**
+     * 组织ID
+     */
+    @Schema(description = "组织ID", example = "1")
+    private Long organizationId;
+
+    /**
      * 项目开始日期
      */
     @Schema(description = "项目开始日期", example = "2025-01-01")

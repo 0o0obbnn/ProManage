@@ -31,7 +31,7 @@ import java.util.List;
  * @since 2025-09-30
  */
 @Slf4j
-//@Configuration
+@Configuration
 public class OpenApiConfig {
 
     /**

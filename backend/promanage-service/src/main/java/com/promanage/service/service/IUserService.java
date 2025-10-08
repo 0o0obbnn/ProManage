@@ -3,7 +3,7 @@ package com.promanage.service.service;
 import com.promanage.common.domain.PageResult;
 import com.promanage.service.entity.Permission;
 import com.promanage.service.entity.Role;
-import com.promanage.service.entity.User;
+import com.promanage.common.entity.User;
 
 import java.util.List;
 
@@ -75,6 +75,17 @@ public interface IUserService {
      * @return 用户列表
      */
     List<User> listAll();
+
+    /**
+     * 统计指定组织的用户数量
+     * <p>
+     * 仅统计未被删除的用户
+     * </p>
+     *
+     * @param organizationId 组织ID
+     * @return 用户数量
+     */
+    long countByOrganizationId(Long organizationId);
 
     // ==================== 创建操作 ====================
 

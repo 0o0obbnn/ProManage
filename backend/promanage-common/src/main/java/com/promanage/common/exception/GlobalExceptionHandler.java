@@ -2,6 +2,7 @@ package com.promanage.common.exception;
 
 import com.promanage.common.domain.Result;
 import com.promanage.common.domain.ResultCode;
+import com.promanage.common.util.IpUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
@@ -31,40 +32,16 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     /**
-     * 获取客户端IP地址
-     */
-    private String getClientIpAddress(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        // 处理多级代理的情况，取第一个IP
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
-    }
-
-    /**
      * 记录异常详细信息
      */
     private void logExceptionDetails(Exception e, HttpServletRequest request) {
-        String clientIp = getClientIpAddress(request);
+        String clientIp = IpUtils.getClientIpAddress(request);
         String userAgent = request.getHeader("User-Agent");
         String requestUrl = request.getRequestURL().toString();
         String method = request.getMethod();
-        
+
         log.error("Exception Details: ", e);
-        log.error("Request Info - URL: {}, Method: {}, IP: {}, UserAgent: {}", 
+        log.error("Request Info - URL: {}, Method: {}, IP: {}, UserAgent: {}",
                  requestUrl, method, clientIp, userAgent);
     }
 

@@ -23,6 +23,9 @@ spring:
       write-dates-as-timestamps: false
       fail-on-empty-beans: false
 
+  elasticsearch:
+    uris: http://localhost:9200
+
 # SpringDoc OpenAPI Configuration
 springdoc:
   api-docs:

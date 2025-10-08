@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.TaskMapper">
+
+    <!-- 搜索任务（用于搜索服务） -->
+    <select id="searchTasks" resultType="com.promanage.service.dto.SearchResultDTO">
+        SELECT t.id, t.title, t.description, t.project_id as projectId, t.assignee_id as assigneeId,
+               t.create_time as createTime, t.update_time as updateTime,
+               u.username as assigneeName, p.name as projectName 
+        FROM tb_task t
+        LEFT JOIN tb_user u ON t.assignee_id = u.id
+        LEFT JOIN tb_project p ON t.project_id = p.id
+        WHERE t.deleted = false
+        <if test="keyword != null and keyword != ''">
+            AND (t.title LIKE CONCAT('%', #{keyword}, '%') OR t.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="projectId != null">
+            AND t.project_id = #{projectId}
+        </if>
+        ORDER BY t.create_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 统计搜索任务数量 -->
+    <select id="countSearchTasks" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM tb_task t
+        WHERE t.deleted = false
+        <if test="keyword != null and keyword != ''">
+            AND (t.title LIKE CONCAT('%', #{keyword}, '%') OR t.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="projectId != null">
+            AND t.project_id = #{projectId}
+        </if>
+    </select>
+
+    <!-- 根据关键词获取不重复的任务标题（用于搜索建议） -->
+    <select id="getDistinctTitlesByKeyword" resultType="string">
+        SELECT DISTINCT title FROM tb_task
+        WHERE deleted = false AND title LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY create_time DESC
+        LIMIT 10
+    </select>
+
+</mapper>

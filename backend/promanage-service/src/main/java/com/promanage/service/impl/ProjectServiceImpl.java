@@ -3,499 +3,476 @@ package com.promanage.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.promanage.common.domain.PageResult;
 import com.promanage.common.domain.ResultCode;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.infrastructure.security.SecurityUtils;
+import com.promanage.service.IProjectActivityService;
+import com.promanage.service.IProjectService;
+import com.promanage.service.service.IUserService;
+import com.promanage.dto.ProjectMemberDTO;
+import com.promanage.dto.ProjectRequest;
+import com.promanage.dto.ProjectStatsDTO;
 import com.promanage.service.entity.Project;
 import com.promanage.service.entity.ProjectMember;
+import com.promanage.common.entity.User;
 import com.promanage.service.mapper.ProjectMapper;
 import com.promanage.service.mapper.ProjectMemberMapper;
-import com.promanage.service.service.IProjectService;
+import com.promanage.service.mapper.TaskMapper;
+import com.promanage.service.mapper.DocumentMapper;
+import com.promanage.service.mapper.ChangeRequestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 项目服务实现类
  * <p>
- * 实现项目管理的所有业务逻辑,包括项目CRUD操作、成员管理和状态管理。
- * 使用Redis缓存提高查询性能,使用事务保证数据一致性。
- * 支持项目生命周期管理和团队协作。
+ *  服务实现类
  * </p>
  *
- * @author ProManage Team
- * @date 2025-09-30
+ * @author nifa
+ * @since 2024-10-04
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ProjectServiceImpl implements IProjectService {
+public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> implements IProjectService {
 
-    private final ProjectMapper projectMapper;
     private final ProjectMemberMapper projectMemberMapper;
+    private final IUserService userService;
+    private final TaskMapper taskMapper;
+    private final DocumentMapper documentMapper;
+    private final ChangeRequestMapper changeRequestMapper;
+    private final IProjectActivityService projectActivityService;
+
 
     /**
-     * 项目状态 - 规划中
+     * 创建项目
      */
-    private static final int PROJECT_STATUS_PLANNING = 0;
-
-    /**
-     * 项目状态 - 已归档
-     */
-    private static final int PROJECT_STATUS_ARCHIVED = 3;
-
-    @Override
-    @Cacheable(value = "projects", key = "#id", unless = "#result == null")
-    public Project getById(Long id) {
-        if (id == null) {
-            return null;
-        }
-
-        log.debug("查询项目详情, id={}", id);
-        Project project = projectMapper.selectById(id);
-        if (project != null) {
-            log.debug("项目查询成功, id={}, name={}", id, project.getName());
-        } else {
-            log.warn("项目不存在, id={}", id);
-        }
-        return project;
-    }
-
-    @Override
-    @Cacheable(value = "projects", key = "'code:' + #code", unless = "#result == null")
-    public Project getByCode(String code) {
-        if (StringUtils.isBlank(code)) {
-            return null;
-        }
-
-        log.debug("根据编码查询项目, code={}", code);
-        Project project = projectMapper.findByCode(code);
-        if (project != null) {
-            log.debug("项目查询成功, code={}, name={}", code, project.getName());
-        } else {
-            log.warn("项目不存在, code={}", code);
-        }
-        return project;
-    }
-
-    @Override
-    public PageResult<Project> listProjects(Integer page, Integer pageSize, String keyword, Integer status) {
-        log.debug("查询项目列表, page={}, pageSize={}, keyword={}, status={}", page, pageSize, keyword, status);
-
-        // 参数验证和默认值设置
-        if (page == null || page < 1) {
-            page = 1;
-        }
-        if (pageSize == null || pageSize < 1) {
-            pageSize = 20;
-        }
-
-        // 构建查询条件
-        LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Project::getDeleted, false);
-
-        // 关键词搜索
-        if (StringUtils.isNotBlank(keyword)) {
-            queryWrapper.and(wrapper -> wrapper
-                    .like(Project::getName, keyword)
-                    .or()
-                    .like(Project::getCode, keyword)
-                    .or()
-                    .like(Project::getDescription, keyword)
-            );
-        }
-
-        // 状态筛选
-        if (status != null) {
-            queryWrapper.eq(Project::getStatus, status);
-        }
-
-        // 排序
-        queryWrapper.orderByDesc(Project::getCreateTime);
-
-        // 分页查询
-        Page<Project> pageParam = new Page<>(page, pageSize);
-        IPage<Project> pageResult = projectMapper.selectPage(pageParam, queryWrapper);
-
-        // 构建返回结果
-        PageResult<Project> result = PageResult.of(
-                pageResult.getRecords(),
-                pageResult.getTotal(),
-                page,
-                pageSize
-        );
-
-        log.debug("项目列表查询完成, 总数={}, 当前页={}", result.getTotal(), result.getPage());
-        return result;
-    }
-
-    @Override
-    public List<Project> listByOwnerId(Long ownerId) {
-        if (ownerId == null) {
-            return List.of();
-        }
-
-        log.debug("查询用户负责的项目列表, ownerId={}", ownerId);
-        List<Project> projects = projectMapper.findByOwnerId(ownerId);
-        log.debug("用户负责的项目查询完成, ownerId={}, 数量={}", ownerId, projects.size());
-        return projects;
-    }
-
-    @Override
-    public List<Project> listByMemberId(Long userId) {
-        if (userId == null) {
-            return List.of();
-        }
-
-        log.debug("查询用户参与的项目列表, userId={}", userId);
-        List<Project> projects = projectMapper.findByMemberId(userId);
-        log.debug("用户参与的项目查询完成, userId={}, 数量={}", userId, projects.size());
-        return projects;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "projects", allEntries = true)
+    @Transactional
     public Long create(Project project) {
-        log.info("创建项目, name={}, code={}", project.getName(), project.getCode());
-
-        // 参数验证
+        log.info("创建项目: {}", project.getName());
         validateProject(project, true);
-
-        // 检查项目编码是否已存在
-        if (StringUtils.isNotBlank(project.getCode()) && projectMapper.existsByCode(project.getCode())) {
-            log.warn("项目编码已存在, code={}", project.getCode());
-            throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "项目编码已存在");
-        }
-
-        // 设置默认值
-        if (project.getStatus() == null) {
-            project.setStatus(PROJECT_STATUS_PLANNING);
-        }
-        if (project.getProgress() == null) {
-            project.setProgress(0);
-        }
-
-        // 设置创建信息
-        Long currentUserId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "未登录"));
-        project.setCreatorId(currentUserId);
-        project.setUpdaterId(currentUserId);
-
-        // 保存项目
-        int result = projectMapper.insert(project);
-        if (result <= 0) {
-            throw new BusinessException(ResultCode.OPERATION_FAILED, "创建项目失败");
-        }
-
-        log.info("项目创建成功, id={}, name={}, code={}", project.getId(), project.getName(), project.getCode());
+        project.setStatus(0); // 0 表示正常状态
+        project.setCreateTime(java.time.LocalDateTime.now());
+        project.setUpdateTime(java.time.LocalDateTime.now());
+        save(project);
         return project.getId();
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "projects", key = "#id")
+    /**
+     * 更新项目
+     */
+    @Transactional
     public void update(Long id, Project project) {
-        log.info("更新项目, id={}, name={}", id, project.getName());
-
-        // 参数验证
-        if (id == null) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, "项目ID不能为空");
+        log.info("更新项目: {}", id);
+        Project existing = getById(id);
+        if (existing == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "项目不存在");
         }
-
-        // 检查项目是否存在
-        Project existingProject = getById(id);
-        if (existingProject == null) {
-            throw new BusinessException(ResultCode.PROJECT_NOT_FOUND);
-        }
-
-        // 检查项目是否已归档
-        if (existingProject.getStatus() != null && existingProject.getStatus().equals(PROJECT_STATUS_ARCHIVED)) {
-            log.warn("项目已归档,不允许修改, id={}", id);
-            throw new BusinessException(ResultCode.PROJECT_ARCHIVED);
-        }
-
-        // 验证项目数据
         validateProject(project, false);
-
-        // 检查项目编码是否重复（排除自己）
-        if (StringUtils.isNotBlank(project.getCode()) && 
-            !project.getCode().equals(existingProject.getCode()) && 
-            projectMapper.existsByCode(project.getCode())) {
-                log.warn("项目编码已存在, code={}", project.getCode());
-                throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "项目编码已存在");
-        }
-
-        // 设置更新信息
-        Long currentUserId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "未登录"));
         project.setId(id);
-        project.setUpdaterId(currentUserId);
-
-        // 更新项目
-        int result = projectMapper.updateById(project);
-        if (result <= 0) {
-            throw new BusinessException(ResultCode.OPERATION_FAILED, "更新项目失败");
-        }
-
-        log.info("项目更新成功, id={}, name={}", id, project.getName());
+        project.setUpdateTime(java.time.LocalDateTime.now());
+        updateById(project);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "projects", key = "#id")
+    /**
+     * 删除项目
+     */
+    @Transactional
     public void delete(Long id) {
-        log.info("删除项目, id={}", id);
-
-        // 参数验证
-        if (id == null) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, "项目ID不能为空");
+        log.info("删除项目: {}", id);
+        Project existing = getById(id);
+        if (existing == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "项目不存在");
         }
-
-        // 检查项目是否存在
-        Project project = getById(id);
-        if (project == null) {
-            throw new BusinessException(ResultCode.PROJECT_NOT_FOUND);
-        }
-
-        // 逻辑删除项目
-        project.setDeleted(true);
-        project.setUpdaterId(SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "未登录")));
-
-        int result = projectMapper.updateById(project);
-        if (result <= 0) {
-            throw new BusinessException(ResultCode.OPERATION_FAILED, "删除项目失败");
-        }
-
-        log.info("项目删除成功, id={}, name={}", id, project.getName());
+        removeById(id);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "projects", allEntries = true)
-    public int batchDelete(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return 0;
-        }
-
-        log.info("批量删除项目, ids={}", ids);
-
-        int deletedCount = 0;
-        for (Long id : ids) {
-            try {
-                delete(id);
-                deletedCount++;
-            } catch (Exception e) {
-                log.error("删除项目失败, id={}, error={}", id, e.getMessage());
-            }
-        }
-
-        log.info("批量删除项目完成, 总数={}, 成功={}", ids.size(), deletedCount);
-        return deletedCount;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "projects", key = "#id")
-    public void updateStatus(Long id, Integer status) {
-        log.info("更新项目状态, id={}, status={}", id, status);
-
-        // 参数验证
-        if (id == null) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, "项目ID不能为空");
-        }
-        if (status == null) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, "项目状态不能为空");
-        }
-
-        // 检查项目是否存在
-        Project project = getById(id);
-        if (project == null) {
-            throw new BusinessException(ResultCode.PROJECT_NOT_FOUND);
-        }
-
-        // 检查状态是否有效
-        if (status < 0 || status > 3) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, "项目状态无效");
-        }
-
-        // 更新状态
-        project.setStatus(status);
-        project.setUpdaterId(SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "未登录")));
-
-        int result = projectMapper.updateById(project);
-        if (result <= 0) {
-            throw new BusinessException(ResultCode.OPERATION_FAILED, "更新项目状态失败");
-        }
-
-        log.info("项目状态更新成功, id={}, status={}", id, status);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "projectMembers", allEntries = true)
-    public void addMember(Long projectId, Long userId, Long roleId) {
-        log.info("添加项目成员, projectId={}, userId={}, roleId={}", projectId, userId, roleId);
-
-        // 参数验证
-        if (projectId == null || userId == null || roleId == null) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, "项目ID、用户ID和角色ID不能为空");
-        }
-
-        // 检查项目是否存在
-        Project project = getById(projectId);
-        if (project == null) {
-            throw new BusinessException(ResultCode.PROJECT_NOT_FOUND);
-        }
-
-        // 检查是否已经是项目成员
-        if (isMember(projectId, userId)) {
-            log.warn("用户已经是项目成员, projectId={}, userId={}", projectId, userId);
-            throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS, "用户已经是项目成员");
-        }
-
-        // 创建项目成员记录
-        ProjectMember projectMember = new ProjectMember();
-        projectMember.setProjectId(projectId);
-        projectMember.setUserId(userId);
-        projectMember.setRoleId(roleId);
-        projectMember.setJoinTime(java.time.LocalDateTime.now());
-        projectMember.setStatus(0); // 0-正常
-        projectMember.setCreatorId(SecurityUtils.getCurrentUserId().orElse(null));
-
-        projectMemberMapper.insert(projectMember);
-        log.info("项目成员添加成功, projectId={}, userId={}, roleId={}", projectId, userId, roleId);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "projectMembers", allEntries = true)
-    public void addMembers(Long projectId, List<Object> members) {
-        log.info("批量添加项目成员, projectId={}, count={}", projectId, members != null ? members.size() : 0);
-
-        if (projectId == null) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, "项目ID不能为空");
-        }
-
-        if (members == null || members.isEmpty()) {
-            log.warn("成员列表为空, projectId={}", projectId);
-            return;
-        }
-
-        // 检查项目是否存在
-        Project project = getById(projectId);
-        if (project == null) {
-            throw new BusinessException(ResultCode.PROJECT_NOT_FOUND);
-        }
-
-        // 批量添加成员
-        List<ProjectMember> projectMembers = new ArrayList<>();
-        for (Object memberObj : members) {
-            if (memberObj instanceof ProjectMember) {
-                ProjectMember member = (ProjectMember) memberObj;
-                member.setProjectId(projectId);
-                member.setJoinTime(java.time.LocalDateTime.now());
-                member.setStatus(0); // 0-正常
-                member.setCreatorId(SecurityUtils.getCurrentUserId().orElse(null));
-                projectMembers.add(member);
-            }
-        }
-
-        if (!projectMembers.isEmpty()) {
-            projectMemberMapper.batchInsert(projectMembers);
-            log.info("批量添加项目成员成功, projectId={}, count={}", projectId, projectMembers.size());
-        }
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "projectMembers", allEntries = true)
-    public void removeMember(Long projectId, Long userId) {
-        log.info("移除项目成员, projectId={}, userId={}", projectId, userId);
-
-        // 参数验证
-        if (projectId == null || userId == null) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, "项目ID和用户ID不能为空");
-        }
-
-        // 检查项目是否存在
-        Project project = getById(projectId);
-        if (project == null) {
-            throw new BusinessException(ResultCode.PROJECT_NOT_FOUND);
-        }
-
-        // 检查是否是项目成员
-        if (!isMember(projectId, userId)) {
-            log.warn("用户不是项目成员, projectId={}, userId={}", projectId, userId);
-            throw new BusinessException(ResultCode.NOT_PROJECT_MEMBER);
-        }
-
-        // 检查是否是项目负责人
-        if (project.getOwnerId().equals(userId)) {
-            log.warn("不能移除项目负责人, projectId={}, userId={}", projectId, userId);
-            throw new BusinessException(ResultCode.OPERATION_FAILED, "不能移除项目负责人");
-        }
-
-        // 删除项目成员记录
-        projectMemberMapper.delete(new LambdaQueryWrapper<ProjectMember>()
-                .eq(ProjectMember::getProjectId, projectId)
-                .eq(ProjectMember::getUserId, userId));
-
-        log.info("项目成员移除成功, projectId={}, userId={}", projectId, userId);
-    }
-
-    @Override
-    @Cacheable(value = "projectMembers", key = "#projectId")
-    public List<Object> listMembers(Long projectId) {
-        log.info("查询项目成员列表, projectId={}", projectId);
-
-        if (projectId == null) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, "项目ID不能为空");
-        }
-
-        // 检查项目是否存在
-        Project project = getById(projectId);
-        if (project == null) {
-            throw new BusinessException(ResultCode.PROJECT_NOT_FOUND);
-        }
-
-        List<ProjectMember> members = projectMemberMapper.findByProjectId(projectId);
-        log.info("查询项目成员列表成功, projectId={}, count={}", projectId, members.size());
+    /**
+     * 查询项目列表
+     */
+    public PageResult<Project> listProjects(Integer page, Integer pageSize, String keyword, Integer status) {
+        log.info("查询项目列表: page={}, pageSize={}, keyword={}, status={}", page, pageSize, keyword, status);
         
-        // 转换为Object列表以保持接口兼容性
-        return new ArrayList<>(members);
+        LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(keyword)) {
+            wrapper.and(w -> w.like(Project::getName, keyword)
+                    .or().like(Project::getCode, keyword)
+                    .or().like(Project::getDescription, keyword));
+        }
+        if (status != null) {
+            wrapper.eq(Project::getStatus, status);
+        }
+        wrapper.orderByDesc(Project::getUpdateTime);
+        
+        IPage<Project> pageResult = page(new Page<>(page, pageSize), wrapper);
+        return PageResult.of(pageResult.getRecords(), pageResult.getTotal(), page, pageSize);
+    }
+
+    /**
+     * 根据负责人ID查询项目
+     */
+    public List<Project> listByOwnerId(Long ownerId) {
+        log.info("根据负责人ID查询项目: {}", ownerId);
+        LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Project::getOwnerId, ownerId);
+        wrapper.orderByDesc(Project::getUpdateTime);
+        return list(wrapper);
+    }
+
+    /**
+     * 根据成员ID查询项目
+     */
+    public List<Project> listByMemberId(Long userId) {
+        log.info("根据成员ID查询项目: {}", userId);
+        // 查询用户参与的项目ID
+        LambdaQueryWrapper<ProjectMember> memberWrapper = new LambdaQueryWrapper<>();
+        memberWrapper.eq(ProjectMember::getUserId, userId);
+        List<ProjectMember> members = projectMemberMapper.selectList(memberWrapper);
+        
+        if (members.isEmpty()) {
+            return List.of();
+        }
+        
+        List<Long> projectIds = members.stream()
+                .map(ProjectMember::getProjectId)
+                .collect(Collectors.toList());
+        
+        LambdaQueryWrapper<Project> projectWrapper = new LambdaQueryWrapper<>();
+        projectWrapper.in(Project::getId, projectIds);
+        return list(projectWrapper);
+    }
+
+    /**
+     * 根据ID查询项目
+     */
+    public Project getById(Long id) {
+        log.debug("根据ID查询项目: {}", id);
+        return super.getById(id);
+    }
+
+    /**
+     * 根据编码查询项目
+     */
+    public Project getByCode(String code) {
+        log.debug("根据编码查询项目: {}", code);
+        LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Project::getCode, code);
+        return getOne(wrapper);
+    }
+
+    /**
+     * 统计项目成员数量
+     */
+    public int countProjectMembers(Long projectId) {
+        log.debug("统计项目成员数量: {}", projectId);
+        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProjectMember::getProjectId, projectId);
+        return Math.toIntExact(projectMemberMapper.selectCount(wrapper));
     }
 
     @Override
+    public PageResult<ProjectMemberDTO> listMembers(Long projectId, Integer page, Integer pageSize, Long roleId) {
+        log.info("查询项目成员列表: projectId={}, page={}, pageSize={}, roleId={}", projectId, page, pageSize, roleId);
+        
+        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProjectMember::getProjectId, projectId);
+        if (roleId != null) {
+            wrapper.eq(ProjectMember::getRoleId, roleId);
+        }
+        
+        IPage<ProjectMember> pageResult = projectMemberMapper.selectPage(new Page<>(page, pageSize), wrapper);
+        
+        List<ProjectMemberDTO> dtoList = pageResult.getRecords().stream().map(member -> {
+            ProjectMemberDTO dto = new ProjectMemberDTO();
+            BeanUtils.copyProperties(member, dto);
+            
+            // 查询用户信息
+            User user = userService.getById(member.getUserId());
+            if (user != null) {
+                dto.setUsername(user.getUsername());
+                dto.setRealName(user.getRealName());
+                dto.setEmail(user.getEmail());
+                dto.setAvatar(user.getAvatar());
+            }
+            
+            return dto;
+        }).collect(Collectors.toList());
+        
+        return PageResult.of(dtoList, pageResult.getTotal(), page, pageSize);
+    }
+
+    @Override
+    public ProjectStatsDTO getProjectStats(Long projectId) {
+        log.info("获取项目统计数据: {}", projectId);
+        
+        // 验证项目是否存在
+        getById(projectId);
+
+        long taskCount = taskMapper.selectCount(new LambdaQueryWrapper<com.promanage.service.entity.Task>().eq(com.promanage.service.entity.Task::getProjectId, projectId));
+        long documentCount = documentMapper.selectCount(new LambdaQueryWrapper<com.promanage.service.entity.Document>().eq(com.promanage.service.entity.Document::getProjectId, projectId));
+        long memberCount = projectMemberMapper.selectCount(new LambdaQueryWrapper<ProjectMember>().eq(ProjectMember::getProjectId, projectId));
+        long changeRequestCount = changeRequestMapper.selectCount(new LambdaQueryWrapper<com.promanage.service.entity.ChangeRequest>().eq(com.promanage.service.entity.ChangeRequest::getProjectId, projectId));
+        
+        // 查询任务状态统计
+        long completedTasks = taskMapper.selectCount(new LambdaQueryWrapper<com.promanage.service.entity.Task>()
+                .eq(com.promanage.service.entity.Task::getProjectId, projectId)
+                .eq(com.promanage.service.entity.Task::getStatus, 3)); // 3 表示已完成
+        long inProgressTasks = taskMapper.selectCount(new LambdaQueryWrapper<com.promanage.service.entity.Task>()
+                .eq(com.promanage.service.entity.Task::getProjectId, projectId)
+                .eq(com.promanage.service.entity.Task::getStatus, 2)); // 2 表示进行中
+        long pendingTasks = taskMapper.selectCount(new LambdaQueryWrapper<com.promanage.service.entity.Task>()
+                .eq(com.promanage.service.entity.Task::getProjectId, projectId)
+                .eq(com.promanage.service.entity.Task::getStatus, 1)); // 1 表示待办
+
+        ProjectStatsDTO stats = new ProjectStatsDTO();
+        stats.setProjectId(projectId);
+        stats.setTotalTasks((int) taskCount);
+        stats.setCompletedTasks((int) completedTasks);
+        stats.setInProgressTasks((int) inProgressTasks);
+        stats.setPendingTasks((int) pendingTasks);
+        stats.setMemberCount((int) memberCount);
+        stats.setTotalDocuments((int) documentCount);
+        stats.setChangeRequests((int) changeRequestCount);
+        
+        // 计算进度百分比
+        if (taskCount > 0) {
+            stats.setProgressPercentage((double) completedTasks / taskCount * 100);
+        } else {
+            stats.setProgressPercentage(0.0);
+        }
+        
+        return stats;
+    }
+
+    @Override
+    @Transactional
+    public void archive(Long projectId) {
+        log.info("归档项目: {}", projectId);
+        Project project = getById(projectId);
+        project.setStatus(3); // 3 表示已归档
+        updateById(project);
+        
+        Long currentUserId = SecurityUtils.getCurrentUserId().orElse(null);
+        projectActivityService.recordActivity(projectId, currentUserId, "PROJECT_ARCHIVED", "项目已归档");
+    }
+
+    @Override
+    @Transactional
+    public void unarchive(Long projectId) {
+        log.info("取消归档项目: {}", projectId);
+        Project project = getById(projectId);
+        if (project.getStatus() != 3) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "项目未归档");
+        }
+        project.setStatus(0); // 0 表示正常
+        updateById(project);
+        
+        Long currentUserId = SecurityUtils.getCurrentUserId().orElse(null);
+        projectActivityService.recordActivity(projectId, currentUserId, "PROJECT_UNARCHIVED", "项目已取消归档");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addMember(Long projectId, Long userId, Long roleId) {
+        log.info("添加项目成员: projectId={}, userId={}, roleId={}", projectId, userId, roleId);
+        
+        // 验证用户是否存在
+        User user = userService.getById(userId);
+        if (user == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "用户不存在");
+        }
+        
+        // 检查是否已经是成员
+        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProjectMember::getProjectId, projectId);
+        wrapper.eq(ProjectMember::getUserId, userId);
+        ProjectMember existing = projectMemberMapper.selectOne(wrapper);
+        if (existing != null) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "用户已经是项目成员");
+        }
+        
+        // 添加成员
+        ProjectMember member = new ProjectMember();
+        member.setProjectId(projectId);
+        member.setUserId(userId);
+        member.setRoleId(roleId);
+        member.setJoinTime(java.time.LocalDateTime.now());
+        member.setStatus(1); // 1 表示启用
+        projectMemberMapper.insert(member);
+        
+        // 记录活动
+        Long currentUserId = SecurityUtils.getCurrentUserId().orElse(null);
+        projectActivityService.recordActivity(projectId, currentUserId, "MEMBER_ADDED", 
+            String.format("添加成员: %s", user.getRealName()));
+    }
+
+    /**
+     * 批量添加项目成员
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void addMembers(Long projectId, List<ProjectMemberDTO> members) {
+        log.info("批量添加项目成员: projectId={}, count={}", projectId, members.size());
+        
+        for (ProjectMemberDTO memberDto : members) {
+            addMember(projectId, memberDto.getUserId(), memberDto.getRoleId());
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeMember(Long projectId, Long userId) {
+        log.info("移除项目成员: projectId={}, userId={}", projectId, userId);
+        
+        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProjectMember::getProjectId, projectId);
+        wrapper.eq(ProjectMember::getUserId, userId);
+        ProjectMember member = projectMemberMapper.selectOne(wrapper);
+        if (member == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "成员不存在");
+        }
+        
+        projectMemberMapper.deleteById(member.getId());
+        
+        // 记录活动
+        User user = userService.getById(userId);
+        Long currentUserId = SecurityUtils.getCurrentUserId().orElse(null);
+        projectActivityService.recordActivity(projectId, currentUserId, "MEMBER_REMOVED", 
+            String.format("移除成员: %s", user != null ? user.getRealName() : "未知用户"));
+    }
+
     public boolean isMember(Long projectId, Long userId) {
-        if (projectId == null || userId == null) {
-            return false;
+        log.debug("检查用户是否为项目成员: projectId={}, userId={}", projectId, userId);
+        
+        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProjectMember::getProjectId, projectId);
+        wrapper.eq(ProjectMember::getUserId, userId);
+        wrapper.eq(ProjectMember::getStatus, 1); // 1 表示启用
+        return projectMemberMapper.selectCount(wrapper) > 0;
+    }
+
+    /**
+     * 检查项目编码是否存在
+     */
+    public boolean existsByCode(String code) {
+        log.debug("检查项目编码是否存在: {}", code);
+        LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Project::getCode, code);
+        return count(wrapper) > 0;
+    }
+    
+    @Override
+    public List<ProjectMemberDTO> listMembersByRole(Long projectId, Long userId, Long roleId) {
+        log.info("查询项目成员列表（按角色过滤）: projectId={}, userId={}, roleId={}", projectId, userId, roleId);
+        
+        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProjectMember::getProjectId, projectId);
+        if (roleId != null) {
+            wrapper.eq(ProjectMember::getRoleId, roleId);
+        }
+        
+        List<ProjectMember> members = projectMemberMapper.selectList(wrapper);
+        
+        return members.stream().map(member -> {
+            ProjectMemberDTO dto = new ProjectMemberDTO();
+            BeanUtils.copyProperties(member, dto);
+            
+            // 查询用户信息
+            User user = userService.getById(member.getUserId());
+            if (user != null) {
+                dto.setUsername(user.getUsername());
+                dto.setRealName(user.getRealName());
+                dto.setEmail(user.getEmail());
+                dto.setAvatar(user.getAvatar());
+            }
+            
+            return dto;
+        }).collect(Collectors.toList());
+    }
+    
+    @Override
+    public PageResult<Project> listUserProjects(Long userId, Integer page, Integer pageSize, Integer status, String keyword) {
+        log.info("获取项目列表（按用户）: userId={}, page={}, pageSize={}, status={}, keyword={}", userId, page, pageSize, status, keyword);
+
+        LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
+
+        // Base query for projects accessible by the user
+        wrapper.and(w -> w.eq(Project::getOwnerId, userId)
+                .or(in -> {
+                    LambdaQueryWrapper<ProjectMember> memberWrapper = new LambdaQueryWrapper<>();
+                    memberWrapper.select(ProjectMember::getProjectId).eq(ProjectMember::getUserId, userId);
+                    List<Object> projectIds = projectMemberMapper.selectObjs(memberWrapper);
+                    if (projectIds == null || projectIds.isEmpty()) {
+                        in.apply("1 = 0"); // No projects if not a member of any
+                    } else {
+                        in.in(Project::getId, projectIds);
+                    }
+                }));
+
+        // Filter by status
+        if (status != null) {
+            wrapper.eq(Project::getStatus, status);
         }
 
-        return projectMemberMapper.existsByProjectIdAndUserId(projectId, userId);
+        // Filter by keyword
+        if (StringUtils.isNotBlank(keyword)) {
+            // Find users whose name matches the keyword to search by owner
+            List<User> users = userService.listAll().stream()
+                    .filter(u -> (u.getRealName() != null && u.getRealName().contains(keyword)) ||
+                                 (u.getUsername() != null && u.getUsername().contains(keyword)))
+                    .collect(Collectors.toList());
+            List<Long> ownerIds = users.stream().map(User::getId).collect(Collectors.toList());
+
+            wrapper.and(w -> {
+                w.like(Project::getName, keyword)
+                        .or().like(Project::getCode, keyword);
+                if (!ownerIds.isEmpty()) {
+                    w.or().in(Project::getOwnerId, ownerIds);
+                }
+            });
+        }
+
+        wrapper.orderByDesc(Project::getUpdateTime);
+
+        IPage<Project> pageResult = page(new Page<>(page, pageSize), wrapper);
+        return PageResult.of(pageResult.getRecords(), pageResult.getTotal(), page, pageSize);
     }
 
     @Override
-    public boolean existsByCode(String code) {
-        if (StringUtils.isBlank(code)) {
-            return false;
+    public PageResult<Project> listUserProjects(Long userId, Integer page, Integer pageSize, Integer status) {
+        return listUserProjects(userId, page, pageSize, status, null);
+    }
+    
+    @Override
+    public boolean isAdmin(Long projectId, Long userId) {
+        log.debug("检查用户是否为项目管理员: projectId={}, userId={}", projectId, userId);
+        
+        // 检查是否为项目负责人
+        Project project = getById(projectId);
+        if (project != null && project.getOwnerId().equals(userId)) {
+            return true;
         }
-
-        log.debug("检查项目编码是否存在, code={}", code);
-        boolean exists = projectMapper.existsByCode(code);
-        log.debug("项目编码检查完成, code={}, exists={}", code, exists);
-        return exists;
+        
+        // 检查是否有管理员角色
+        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProjectMember::getProjectId, projectId);
+        wrapper.eq(ProjectMember::getUserId, userId);
+        wrapper.eq(ProjectMember::getRoleId, 1L); // 假设 1 是管理员角色ID
+        wrapper.eq(ProjectMember::getStatus, 1);
+        return projectMemberMapper.selectCount(wrapper) > 0;
+    }
+    
+    @Override
+    public boolean isMemberOrAdmin(Long projectId, Long userId) {
+        return isMember(projectId, userId) || isAdmin(projectId, userId);
     }
 
     /**
@@ -528,156 +505,5 @@ public class ProjectServiceImpl implements IProjectService {
         if (StringUtils.isNotBlank(project.getDescription()) && project.getDescription().length() > 500) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "项目描述长度不能超过500个字符");
         }
-    }
-
-    @Override
-    public int countProjectMembers(Long projectId) {
-        log.debug("统计项目成员数量, projectId={}", projectId);
-
-        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<ProjectMember>()
-                .eq(ProjectMember::getProjectId, projectId)
-                .eq(ProjectMember::getStatus, 0); // 正常状态
-
-        return Math.toIntExact(projectMemberMapper.selectCount(wrapper));
-    }
-
-    @Override
-    public PageResult<Project> listUserProjects(Long userId, Integer page, Integer pageSize, Integer status) {
-        log.debug("查询用户项目列表, userId={}, page={}, pageSize={}, status={}", userId, page, pageSize, status);
-
-        // 参数验证和默认值设置
-        if (page == null || page < 1) {
-            page = 1;
-        }
-        if (pageSize == null || pageSize < 1) {
-            pageSize = 20;
-        }
-
-        // 查询用户作为成员的项目ID列表
-        List<Project> userProjects = projectMapper.findByMemberId(userId);
-        List<Long> projectIds = userProjects.stream()
-                .map(Project::getId)
-                .collect(Collectors.toList());
-
-        if (projectIds.isEmpty()) {
-            return PageResult.of(List.of(), 0L, page, pageSize);
-        }
-
-        // 构建查询条件
-        LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(Project::getId, projectIds)
-                .eq(Project::getDeleted, false);
-
-        // 状态筛选
-        if (status != null) {
-            queryWrapper.eq(Project::getStatus, status);
-        }
-
-        // 排序
-        queryWrapper.orderByDesc(Project::getCreateTime);
-
-        // 分页查询
-        Page<Project> pageParam = new Page<>(page, pageSize);
-        IPage<Project> pageResult = projectMapper.selectPage(pageParam, queryWrapper);
-
-        // 构建返回结果
-        PageResult<Project> result = PageResult.of(
-                pageResult.getRecords(),
-                pageResult.getTotal(),
-                page,
-                pageSize
-        );
-
-        log.debug("用户项目列表查询完成, 总数={}, 当前页={}", result.getTotal(), result.getPage());
-        return result;
-    }
-
-    @Override
-    public boolean hasProjectViewPermission(Long projectId, Long userId) {
-        if (projectId == null || userId == null) {
-            return false;
-        }
-        // 项目负责人或项目成员都有查看权限
-        Project project = getById(projectId);
-        if (project != null && project.getOwnerId().equals(userId)) {
-            return true;
-        }
-        return isMember(projectId, userId);
-    }
-
-    @Override
-    public boolean hasProjectEditPermission(Long projectId, Long userId) {
-        if (projectId == null || userId == null) {
-            return false;
-        }
-        // 项目负责人有编辑权限
-        Project project = getById(projectId);
-        return project != null && project.getOwnerId().equals(userId);
-    }
-
-    @Override
-    public boolean hasProjectDeletePermission(Long projectId, Long userId) {
-        if (projectId == null || userId == null) {
-            return false;
-        }
-        // 项目负责人有删除权限
-        Project project = getById(projectId);
-        return project != null && project.getOwnerId().equals(userId);
-    }
-
-    @Override
-    public boolean hasProjectMemberManagePermission(Long projectId, Long userId) {
-        if (projectId == null || userId == null) {
-            return false;
-        }
-        // 项目负责人有成员管理权限
-        Project project = getById(projectId);
-        return project != null && project.getOwnerId().equals(userId);
-    }
-
-    @Override
-    public boolean isProjectMember(Long projectId, Long userId) {
-        return isMember(projectId, userId);
-    }
-
-    @Override
-    public PageResult<ProjectMember> listProjectMembers(Long projectId, Integer page, Integer pageSize) {
-        if (projectId == null) {
-            return PageResult.of(List.of(), 0L, page != null ? page : 1, pageSize != null ? pageSize : 20);
-        }
-
-        // 参数验证和默认值设置
-        if (page == null || page < 1) {
-            page = 1;
-        }
-        if (pageSize == null || pageSize < 1) {
-            pageSize = 20;
-        }
-
-        // 查询项目成员
-        List<ProjectMember> members = projectMemberMapper.findByProjectId(projectId);
-
-        // 手动分页
-        int total = members.size();
-        int start = (page - 1) * pageSize;
-        int end = Math.min(start + pageSize, total);
-
-        List<ProjectMember> pageList = start < total ? members.subList(start, end) : List.of();
-
-        return PageResult.of(pageList, (long) total, page, pageSize);
-    }
-
-    @Override
-    public ProjectMember getProjectMemberRole(Long projectId, Long userId) {
-        if (projectId == null || userId == null) {
-            return null;
-        }
-
-        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<ProjectMember>()
-                .eq(ProjectMember::getProjectId, projectId)
-                .eq(ProjectMember::getUserId, userId)
-                .eq(ProjectMember::getStatus, 0); // 正常状态
-
-        return projectMemberMapper.selectOne(wrapper);
     }
 }

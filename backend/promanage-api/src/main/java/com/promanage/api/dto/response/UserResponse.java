@@ -47,6 +47,12 @@ public class UserResponse {
     @Schema(description = "用户状态：0-禁用，1-正常，2-锁定", example = "1")
     private Integer status;
 
+    @Schema(description = "组织ID", example = "1")
+    private Long organizationId;
+
+    @Schema(description = "部门ID", example = "1")
+    private Long departmentId;
+
     @Schema(description = "个人简介", example = "资深Java开发工程师")
     private String bio;
 

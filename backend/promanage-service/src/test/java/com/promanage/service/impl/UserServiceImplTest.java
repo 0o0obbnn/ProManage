@@ -1,7 +1,7 @@
 package com.promanage.service.impl;
 
 import com.promanage.common.exception.BusinessException;
-import com.promanage.service.entity.User;
+import com.promanage.common.entity.User;
 import com.promanage.service.mapper.UserMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -91,7 +91,7 @@ class UserServiceImplTest {
         List<Long> ids = Arrays.asList(1L, 2L);
         List<User> users = Arrays.asList(user1, user2);
 
-        when(userMapper.selectBatchIds(ids)).thenReturn(users);
+        when(userMapper.selectByIds(ids)).thenReturn(users);
 
         // when
         Map<Long, User> result = userService.getByIds(ids);
@@ -101,7 +101,7 @@ class UserServiceImplTest {
         assertThat(result).hasSize(2);
         assertThat(result.get(1L).getUsername()).isEqualTo("user1");
         assertThat(result.get(2L).getUsername()).isEqualTo("user2");
-        verify(userMapper).selectBatchIds(ids);
+        verify(userMapper).selectByIds(ids);
     }
 
     @Test
@@ -119,7 +119,7 @@ class UserServiceImplTest {
         List<Long> ids = Arrays.asList(1L, 2L);
         List<User> users = Arrays.asList(user1, user2);
 
-        when(userMapper.selectBatchIds(ids)).thenReturn(users);
+        when(userMapper.selectByIds(ids)).thenReturn(users);
 
         // when
         Map<Long, User> result = userService.getByIds(ids);

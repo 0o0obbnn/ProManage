@@ -128,7 +128,7 @@ mybatis-plus:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET}  # No default value - must be configured via environment variable
+  secret: ${JWT_SECRET:VGVjaG5pY2FsU2VjcmV0S2V5UGxlYXNlQ2hhbmdlTWV0b09uZVBsZWFzZUxvbmdlclNlY3JldEtleUZvckRldk9ubHk=}  # Default for dev environment, overwrite in production
   expiration: ${JWT_EXPIRATION:3600000}  # 1 hour (reduced from 24 hours for better security)
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours (reduced from 7 days)
   issuer: ProManage

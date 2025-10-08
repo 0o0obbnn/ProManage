@@ -3,6 +3,9 @@ package com.promanage.api.controller;
 import com.promanage.api.dto.request.CreateTaskCommentRequest;
 import com.promanage.api.dto.request.CreateTaskRequest;
 import com.promanage.api.dto.request.UpdateTaskRequest;
+import com.promanage.api.dto.request.BatchUpdateTasksRequest;
+import com.promanage.api.dto.request.BatchDeleteTasksRequest;
+import com.promanage.api.dto.request.BatchAssignTasksRequest;
 import com.promanage.api.dto.response.TaskCommentResponse;
 import com.promanage.api.dto.response.TaskDetailResponse;
 import com.promanage.api.dto.response.TaskResponse;
@@ -10,9 +13,19 @@ import com.promanage.common.domain.PageResult;
 import com.promanage.common.domain.Result;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.infrastructure.utils.SecurityUtils;
+import com.promanage.api.dto.response.TaskActivityResponse;
+import com.promanage.api.dto.response.TaskAttachmentResponse;
+import com.promanage.api.dto.response.TaskCheckItemResponse;
 import com.promanage.service.entity.Task;
+import com.promanage.service.entity.TaskActivity;
+import com.promanage.service.entity.TaskAttachment;
+import com.promanage.service.entity.TaskCheckItem;
 import com.promanage.service.entity.TaskComment;
-import com.promanage.service.entity.User;
+import com.promanage.common.entity.User;
+import com.promanage.service.mapper.TaskActivityMapper;
+import com.promanage.service.mapper.TaskAttachmentMapper;
+import com.promanage.service.mapper.TaskCheckItemMapper;
+import com.promanage.service.mapper.TaskCommentMapper;
 import com.promanage.service.service.ITaskService;
 import com.promanage.service.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +34,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,6 +60,7 @@ public class TaskController {
 
     private final ITaskService taskService;
     private final IUserService userService;
+    private final TaskCommentMapper taskCommentMapper;
 
     /**
      * 获取项目任务列表
@@ -442,6 +459,164 @@ public class TaskController {
         return Result.success();
     }
 
+    /**
+     * 获取任务依赖列表
+     *
+     * @param taskId 任务ID
+     * @return 依赖任务列表
+     */
+    @GetMapping("/tasks/{taskId}/dependencies")
+    @Operation(summary = "获取任务依赖列表", description = "获取任务的所有前置任务（依赖关系）")
+    public Result<List<TaskResponse>> getTaskDependencies(@PathVariable Long taskId) {
+        Long userId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException("请先登录"));
+
+        log.info("获取任务依赖列表请求, taskId={}, userId={}", taskId, userId);
+
+        // 检查权限
+        if (!taskService.hasTaskViewPermission(taskId, userId)) {
+            throw new BusinessException("没有权限查看此任务的依赖关系");
+        }
+
+        List<Task> dependencies = taskService.listTaskDependencies(taskId);
+        List<TaskResponse> response = dependencies.stream()
+                .map(this::convertToTaskResponse)
+                .collect(Collectors.toList());
+
+        log.info("获取任务依赖列表成功, taskId={}, 依赖数={}", taskId, response.size());
+        return Result.success(response);
+    }
+
+    /**
+     * 添加任务依赖
+     *
+     * @param taskId 任务ID
+     * @param dependencyTaskId 依赖任务ID（前置任务ID）
+     * @return 操作结果
+     */
+    @PostMapping("/tasks/{taskId}/dependencies")
+    @Operation(summary = "添加任务依赖", description = "为任务添加前置任务依赖关系")
+    public Result<Void> addTaskDependency(
+            @PathVariable Long taskId,
+            @RequestParam Long dependencyTaskId) {
+
+        Long userId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException("请先登录"));
+
+        log.info("添加任务依赖请求, taskId={}, dependencyTaskId={}, userId={}", taskId, dependencyTaskId, userId);
+
+        // 检查权限
+        if (!taskService.hasTaskPermission(taskId, userId)) {
+            throw new BusinessException("没有权限为此任务添加依赖关系");
+        }
+
+        taskService.addTaskDependency(taskId, dependencyTaskId);
+
+        log.info("添加任务依赖成功, taskId={}, dependencyTaskId={}", taskId, dependencyTaskId);
+        return Result.success();
+    }
+
+    /**
+     * 删除任务依赖
+     *
+     * @param taskId 任务ID
+     * @param dependencyTaskId 依赖任务ID（前置任务ID）
+     * @return 操作结果
+     */
+    @DeleteMapping("/tasks/{taskId}/dependencies/{dependencyTaskId}")
+    @Operation(summary = "删除任务依赖", description = "删除任务的前置任务依赖关系")
+    public Result<Void> removeTaskDependency(
+            @PathVariable Long taskId,
+            @PathVariable Long dependencyTaskId) {
+
+        Long userId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException("请先登录"));
+
+        log.info("删除任务依赖请求, taskId={}, dependencyTaskId={}, userId={}", taskId, dependencyTaskId, userId);
+
+        // 检查权限
+        if (!taskService.hasTaskPermission(taskId, userId)) {
+            throw new BusinessException("没有权限删除此任务的依赖关系");
+        }
+
+        taskService.removeTaskDependency(taskId, dependencyTaskId);
+
+        log.info("删除任务依赖成功, taskId={}, dependencyTaskId={}", taskId, dependencyTaskId);
+        return Result.success();
+    }
+
+    /**
+     * 批量更新任务
+     *
+     * @param request 批量更新请求
+     * @return 操作结果
+     */
+    @PostMapping("/tasks/batch-update")
+    @Operation(summary = "批量更新任务", description = "批量更新任务的状态、优先级、指派人或标签")
+    public Result<Integer> batchUpdateTasks(@Valid @RequestBody BatchUpdateTasksRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException("请先登录"));
+
+        log.info("批量更新任务请求, taskIds={}, userId={}", request.getTaskIds(), userId);
+
+        int successCount = taskService.batchUpdateTasks(
+                request.getTaskIds(),
+                request.getStatus(),
+                request.getPriority(),
+                request.getAssigneeId(),
+                request.getTags(),
+                userId
+        );
+
+        log.info("批量更新任务完成, 总数={}, 成功={}", request.getTaskIds().size(), successCount);
+        return Result.success(successCount);
+    }
+
+    /**
+     * 批量删除任务
+     *
+     * @param request 批量删除请求
+     * @return 操作结果
+     */
+    @PostMapping("/tasks/batch-delete")
+    @Operation(summary = "批量删除任务", description = "批量软删除任务")
+    public Result<Integer> batchDeleteTasks(@Valid @RequestBody BatchDeleteTasksRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException("请先登录"));
+
+        log.info("批量删除任务请求, taskIds={}, userId={}", request.getTaskIds(), userId);
+
+        int successCount = taskService.batchDeleteTasks(request.getTaskIds(), userId);
+
+        log.info("批量删除任务完成, 总数={}, 成功={}", request.getTaskIds().size(), successCount);
+        return Result.success(successCount);
+    }
+
+    /**
+     * 批量分配任务
+     *
+     * @param request 批量分配请求
+     * @return 操作结果
+     */
+    @PostMapping("/tasks/batch-assign")
+    @Operation(summary = "批量分配任务", description = "批量为任务分配执行人")
+    public Result<Integer> batchAssignTasks(@Valid @RequestBody BatchAssignTasksRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException("请先登录"));
+
+        log.info("批量分配任务请求, taskIds={}, assigneeId={}, userId={}",
+                request.getTaskIds(), request.getAssigneeId(), userId);
+
+        int successCount = taskService.batchAssignTasks(
+                request.getTaskIds(),
+                request.getAssigneeId(),
+                userId
+        );
+
+        log.info("批量分配任务完成, 总数={}, 成功={}", request.getTaskIds().size(), successCount);
+        return Result.success(successCount);
+    }
+
     // 辅助方法
 
     private TaskResponse convertToTaskResponse(Task task) {
@@ -515,17 +690,89 @@ public class TaskController {
         detailResponse.setDependencies(taskService.listTaskDependencies(task.getId()).stream()
                 .map(this::convertToTaskResponse)
                 .collect(Collectors.toList()));
-        detailResponse.setRecentComments(null); // TODO: 需要从评论服务获取
-        detailResponse.setRecentActivities(null); // TODO: 需要从活动服务获取
+
+        // 获取最近的评论（最多5条）
+        PageResult<TaskComment> recentCommentsPage = taskService.listTaskComments(task.getId(), 1, 5);
+        detailResponse.setRecentComments(recentCommentsPage.getList().stream()
+                .map(this::convertToTaskCommentResponse)
+                .collect(Collectors.toList()));
+
+        // 获取最近活动（最多10条）
+        PageResult<TaskActivity> recentActivitiesPage = taskService.listTaskActivities(task.getId(), 1, 10);
+        detailResponse.setRecentActivities(recentActivitiesPage.getList().stream()
+                .map(activity -> {
+                    User activityUser = activity.getUserId() != null ? userService.getById(activity.getUserId()) : null;
+                    return TaskActivityResponse.builder()
+                            .id(activity.getId())
+                            .activityType(activity.getActivityType())
+                            .content(activity.getContent())
+                            .oldValue(activity.getOldValue())
+                            .newValue(activity.getNewValue())
+                            .userId(activity.getUserId())
+                            .userName(activityUser != null ? activityUser.getRealName() : null)
+                            .userAvatar(activityUser != null ? activityUser.getAvatar() : null)
+                            .createTime(activity.getCreateTime())
+                            .build();
+                })
+                .collect(Collectors.toList()));
+
         detailResponse.setFullDescription(task.getDescription()); // 完整描述
-        detailResponse.setAttachments(null); // TODO: 需要从附件服务获取
-        detailResponse.setCheckItems(null); // TODO: 需要实现检查项功能
+
+        // 获取附件列表
+        List<TaskAttachment> attachments = taskService.listTaskAttachments(task.getId());
+        detailResponse.setAttachments(attachments.stream()
+                .map(attachment -> TaskAttachmentResponse.builder()
+                        .id(attachment.getId())
+                        .fileName(attachment.getFileName())
+                        .filePath(attachment.getFilePath())
+                        .fileSize(attachment.getFileSize())
+                        .mimeType(attachment.getMimeType())
+                        .uploaderId(attachment.getUploaderId())
+                        .isImage(attachment.getIsImage())
+                        .createTime(attachment.getCreateTime())
+                        .build())
+                .collect(Collectors.toList()));
+
+        // 获取检查项列表
+        List<TaskCheckItem> checkItems = taskService.listTaskCheckItems(task.getId());
+        detailResponse.setCheckItems(checkItems.stream()
+                .map(checkItem -> TaskCheckItemResponse.builder()
+                        .id(checkItem.getId())
+                        .content(checkItem.getContent())
+                        .isCompleted(checkItem.getIsCompleted())
+                        .completedById(checkItem.getCompletedById())
+                        .completedTime(checkItem.getCompletedTime())
+                        .sortOrder(checkItem.getSortOrder())
+                        .createTime(checkItem.getCreateTime())
+                        .build())
+                .collect(Collectors.toList()));
 
         return detailResponse;
     }
 
     private TaskCommentResponse convertToTaskCommentResponse(TaskComment comment) {
         User author = comment.getAuthorId() != null ? userService.getById(comment.getAuthorId()) : null;
+
+        // 计算回复数量 - 查询以当前评论为父评论的评论数量
+        int replyCount = taskCommentMapper.countReplies(comment.getId());
+
+        // 获取父评论信息（如果存在）
+        TaskCommentResponse parentCommentResponse = null;
+        if (comment.getParentCommentId() != null) {
+            TaskComment parentComment = taskCommentMapper.selectById(comment.getParentCommentId());
+            if (parentComment != null) {
+                User parentAuthor = parentComment.getAuthorId() != null ?
+                        userService.getById(parentComment.getAuthorId()) : null;
+                parentCommentResponse = TaskCommentResponse.builder()
+                        .id(parentComment.getId())
+                        .content(parentComment.getContent())
+                        .authorId(parentComment.getAuthorId())
+                        .authorName(parentAuthor != null ? parentAuthor.getRealName() : null)
+                        .authorAvatar(parentAuthor != null ? parentAuthor.getAvatar() : null)
+                        .createTime(parentComment.getCreateTime())
+                        .build();
+            }
+        }
 
         return TaskCommentResponse.builder()
                 .id(comment.getId())
@@ -537,8 +784,8 @@ public class TaskController {
                 .isInternal(comment.getIsInternal())
                 .createTime(comment.getCreateTime())
                 .updateTime(comment.getUpdateTime())
-                .parentComment(null) // TODO: 如果需要显示父评论信息
-                .replyCount(0) // TODO: 需要计算回复数量
+                .parentComment(parentCommentResponse)
+                .replyCount(replyCount)
                 .isEdited(!comment.getCreateTime().equals(comment.getUpdateTime()))
                 .build();
     }

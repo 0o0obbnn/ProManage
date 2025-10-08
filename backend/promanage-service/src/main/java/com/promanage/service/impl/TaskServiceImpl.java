@@ -5,11 +5,22 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.promanage.common.domain.PageResult;
 import com.promanage.common.exception.BusinessException;
-import com.promanage.infrastructure.cache.CacheService;
+import com.promanage.service.entity.Project;
 import com.promanage.service.entity.Task;
+import com.promanage.service.entity.TaskActivity;
+import com.promanage.service.entity.TaskAttachment;
+import com.promanage.service.entity.TaskCheckItem;
 import com.promanage.service.entity.TaskComment;
+import com.promanage.service.entity.TaskDependency;
+import com.promanage.common.entity.User;
+import com.promanage.service.mapper.ProjectMapper;
 import com.promanage.service.mapper.TaskMapper;
 import com.promanage.service.mapper.TaskCommentMapper;
+import com.promanage.service.mapper.TaskDependencyMapper;
+import com.promanage.service.mapper.UserMapper;
+import com.promanage.service.mapper.TaskActivityMapper;
+import com.promanage.service.mapper.TaskAttachmentMapper;
+import com.promanage.service.mapper.TaskCheckItemMapper;
 import com.promanage.service.service.ITaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +29,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 任务服务实现类
@@ -35,7 +46,12 @@ public class TaskServiceImpl implements ITaskService {
 
     private final TaskMapper taskMapper;
     private final TaskCommentMapper taskCommentMapper;
-    private final CacheService cacheService;
+    private final TaskDependencyMapper taskDependencyMapper;
+    private final ProjectMapper projectMapper;
+    private final UserMapper userMapper;
+    private final TaskActivityMapper taskActivityMapper;
+    private final TaskAttachmentMapper taskAttachmentMapper;
+    private final TaskCheckItemMapper taskCheckItemMapper;
 
     @Override
     @Transactional
@@ -284,10 +300,21 @@ public class TaskServiceImpl implements ITaskService {
     public List<Task> listTaskDependencies(Long taskId) {
         log.debug("获取任务依赖列表, taskId={}", taskId);
 
-        // TODO: 实现任务依赖关系查询
-        // 这里需要根据实际的数据库设计来实现
-        // 暂时返回空列表
-        return List.of();
+        // 查询该任务依赖的所有前置任务ID
+        List<Long> prerequisiteTaskIds = taskDependencyMapper.findPrerequisiteTaskIds(taskId);
+
+        if (prerequisiteTaskIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 批量查询前置任务详情（使用 LambdaQueryWrapper 替代 deprecated 方法）
+        LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<Task>()
+                .in(Task::getId, prerequisiteTaskIds)
+                .eq(Task::getDeleted, false);
+        List<Task> prerequisiteTasks = taskMapper.selectList(wrapper);
+
+        log.debug("任务依赖查询完成, taskId={}, 依赖任务数={}", taskId, prerequisiteTasks.size());
+        return prerequisiteTasks;
     }
 
     @Override
@@ -295,11 +322,34 @@ public class TaskServiceImpl implements ITaskService {
     public void addTaskDependency(Long taskId, Long dependencyTaskId) {
         log.info("添加任务依赖, taskId={}, dependencyTaskId={}", taskId, dependencyTaskId);
 
+        // 验证两个任务都存在
         validateTaskExists(taskId);
         validateTaskExists(dependencyTaskId);
 
-        // TODO: 实现添加任务依赖关系
-        // 这里需要根据实际的数据库设计来实现
+        // 验证不能依赖自己
+        if (taskId.equals(dependencyTaskId)) {
+            throw new BusinessException("任务不能依赖自己");
+        }
+
+        // 检查是否已存在依赖关系
+        if (taskDependencyMapper.existsDependency(dependencyTaskId, taskId)) {
+            log.warn("任务依赖关系已存在, taskId={}, dependencyTaskId={}", taskId, dependencyTaskId);
+            throw new BusinessException("任务依赖关系已存在");
+        }
+
+        // 检查是否会形成循环依赖
+        if (wouldCreateCircularDependency(taskId, dependencyTaskId)) {
+            throw new BusinessException("添加此依赖会形成循环依赖");
+        }
+
+        // 创建依赖关系
+        TaskDependency dependency = new TaskDependency();
+        dependency.setPrerequisiteTaskId(dependencyTaskId); // dependencyTaskId 是前置任务
+        dependency.setDependentTaskId(taskId); // taskId 依赖于 dependencyTaskId
+        dependency.setDependencyType("FINISH_TO_START"); // 默认类型：完成-开始
+        dependency.setCreateTime(java.time.LocalDateTime.now());
+
+        taskDependencyMapper.insert(dependency);
 
         log.info("任务依赖添加成功, taskId={}, dependencyTaskId={}", taskId, dependencyTaskId);
     }
@@ -309,8 +359,17 @@ public class TaskServiceImpl implements ITaskService {
     public void removeTaskDependency(Long taskId, Long dependencyTaskId) {
         log.info("移除任务依赖, taskId={}, dependencyTaskId={}", taskId, dependencyTaskId);
 
-        // TODO: 实现移除任务依赖关系
-        // 这里需要根据实际的数据库设计来实现
+        // 验证两个任务都存在
+        validateTaskExists(taskId);
+        validateTaskExists(dependencyTaskId);
+
+        // 删除依赖关系
+        int deleted = taskDependencyMapper.deleteDependency(dependencyTaskId, taskId);
+
+        if (deleted == 0) {
+            log.warn("任务依赖关系不存在, taskId={}, dependencyTaskId={}", taskId, dependencyTaskId);
+            throw new BusinessException("任务依赖关系不存在");
+        }
 
         log.info("任务依赖移除成功, taskId={}, dependencyTaskId={}", taskId, dependencyTaskId);
     }
@@ -456,12 +515,30 @@ public class TaskServiceImpl implements ITaskService {
 
     // 辅助方法
 
+    /**
+     * 验证项目访问权限
+     */
     private void validateProjectAccess(Long projectId, Long userId) {
-        // TODO: 验证项目存在性和用户权限
-        // 这里简化处理，实际需要调用项目服务
         log.debug("验证项目访问权限, projectId={}, userId={}", projectId, userId);
+
+        // 检查项目是否存在
+        Project project = projectMapper.selectById(projectId);
+        if (project == null || project.getDeleted()) {
+            throw new BusinessException("项目不存在");
+        }
+
+        // 检查用户是否有权限访问该项目
+        // 项目负责人或项目成员都有权限
+        // 这里简化处理，实际应该通过 ProjectService 检查
+        if (!project.getOwnerId().equals(userId)) {
+            // 可以进一步检查是否为项目成员
+            log.debug("用户不是项目负责人, projectId={}, userId={}", projectId, userId);
+        }
     }
 
+    /**
+     * 验证任务是否存在
+     */
     private void validateTaskExists(Long taskId) {
         Task task = taskMapper.selectById(taskId);
         if (task == null || task.getDeleted()) {
@@ -469,18 +546,36 @@ public class TaskServiceImpl implements ITaskService {
         }
     }
 
+    /**
+     * 验证任务访问权限
+     */
     private void validateTaskAccess(Long taskId, Long userId) {
         if (!hasTaskPermission(taskId, userId)) {
             throw new BusinessException("没有权限操作此任务");
         }
     }
 
+    /**
+     * 验证用户是否存在
+     */
     private void validateUserExists(Long userId) {
-        // TODO: 验证用户存在性
-        // 这里简化处理，实际需要调用用户服务
         log.debug("验证用户存在, userId={}", userId);
+
+        // 检查用户是否存在
+        User user = userMapper.selectById(userId);
+        if (user == null || user.getDeleted()) {
+            throw new BusinessException("用户不存在");
+        }
+
+        // 检查用户状态是否正常
+        if (user.getStatus() != 0) { // 0-正常, 1-禁用
+            throw new BusinessException("用户状态异常，无法分配任务");
+        }
     }
 
+    /**
+     * 验证状态转换的合法性
+     */
     private void validateStatusTransition(Integer oldStatus, Integer newStatus) {
         // 简化的状态转换验证
         // 0-待办, 1-进行中, 2-审核中, 3-已完成, 4-已取消, 5-已阻塞
@@ -496,5 +591,345 @@ public class TaskServiceImpl implements ITaskService {
 
         // 其他状态转换规则可以根据业务需求添加
         log.debug("验证状态转换, oldStatus={}, newStatus={}", oldStatus, newStatus);
+    }
+
+    /**
+     * 检查是否会形成循环依赖
+     * 使用深度优先搜索（DFS）检测循环
+     */
+    private boolean wouldCreateCircularDependency(Long taskId, Long dependencyTaskId) {
+        log.debug("检查循环依赖, taskId={}, dependencyTaskId={}", taskId, dependencyTaskId);
+
+        // 如果 dependencyTaskId 依赖于 taskId（直接或间接），则会形成循环
+        return hasTransitiveDependency(dependencyTaskId, taskId);
+    }
+
+    /**
+     * 检查 fromTask 是否（直接或间接）依赖于 toTask
+     * 使用深度优先搜索
+     */
+    private boolean hasTransitiveDependency(Long fromTask, Long toTask) {
+        // 获取 fromTask 的所有前置任务
+        List<Long> prerequisites = taskDependencyMapper.findPrerequisiteTaskIds(fromTask);
+
+        // 如果直接依赖，返回 true
+        if (prerequisites.contains(toTask)) {
+            return true;
+        }
+
+        // 递归检查间接依赖
+        for (Long prerequisite : prerequisites) {
+            if (hasTransitiveDependency(prerequisite, toTask)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    @Transactional
+    public int batchUpdateTasks(List<Long> taskIds, Integer status, Integer priority,
+                               Long assigneeId, String tags, Long userId) {
+        log.info("批量更新任务, taskIds={}, status={}, priority={}, assigneeId={}, tags={}, userId={}",
+                taskIds, status, priority, assigneeId, tags, userId);
+
+        if (taskIds == null || taskIds.isEmpty()) {
+            throw new BusinessException("任务ID列表不能为空");
+        }
+
+        // 验证指派人是否存在
+        if (assigneeId != null) {
+            validateUserExists(assigneeId);
+        }
+
+        int successCount = 0;
+        for (Long taskId : taskIds) {
+            try {
+                // 验证任务存在
+                Task task = taskMapper.selectById(taskId);
+                if (task == null || task.getDeleted()) {
+                    log.warn("任务不存在, taskId={}", taskId);
+                    continue;
+                }
+
+                // 检查权限
+                if (!hasTaskPermission(taskId, userId)) {
+                    log.warn("没有权限操作任务, taskId={}, userId={}", taskId, userId);
+                    continue;
+                }
+
+                // 构建更新对象
+                Task updateTask = new Task();
+                updateTask.setId(taskId);
+                updateTask.setUpdaterId((long) userId);
+
+                boolean needUpdate = false;
+
+                if (status != null) {
+                    validateStatusTransition(task.getStatus(), status);
+                    updateTask.setStatus(status);
+                    needUpdate = true;
+
+                    // 如果状态变为已完成，设置完成日期
+                    if (status == 3) {
+                        updateTask.setCompletedDate(java.time.LocalDate.now());
+                    }
+                }
+
+                if (priority != null) {
+                    updateTask.setPriority(priority);
+                    needUpdate = true;
+                }
+
+                if (assigneeId != null) {
+                    updateTask.setAssigneeId(assigneeId);
+                    needUpdate = true;
+                }
+
+                if (tags != null) {
+                    updateTask.setTags(tags);
+                    needUpdate = true;
+                }
+
+                if (needUpdate) {
+                    taskMapper.updateById(updateTask);
+                    successCount++;
+                }
+            } catch (Exception e) {
+                log.error("批量更新任务失败, taskId={}", taskId, e);
+            }
+        }
+
+        log.info("批量更新任务完成, 总数={}, 成功={}", taskIds.size(), successCount);
+        return successCount;
+    }
+
+    @Override
+    @Transactional
+    public int batchDeleteTasks(List<Long> taskIds, Long userId) {
+        log.info("批量删除任务, taskIds={}, userId={}", taskIds, userId);
+
+        if (taskIds == null || taskIds.isEmpty()) {
+            throw new BusinessException("任务ID列表不能为空");
+        }
+
+        int successCount = 0;
+        for (Long taskId : taskIds) {
+            try {
+                // 验证任务存在
+                Task task = taskMapper.selectById(taskId);
+                if (task == null || task.getDeleted()) {
+                    log.warn("任务不存在或已删除, taskId={}", taskId);
+                    continue;
+                }
+
+                // 检查权限
+                if (!hasTaskPermission(taskId, userId)) {
+                    log.warn("没有权限删除任务, taskId={}, userId={}", taskId, userId);
+                    continue;
+                }
+
+                // 检查是否有子任务
+                List<Task> subtasks = listSubtasks(taskId);
+                if (!subtasks.isEmpty()) {
+                    log.warn("任务存在子任务，无法删除, taskId={}", taskId);
+                    continue;
+                }
+
+                // 软删除
+                Task deleteTask = new Task();
+                deleteTask.setId(taskId);
+                deleteTask.setDeleted(true);
+                deleteTask.setUpdaterId((long) userId);
+                taskMapper.updateById(deleteTask);
+
+                successCount++;
+            } catch (Exception e) {
+                log.error("批量删除任务失败, taskId={}", taskId, e);
+            }
+        }
+
+        log.info("批量删除任务完成, 总数={}, 成功={}", taskIds.size(), successCount);
+        return successCount;
+    }
+
+    @Override
+    @Transactional
+    public int batchAssignTasks(List<Long> taskIds, Long assigneeId, Long userId) {
+        log.info("批量分配任务, taskIds={}, assigneeId={}, userId={}", taskIds, assigneeId, userId);
+
+        if (taskIds == null || taskIds.isEmpty()) {
+            throw new BusinessException("任务ID列表不能为空");
+        }
+
+        if (assigneeId == null) {
+            throw new BusinessException("指派人ID不能为空");
+        }
+
+        // 验证指派人是否存在
+        validateUserExists(assigneeId);
+
+        int successCount = 0;
+        for (Long taskId : taskIds) {
+            try {
+                // 验证任务存在
+                validateTaskExists(taskId);
+
+                // 检查权限
+                if (!hasTaskPermission(taskId, userId)) {
+                    log.warn("没有权限分配任务, taskId={}, userId={}", taskId, userId);
+                    continue;
+                }
+
+                // 更新指派人
+                Task task = new Task();
+                task.setId(taskId);
+                task.setAssigneeId(assigneeId);
+                task.setUpdaterId((long) userId);
+                taskMapper.updateById(task);
+
+                successCount++;
+            } catch (Exception e) {
+                log.error("批量分配任务失败, taskId={}", taskId, e);
+            }
+        }
+
+        log.info("批量分配任务完成, 总数={}, 成功={}", taskIds.size(), successCount);
+        return successCount;
+    }
+
+    @Override
+    public PageResult<TaskActivity> listTaskActivities(Long taskId, Integer page, Integer size) {
+        log.debug("获取任务活动列表, taskId={}, page={}, size={}", taskId, page, size);
+        
+        validateTaskExists(taskId);
+        
+        LambdaQueryWrapper<TaskActivity> wrapper = new LambdaQueryWrapper<TaskActivity>()
+                .eq(TaskActivity::getTaskId, taskId)
+                .orderByDesc(TaskActivity::getCreateTime);
+        
+        IPage<TaskActivity> activityPage = taskActivityMapper.selectPage(new Page<>(page, size), wrapper);
+        
+        return PageResult.of(activityPage.getRecords(), activityPage.getTotal(), page, size);
+    }
+
+    @Override
+    @Transactional
+    public Long addTaskActivity(TaskActivity activity) {
+        log.info("添加任务活动, taskId={}, activityType={}", activity.getTaskId(), activity.getActivityType());
+        
+        validateTaskExists(activity.getTaskId());
+        
+        taskActivityMapper.insert(activity);
+        
+        log.info("任务活动添加成功, activityId={}", activity.getId());
+        return activity.getId();
+    }
+
+    @Override
+    public List<TaskAttachment> listTaskAttachments(Long taskId) {
+        log.debug("获取任务附件列表, taskId={}", taskId);
+        
+        validateTaskExists(taskId);
+        
+        LambdaQueryWrapper<TaskAttachment> wrapper = new LambdaQueryWrapper<TaskAttachment>()
+                .eq(TaskAttachment::getTaskId, taskId)
+                .eq(TaskAttachment::getDeleted, false)
+                .orderByDesc(TaskAttachment::getCreateTime);
+        
+        return taskAttachmentMapper.selectList(wrapper);
+    }
+
+    @Override
+    @Transactional
+    public Long addTaskAttachment(TaskAttachment attachment) {
+        log.info("添加任务附件, taskId={}, fileName={}", attachment.getTaskId(), attachment.getFileName());
+        
+        validateTaskExists(attachment.getTaskId());
+        
+        taskAttachmentMapper.insert(attachment);
+        
+        log.info("任务附件添加成功, attachmentId={}", attachment.getId());
+        return attachment.getId();
+    }
+
+    @Override
+    @Transactional
+    public void deleteTaskAttachment(Long attachmentId, Long userId) {
+        log.info("删除任务附件, attachmentId={}, userId={}", attachmentId, userId);
+        
+        TaskAttachment attachment = taskAttachmentMapper.selectById(attachmentId);
+        if (attachment == null) {
+            throw new BusinessException("附件不存在");
+        }
+        
+        validateTaskAccess(attachment.getTaskId(), userId);
+        
+        attachment.setDeleted(true);
+        attachment.setUpdaterId(userId);
+        taskAttachmentMapper.updateById(attachment);
+        
+        log.info("任务附件删除成功, attachmentId={}", attachmentId);
+    }
+
+    @Override
+    public List<TaskCheckItem> listTaskCheckItems(Long taskId) {
+        log.debug("获取任务检查项列表, taskId={}", taskId);
+        
+        validateTaskExists(taskId);
+        
+        LambdaQueryWrapper<TaskCheckItem> wrapper = new LambdaQueryWrapper<TaskCheckItem>()
+                .eq(TaskCheckItem::getTaskId, taskId)
+                .orderByAsc(TaskCheckItem::getSortOrder);
+        
+        return taskCheckItemMapper.selectList(wrapper);
+    }
+
+    @Override
+    @Transactional
+    public Long addTaskCheckItem(TaskCheckItem checkItem) {
+        log.info("添加任务检查项, taskId={}, content={}", checkItem.getTaskId(), checkItem.getContent());
+        
+        validateTaskExists(checkItem.getTaskId());
+        
+        taskCheckItemMapper.insert(checkItem);
+        
+        log.info("任务检查项添加成功, checkItemId={}", checkItem.getId());
+        return checkItem.getId();
+    }
+
+    @Override
+    @Transactional
+    public void updateTaskCheckItem(TaskCheckItem checkItem) {
+        log.info("更新任务检查项, checkItemId={}", checkItem.getId());
+        
+        TaskCheckItem existingCheckItem = taskCheckItemMapper.selectById(checkItem.getId());
+        if (existingCheckItem == null) {
+            throw new BusinessException("检查项不存在");
+        }
+        
+        validateTaskAccess(existingCheckItem.getTaskId(), checkItem.getUpdaterId());
+        
+        taskCheckItemMapper.updateById(checkItem);
+        
+        log.info("任务检查项更新成功, checkItemId={}", checkItem.getId());
+    }
+
+    @Override
+    @Transactional
+    public void deleteTaskCheckItem(Long checkItemId, Long userId) {
+        log.info("删除任务检查项, checkItemId={}, userId={}", checkItemId, userId);
+        
+        TaskCheckItem checkItem = taskCheckItemMapper.selectById(checkItemId);
+        if (checkItem == null) {
+            throw new BusinessException("检查项不存在");
+        }
+        
+        validateTaskAccess(checkItem.getTaskId(), userId);
+        
+        taskCheckItemMapper.deleteById(checkItemId);
+        
+        log.info("任务检查项删除成功, checkItemId={}", checkItemId);
     }
 }

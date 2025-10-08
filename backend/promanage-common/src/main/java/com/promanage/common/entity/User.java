@@ -1,4 +1,4 @@
-package com.promanage.service.entity;
+package com.promanage.common.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -79,6 +79,12 @@ public class User extends BaseEntity {
      */
     @Schema(description = "部门ID", example = "1")
     private Long departmentId;
+
+    /**
+     * 组织ID
+     */
+    @Schema(description = "组织ID", example = "1")
+    private Long organizationId;
 
     /**
      * 职位

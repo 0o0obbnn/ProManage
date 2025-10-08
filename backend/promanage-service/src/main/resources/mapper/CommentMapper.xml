@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.CommentMapper">
+
+    <!-- 根据实体类型和实体ID查询评论列表 -->
+    <select id="findByEntityTypeAndEntityId" resultType="com.promanage.service.entity.Comment">
+        SELECT * FROM tb_comment
+        WHERE entity_type = #{entityType}
+        AND entity_id = #{entityId}
+        AND deleted = false
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计实体的评论数量 -->
+    <select id="countByEntityTypeAndEntityId" resultType="int">
+        SELECT COUNT(*) FROM tb_comment
+        WHERE entity_type = #{entityType}
+        AND entity_id = #{entityId}
+        AND deleted = false
+    </select>
+
+    <!-- 根据作者ID查询评论列表 -->
+    <select id="findByAuthorId" resultType="com.promanage.service.entity.Comment">
+        SELECT * FROM tb_comment
+        WHERE author_id = #{authorId}
+        AND deleted = false
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据父评论ID查询回复列表 -->
+    <select id="findByParentCommentId" resultType="com.promanage.service.entity.Comment">
+        SELECT * FROM tb_comment
+        WHERE parent_comment_id = #{parentCommentId}
+        AND deleted = false
+        ORDER BY create_time ASC
+    </select>
+
+</mapper>
+

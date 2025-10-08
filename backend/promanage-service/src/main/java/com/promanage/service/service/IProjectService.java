@@ -115,7 +115,7 @@ public interface IProjectService {
      * @param projectId 项目ID
      * @param members 成员列表
      */
-    void addMembers(Long projectId, List<Object> members);
+    void addMembers(Long projectId, List<com.promanage.service.dto.ProjectMemberDTO> members);
 
     /**
      * 移除项目成员
@@ -131,7 +131,7 @@ public interface IProjectService {
      * @param projectId 项目ID
      * @return 成员列表
      */
-    List<Object> listMembers(Long projectId);
+    List<com.promanage.service.dto.ProjectMemberDTO> listMembers(Long projectId);
 
     /**
      * 检查用户是否为项目成员

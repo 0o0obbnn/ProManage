@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.NotificationMapper">
+
+    <!-- 根据用户ID查找未读通知数量 -->
+    <select id="countUnreadByUserId" parameterType="long" resultType="int">
+        SELECT COUNT(*) FROM tb_notification
+        WHERE user_id = #{userId} AND is_read = false AND deleted = false
+    </select>
+
+    <!-- 根据用户ID查找通知列表 -->
+    <select id="findByUserId" parameterType="long" resultType="com.promanage.service.entity.Notification">
+        SELECT * FROM tb_notification
+        WHERE user_id = #{userId} AND deleted = false
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据用户ID和类型查找通知列表 -->
+    <select id="findByUserIdAndType" resultType="com.promanage.service.entity.Notification">
+        SELECT * FROM tb_notification
+        WHERE user_id = #{userId} AND type = #{type} AND deleted = false
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 标记通知为已读 -->
+    <update id="markAsRead">
+        UPDATE tb_notification
+        SET is_read = true, update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND user_id = #{userId} AND deleted = false
+    </update>
+
+    <!-- 批量标记通知为已读 -->
+    <update id="markAsReadBatch">
+        UPDATE tb_notification
+        SET is_read = true, update_time = CURRENT_TIMESTAMP
+        WHERE user_id = #{userId} AND deleted = false
+        AND id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 标记用户所有通知为已读 -->
+    <update id="markAllAsRead">
+        UPDATE tb_notification
+        SET is_read = true, update_time = CURRENT_TIMESTAMP
+        WHERE user_id = #{userId} AND is_read = false AND deleted = false
+    </update>
+
+    <!-- 删除通知 -->
+    <update id="deleteNotification">
+        UPDATE tb_notification
+        SET deleted = true, update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND user_id = #{userId}
+    </update>
+
+    <!-- 批量删除通知 -->
+    <update id="deleteNotificationBatch">
+        UPDATE tb_notification
+        SET deleted = true, update_time = CURRENT_TIMESTAMP
+        WHERE user_id = #{userId}
+        AND id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 根据相关数据查找通知 -->
+    <select id="findByRelatedData" resultType="com.promanage.service.entity.Notification">
+        SELECT * FROM tb_notification
+        WHERE related_id = #{relatedId} AND related_type = #{relatedType} AND deleted = false
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>

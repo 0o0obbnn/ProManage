@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.TaskCommentMapper">
+
+    <!-- 统计评论的回复数量 -->
+    <select id="countReplies" resultType="int">
+        SELECT COUNT(*) FROM tb_task_comment
+        WHERE parent_comment_id = #{parentCommentId}
+        AND status = 0
+        AND deleted = false
+    </select>
+
+</mapper>
+

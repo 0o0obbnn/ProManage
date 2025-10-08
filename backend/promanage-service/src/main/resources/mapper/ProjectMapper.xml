@@ -1,46 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.promanage.service.mapper.ProjectMapper">
 
-    <!-- 根据负责人ID查找项目列表 -->
-    <select id="findByOwnerId" resultType="com.promanage.service.entity.Project">
-        SELECT * FROM tb_project
-        WHERE owner_id = #{ownerId}
-        AND deleted = false
-        ORDER BY update_time DESC
+    <!-- 搜索项目（用于搜索服务） -->
+    <select id="searchProjects" resultType="com.promanage.service.dto.SearchResultDTO">
+        SELECT p.id, p.name as title, p.description, p.owner_id as creatorId,
+               p.create_time as createTime, p.update_time as updateTime,
+               u.username as creatorName
+        FROM tb_project p
+        LEFT JOIN tb_user u ON p.owner_id = u.id
+        WHERE p.deleted = false
+        <if test="keyword != null and keyword != ''">
+            AND (p.name LIKE CONCAT('%', #{keyword}, '%') OR p.description LIKE CONCAT('%', #{keyword}, '%') OR p.code LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY p.create_time DESC
+        LIMIT #{limit} OFFSET #{offset}
     </select>
 
-    <!-- 根据成员ID查找项目列表 -->
-    <select id="findByMemberId" resultType="com.promanage.service.entity.Project">
-        SELECT p.* FROM tb_project p
-        INNER JOIN tb_project_member pm ON p.id = pm.project_id
-        WHERE pm.user_id = #{userId}
-        AND pm.status = 0
-        AND p.deleted = false
-        ORDER BY p.update_time DESC
+    <!-- 统计搜索项目数量 -->
+    <select id="countSearchProjects" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM tb_project p
+        WHERE p.deleted = false
+        <if test="keyword != null and keyword != ''">
+            AND (p.name LIKE CONCAT('%', #{keyword}, '%') OR p.description LIKE CONCAT('%', #{keyword}, '%') OR p.code LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
     </select>
 
-    <!-- 根据项目编码查找项目 -->
-    <select id="findByCode" resultType="com.promanage.service.entity.Project">
-        SELECT * FROM tb_project
-        WHERE code = #{code}
-        AND deleted = false
-    </select>
-
-    <!-- 根据状态查找项目列表 -->
-    <select id="findByStatus" resultType="com.promanage.service.entity.Project">
-        SELECT * FROM tb_project
-        WHERE status = #{status}
-        AND deleted = false
-        ORDER BY update_time DESC
-    </select>
-
-    <!-- 检查项目编码是否存在 -->
-    <select id="existsByCode" resultType="boolean">
-        SELECT COUNT(*) > 0 FROM tb_project
-        WHERE code = #{code}
-        AND deleted = false
+    <!-- 根据关键词获取不重复的项目名称（用于搜索建议） -->
+    <select id="getDistinctNamesByKeyword" resultType="string">
+        SELECT DISTINCT name FROM tb_project
+        WHERE deleted = false AND name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY create_time DESC
+        LIMIT 10
     </select>
 
 </mapper>

@@ -1,6 +1,6 @@
 package com.promanage.service.converter;
 
-import com.promanage.service.entity.User;
+import com.promanage.common.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -18,22 +18,6 @@ import java.util.List;
  */
 @Mapper(componentModel = "spring")
 public interface UserConverter {
-
-    /**
-     * 实体转实体 (用于复制属性)
-     *
-     * @param source 源User对象
-     * @return 新User对象
-     */
-    User toEntity(User source);
-
-    /**
-     * 批量转换实体列表
-     *
-     * @param users 用户列表
-     * @return 用户列表
-     */
-    List<User> toEntityList(List<User> users);
 
     /**
      * 更新实体属性 (将source的非空属性复制到target)

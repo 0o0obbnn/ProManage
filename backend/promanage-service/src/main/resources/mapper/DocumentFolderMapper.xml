@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.promanage.service.mapper.DocumentFolderMapper">
+
+    <!-- 根据项目ID查找文件夹列表 -->
+    <select id="findByProjectId" parameterType="long" resultType="com.promanage.service.entity.DocumentFolder">
+        SELECT * FROM tb_document_folder
+        WHERE project_id = #{projectId} AND deleted = false
+        ORDER BY sort_order ASC, create_time DESC
+    </select>
+
+    <!-- 根据父文件夹ID查找子文件夹列表 -->
+    <select id="findByParentId" parameterType="long" resultType="com.promanage.service.entity.DocumentFolder">
+        SELECT * FROM tb_document_folder
+        WHERE parent_id = #{parentId} AND deleted = false
+        ORDER BY sort_order ASC, create_time DESC
+    </select>
+
+    <!-- 根据项目ID和父文件夹ID查找文件夹列表 -->
+    <select id="findByProjectIdAndParentId" resultType="com.promanage.service.entity.DocumentFolder">
+        SELECT * FROM tb_document_folder
+        WHERE project_id = #{projectId} AND parent_id = #{parentId} AND deleted = false
+        ORDER BY sort_order ASC, create_time DESC
+    </select>
+
+</mapper>

@@ -30,8 +30,8 @@ import java.util.Arrays;
  * @since 2025-09-30
  */
 @Slf4j
-//@Configuration
-//@EnableCaching
+@Configuration
+@EnableCaching
 public class CacheConfig implements CachingConfigurer {
 
     /**

@@ -1,7 +1,7 @@
 package com.promanage.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.promanage.service.entity.User;
+import com.promanage.common.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;

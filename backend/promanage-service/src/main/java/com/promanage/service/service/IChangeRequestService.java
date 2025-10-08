@@ -2,6 +2,7 @@ package com.promanage.service.service;
 
 import com.promanage.common.domain.PageResult;
 import com.promanage.service.entity.ChangeRequest;
+import com.promanage.service.entity.ChangeRequestApproval;
 import com.promanage.service.entity.ChangeRequestImpact;
 
 import java.util.List;
@@ -54,12 +55,18 @@ public interface IChangeRequestService {
      * @param size 每页大小
      * @param status 状态（可选）
      * @param priority 优先级（可选）
+     * @param impactLevel 影响程度（可选）
      * @param assigneeId 指派人ID（可选）
      * @param requesterId 请求人ID（可选）
+     * @param reviewerId 审核人ID（可选）
+     * @param keyword 关键词搜索（可选，搜索标题和描述）
+     * @param tags 标签（可选）
      * @return 分页结果
      */
     PageResult<ChangeRequest> listChangeRequests(Long projectId, Integer page, Integer size,
-                                              String status, Integer priority, Long assigneeId, Long requesterId);
+                                              String status, Integer priority, String impactLevel,
+                                              Long assigneeId, Long requesterId, Long reviewerId,
+                                              String keyword, String tags);
 
     /**
      * 提交变更请求
@@ -232,8 +239,9 @@ public interface IChangeRequestService {
      * @param changeRequestIds 变更请求ID列表
      * @param status 新状态
      * @param userId 操作人ID
+     * @return 批量操作结果
      */
-    void batchUpdateChangeRequestStatus(List<Long> changeRequestIds, String status, Long userId);
+    com.promanage.common.domain.BatchOperationResult<Long> batchUpdateChangeRequestStatus(List<Long> changeRequestIds, String status, Long userId);
 
     /**
      * 获取项目变更请求统计信息
@@ -275,35 +283,4 @@ public interface IChangeRequestService {
         public void setClosedCount(int closedCount) { this.closedCount = closedCount; }
     }
 
-    /**
-     * 变更请求审批实体
-     */
-    class ChangeRequestApproval {
-        private Long id;
-        private Long changeRequestId;
-        private Long approverId;
-        private String approverName;
-        private String approvalStep;
-        private String status;
-        private String comments;
-        private java.time.LocalDateTime approvedAt;
-
-        // Getters and setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
-        public Long getChangeRequestId() { return changeRequestId; }
-        public void setChangeRequestId(Long changeRequestId) { this.changeRequestId = changeRequestId; }
-        public Long getApproverId() { return approverId; }
-        public void setApproverId(Long approverId) { this.approverId = approverId; }
-        public String getApproverName() { return approverName; }
-        public void setApproverName(String approverName) { this.approverName = approverName; }
-        public String getApprovalStep() { return approvalStep; }
-        public void setApprovalStep(String approvalStep) { this.approvalStep = approvalStep; }
-        public String getStatus() { return status; }
-        public void setStatus(String status) { this.status = status; }
-        public String getComments() { return comments; }
-        public void setComments(String comments) { this.comments = comments; }
-        public java.time.LocalDateTime getApprovedAt() { return approvedAt; }
-        public void setApprovedAt(java.time.LocalDateTime approvedAt) { this.approvedAt = approvedAt; }
-    }
 }

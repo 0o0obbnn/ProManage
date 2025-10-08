@@ -1,6 +1,7 @@
 package com.promanage.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.promanage.service.dto.SearchResultDTO;
 import com.promanage.service.entity.Project;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -116,4 +117,57 @@ public interface ProjectMapper extends BaseMapper<Project> {
      */
     @Select("SELECT COUNT(1) FROM tb_project WHERE code = #{code} AND deleted = false")
     boolean existsByCode(@Param("code") String code);
+
+    /**
+     * 搜索项目（用于搜索服务）
+     *
+     * @param params 搜索参数
+     * @return 项目列表
+     */
+    List<Project> searchProjects(@Param("params") java.util.Map<String, Object> params);
+
+    /**
+     * 统计搜索项目数量
+     *
+     * @param params 搜索参数
+     * @return 项目数量
+     */
+    long countSearchProjects(@Param("params") java.util.Map<String, Object> params);
+
+    /**
+     * 根据关键词获取不重复的项目名称
+     *
+     * @param keyword 关键词
+     * @param limit 限制数量
+     * @return 项目名称列表
+     */
+    List<String> getDistinctNamesByKeyword(@Param("keyword") String keyword, @Param("limit") Integer limit);
+
+    /**
+     * 搜索项目（用于搜索服务）
+     *
+     * @param keyword 关键词
+     * @param offset 偏移量
+     * @param limit 限制数量
+     * @return 项目搜索结果列表
+     */
+    List<SearchResultDTO> searchProjects(@Param("keyword") String keyword, 
+                                        @Param("offset") Integer offset, 
+                                        @Param("limit") Integer limit);
+
+    /**
+     * 统计搜索项目数量
+     *
+     * @param keyword 关键词
+     * @return 项目数量
+     */
+    Long countSearchProjects(@Param("keyword") String keyword);
+
+    /**
+     * 根据关键词获取不重复的项目名称（用于搜索建议）
+     *
+     * @param keyword 关键词
+     * @return 项目名称列表
+     */
+    List<String> getDistinctNamesByKeyword(@Param("keyword") String keyword);
 }

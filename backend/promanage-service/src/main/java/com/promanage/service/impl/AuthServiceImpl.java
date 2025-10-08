@@ -2,7 +2,7 @@ package com.promanage.service.impl;
 
 import com.promanage.common.domain.ResultCode;
 import com.promanage.common.exception.BusinessException;
-import com.promanage.service.entity.User;
+import com.promanage.common.entity.User;
 import com.promanage.service.service.IAuthService;
 import com.promanage.service.service.IEmailService;
 import com.promanage.service.service.IUserService;

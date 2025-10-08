@@ -1,6 +1,6 @@
 package com.promanage.service.service;
 
-import com.promanage.service.entity.User;
+import com.promanage.common.entity.User;
 
 /**
  * 认证服务接口

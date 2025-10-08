@@ -112,13 +112,13 @@ public class DocumentResponse {
                 .fileSize(document.getFileSize())
                 .currentVersion(document.getCurrentVersion())
                 .viewCount(document.getViewCount())
-                .priority(null) // TODO: 从实体中获取优先级
+                .priority(document.getPriority())
                 .creatorId(document.getCreatorId())
-                .creatorName(null) // TODO: 从用户服务获取创建者姓名
-                .creatorAvatar(null) // TODO: 从用户服务获取创建者头像
+                .creatorName(null) // 需要在Controller层通过UserService填充
+                .creatorAvatar(null) // 需要在Controller层通过UserService填充
                 .createTime(document.getCreateTime())
                 .updateTime(document.getUpdateTime())
-                .updaterName(null) // TODO: 从用户服务获取更新者姓名
+                .updaterName(null) // 需要在Controller层通过UserService填充
                 .build();
     }
 }
