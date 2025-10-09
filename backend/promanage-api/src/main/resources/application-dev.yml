@@ -43,9 +43,9 @@ spring:
 
   # Redis Configuration
   redis:
-    host: 192.168.18.7
+    host: 192.168.2.144
     port: 6379
-    password:
+    password: 
     database: 0
     timeout: 3000ms
     lettuce:
@@ -70,6 +70,11 @@ spring:
     placeholder-replacement: true
     placeholders:
       database: promanage
+
+  # Elasticsearch Configuration (disabled by default)
+  elasticsearch:
+    enabled: false
+    uris: localhost:9200
 
   # Mail Configuration
   mail:

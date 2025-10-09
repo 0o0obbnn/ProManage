@@ -3,12 +3,14 @@ package com.promanage.infrastructure.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurer;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.cache.interceptor.CacheResolver;
 import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.cache.interceptor.SimpleCacheErrorHandler;
 import org.springframework.cache.interceptor.SimpleCacheResolver;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 
 import java.lang.reflect.Method;
@@ -19,16 +21,14 @@ import java.util.Arrays;
  * <p>
  * Configures Spring Cache abstraction with custom key generation and error handling.
  * Works with RedisCacheManager configured in RedisConfig.
- *
- * Temporarily disabled to resolve startup conflicts.
  * </p>
  *
  * @author ProManage Team
  * @since 2025-09-30
  */
 @Slf4j
-//@Configuration
-//@EnableCaching
+@Configuration
+@EnableCaching
 public class CacheConfig implements CachingConfigurer {
 
     /**

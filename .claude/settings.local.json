@@ -46,7 +46,14 @@
       "Bash(jar:*)",
       "Read(//d/maven-repo/com/promanage/promanage-service/**)",
       "mcp__serena__search_for_pattern",
-      "mcp__serena__activate_project"
+      "mcp__serena__activate_project",
+      "Bash(tasklist:*)",
+      "Bash(python:*)",
+      "Bash(for file in AuthControllerTest.java DocumentControllerTest.java SearchControllerTest.java)",
+      "Bash(do sed -i 's/import org\\.springframework\\.boot\\.test\\.mock\\.mockito\\.MockBean;/import org.springframework.test.context.bean.override.mockito.MockitoBean;/g' \"$file\")",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Read(//g/nifa/**)"
     ],
     "deny": [],
     "ask": []

@@ -54,6 +54,7 @@ public class TaskController {
     private final ITaskService taskService;
     private final IUserService userService;
     private final TaskCommentMapper taskCommentMapper;
+    private final com.promanage.service.mapper.TaskAttachmentMapper taskAttachmentMapper;
 
     /**
      * 获取项目任务列表
@@ -638,7 +639,7 @@ public class TaskController {
                 .completedDate(task.getCompletedDate())
                 .tags(task.getTags())
                 .commentCount(taskService.listTaskComments(task.getId(), 1, 1).getTotal().intValue())
-                .attachmentCount(0) // TODO: 需要从附件服务获取
+                .attachmentCount(taskAttachmentMapper.countByTaskId(task.getId()))
                 .subtaskCount(taskService.listSubtasks(task.getId()).size())
                 .createTime(task.getCreateTime())
                 .updateTime(task.getUpdateTime())

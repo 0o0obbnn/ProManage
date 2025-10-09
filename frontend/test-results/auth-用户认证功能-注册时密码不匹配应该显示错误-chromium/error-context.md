@@ -1,0 +1,45 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - img "ProManage" [ref=e6]
+    - heading "创建账号" [level=1] [ref=e7]
+    - paragraph [ref=e8]: 加入 ProManage，开始您的项目管理之旅
+  - generic [ref=e9]:
+    - generic [ref=e15]:
+      - img "user" [ref=e17]:
+        - img [ref=e18]
+      - textbox "用户名" [ref=e20]: temp_1760018277063
+    - generic [ref=e26]:
+      - img "mail" [ref=e28]:
+        - img [ref=e29]
+      - textbox "邮箱地址" [active] [ref=e31]: temp_1760018277063@example.com
+    - generic [ref=e37]:
+      - img "lock" [ref=e39]:
+        - img [ref=e40]
+      - textbox "密码" [ref=e42]
+      - img "eye-invisible" [ref=e44] [cursor=pointer]:
+        - img [ref=e45] [cursor=pointer]
+    - generic [ref=e53]:
+      - img "lock" [ref=e55]:
+        - img [ref=e56]
+      - textbox "确认密码" [ref=e58]
+      - img "eye-invisible" [ref=e60] [cursor=pointer]:
+        - img [ref=e61] [cursor=pointer]
+    - generic [ref=e69] [cursor=pointer]:
+      - checkbox "我已阅读并同意 服务条款 和 隐私政策" [ref=e71] [cursor=pointer]
+      - generic [ref=e73] [cursor=pointer]:
+        - text: 我已阅读并同意
+        - link "服务条款" [ref=e74] [cursor=pointer]:
+          - /url: "#"
+        - text: 和
+        - link "隐私政策" [ref=e75] [cursor=pointer]:
+          - /url: "#"
+    - button "创建账号" [ref=e81] [cursor=pointer]:
+      - generic [ref=e82] [cursor=pointer]: 创建账号
+    - generic [ref=e84]:
+      - text: 已有账号?
+      - link "立即登录" [ref=e85] [cursor=pointer]:
+        - /url: /login
+```

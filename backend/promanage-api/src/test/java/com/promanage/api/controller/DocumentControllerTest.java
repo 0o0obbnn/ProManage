@@ -9,7 +9,7 @@ import com.promanage.service.service.IUserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,21 +27,21 @@ class DocumentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private IDocumentService documentService;
-    @MockBean
+    @MockitoBean
     private IDocumentFolderService documentFolderService;
-    @MockBean
+    @MockitoBean
     private IUserService userService;
-    @MockBean
+    @MockitoBean
     private CommentMapper commentMapper;
     
     // Mock security components
-    @MockBean
+    @MockitoBean
     private com.promanage.infrastructure.security.JwtTokenProvider jwtTokenProvider;
-    @MockBean
+    @MockitoBean
     private com.promanage.infrastructure.security.TokenBlacklistService tokenBlacklistService;
-    @MockBean
+    @MockitoBean
     private com.promanage.infrastructure.security.JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     // Removed ObjectMapper as it's not needed in this test

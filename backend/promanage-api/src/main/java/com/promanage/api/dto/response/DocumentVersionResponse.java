@@ -1,5 +1,8 @@
 package com.promanage.api.dto.response;
 
+import com.promanage.service.entity.DocumentVersion;
+import com.promanage.service.service.IUserService;
+import com.promanage.common.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -60,4 +63,75 @@ public class DocumentVersionResponse {
 
     @Schema(description = "是否为当前版本", example = "true")
     private Boolean isCurrent;
+
+    /**
+     * 从DocumentVersion实体创建DocumentVersionResponse
+     *
+     * @param documentVersion DocumentVersion实体
+     * @return DocumentVersionResponse对象
+     */
+    public static DocumentVersionResponse fromEntity(DocumentVersion documentVersion) {
+        if (documentVersion == null) {
+            return null;
+        }
+
+        return DocumentVersionResponse.builder()
+                .id(documentVersion.getId())
+                .documentId(documentVersion.getDocumentId())
+                .version(documentVersion.getVersionNumber())
+                .changeLog(documentVersion.getChangeLog())
+                .fileUrl(documentVersion.getFileUrl())
+                .fileSize(documentVersion.getFileSize())
+                .contentHash(documentVersion.getContentHash())
+                .creatorId(documentVersion.getCreatorId())
+                .creatorName(null) // TODO: 需要从用户服务获取 - 使用fromEntityWithUser方法
+                .creatorAvatar(null) // TODO: 需要从用户服务获取 - 使用fromEntityWithUser方法
+                .createTime(documentVersion.getCreateTime())
+                .isCurrent(documentVersion.getIsCurrent())
+                .build();
+    }
+
+    /**
+     * 从DocumentVersion实体创建DocumentVersionResponse，包含创建者信息
+     *
+     * @param documentVersion DocumentVersion实体
+     * @param userService     用户服务（用于获取创建者信息）
+     * @return DocumentVersionResponse对象
+     */
+    public static DocumentVersionResponse fromEntityWithUser(DocumentVersion documentVersion, IUserService userService) {
+        if (documentVersion == null) {
+            return null;
+        }
+
+        // 获取创建者信息
+        String creatorName = null;
+        String creatorAvatar = null;
+
+        if (documentVersion.getCreatorId() != null) {
+            try {
+                User creator = userService.getById(documentVersion.getCreatorId());
+                if (creator != null) {
+                    creatorName = creator.getRealName();
+                    creatorAvatar = creator.getAvatar();
+                }
+            } catch (Exception e) {
+                // 如果获取用户信息失败，保持为null
+            }
+        }
+
+        return DocumentVersionResponse.builder()
+                .id(documentVersion.getId())
+                .documentId(documentVersion.getDocumentId())
+                .version(documentVersion.getVersionNumber())
+                .changeLog(documentVersion.getChangeLog())
+                .fileUrl(documentVersion.getFileUrl())
+                .fileSize(documentVersion.getFileSize())
+                .contentHash(documentVersion.getContentHash())
+                .creatorId(documentVersion.getCreatorId())
+                .creatorName(creatorName)
+                .creatorAvatar(creatorAvatar)
+                .createTime(documentVersion.getCreateTime())
+                .isCurrent(documentVersion.getIsCurrent())
+                .build();
+    }
 }

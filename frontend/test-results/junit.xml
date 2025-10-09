@@ -1,0 +1,478 @@
+<testsuites id="" name="" tests="18" failures="9" skipped="0" errors="0" time="17.829312">
+<testsuite name="auth.spec.ts" timestamp="2025-10-09T13:57:56.291Z" hostname="chromium" tests="7" failures="6" skipped="0" time="75.014" errors="0">
+<testcase name="用户认证功能 › 应该显示登录页面" classname="auth.spec.ts" time="7.607">
+<failure message="auth.spec.ts:21:3 应该显示登录页面" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:21:3 › 用户认证功能 › 应该显示登录页面 ───────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  getByRole('button', { name: /登录|登錄|Login/i })
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByRole('button', { name: /登录|登錄|Login/i })
+
+
+      30 |
+      31 |     // 验证登录按钮存在
+    > 32 |     await expect(page.getByRole('button', { name: /登录|登錄|Login/i })).toBeVisible();
+         |                                                                      ^
+      33 |   });
+      34 |
+      35 |   test('应该成功注册新用户', async ({ page }) => {
+        at G:\nifa\ProManage\frontend\e2e\auth.spec.ts:32:70
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该显示登录页面-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该显示登录页面-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\auth-用户认证功能-应该显示登录页面-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该显示登录页面-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\test-results\auth-用户认证功能-应该显示登录页面-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-用户认证功能-应该显示登录页面-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|auth-用户认证功能-应该显示登录页面-chromium\video.webm]]
+
+[[ATTACHMENT|auth-用户认证功能-应该显示登录页面-chromium\error-context.md]]
+
+[[ATTACHMENT|auth-用户认证功能-应该显示登录页面-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="用户认证功能 › 应该成功注册新用户" classname="auth.spec.ts" time="13.115">
+<failure message="auth.spec.ts:35:3 应该成功注册新用户" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:35:3 › 用户认证功能 › 应该成功注册新用户 ──────────────────────────────────────────────
+
+    TimeoutError: page.fill: Timeout 10000ms exceeded.
+    Call log:
+      - waiting for locator('input[placeholder*="真实姓名"]')
+
+
+      43 |     await page.fill('input[placeholder*="用户名"]', testUsername);
+      44 |     await page.fill('input[placeholder*="邮箱"]', testEmail);
+    > 45 |     await page.fill('input[placeholder*="真实姓名"]', testRealName);
+         |                ^
+      46 |
+      47 |     // 填写密码
+      48 |     const passwordInputs = page.locator('input[type="password"]');
+        at G:\nifa\ProManage\frontend\e2e\auth.spec.ts:45:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该成功注册新用户-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该成功注册新用户-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\auth-用户认证功能-应该成功注册新用户-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该成功注册新用户-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\test-results\auth-用户认证功能-应该成功注册新用户-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-用户认证功能-应该成功注册新用户-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|auth-用户认证功能-应该成功注册新用户-chromium\video.webm]]
+
+[[ATTACHMENT|auth-用户认证功能-应该成功注册新用户-chromium\error-context.md]]
+
+[[ATTACHMENT|auth-用户认证功能-应该成功注册新用户-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="用户认证功能 › 应该成功登录" classname="auth.spec.ts" time="12.529">
+<failure message="auth.spec.ts:63:3 应该成功登录" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:63:3 › 用户认证功能 › 应该成功登录 ─────────────────────────────────────────────────
+
+    TimeoutError: page.click: Timeout 10000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("登录")')
+
+
+      72 |
+      73 |     // 点击登录按钮
+    > 74 |     await page.click('button:has-text("登录")');
+         |                ^
+      75 |
+      76 |     // 等待登录成功
+      77 |     await page.waitForTimeout(3000);
+        at G:\nifa\ProManage\frontend\e2e\auth.spec.ts:74:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该成功登录-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该成功登录-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\auth-用户认证功能-应该成功登录-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该成功登录-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\test-results\auth-用户认证功能-应该成功登录-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-用户认证功能-应该成功登录-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|auth-用户认证功能-应该成功登录-chromium\video.webm]]
+
+[[ATTACHMENT|auth-用户认证功能-应该成功登录-chromium\error-context.md]]
+
+[[ATTACHMENT|auth-用户认证功能-应该成功登录-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="用户认证功能 › 登录失败应该显示错误提示" classname="auth.spec.ts" time="12.612">
+<failure message="auth.spec.ts:86:3 登录失败应该显示错误提示" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:86:3 › 用户认证功能 › 登录失败应该显示错误提示 ───────────────────────────────────────────
+
+    TimeoutError: page.click: Timeout 10000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("登录")')
+
+
+      92 |
+      93 |     // 点击登录
+    > 94 |     await page.click('button:has-text("登录")');
+         |                ^
+      95 |
+      96 |     // 等待错误提示
+      97 |     await page.waitForTimeout(2000);
+        at G:\nifa\ProManage\frontend\e2e\auth.spec.ts:94:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-登录失败应该显示错误提示-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-登录失败应该显示错误提示-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\auth-用户认证功能-登录失败应该显示错误提示-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-登录失败应该显示错误提示-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\test-results\auth-用户认证功能-登录失败应该显示错误提示-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-用户认证功能-登录失败应该显示错误提示-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|auth-用户认证功能-登录失败应该显示错误提示-chromium\video.webm]]
+
+[[ATTACHMENT|auth-用户认证功能-登录失败应该显示错误提示-chromium\error-context.md]]
+
+[[ATTACHMENT|auth-用户认证功能-登录失败应该显示错误提示-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="用户认证功能 › 注册时密码不匹配应该显示错误" classname="auth.spec.ts" time="12.72">
+<failure message="auth.spec.ts:104:3 注册时密码不匹配应该显示错误" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:104:3 › 用户认证功能 › 注册时密码不匹配应该显示错误 ────────────────────────────────────────
+
+    TimeoutError: page.fill: Timeout 10000ms exceeded.
+    Call log:
+      - waiting for locator('input[placeholder*="真实姓名"]')
+
+
+      108 |     await page.fill('input[placeholder*="用户名"]', `temp_${timestamp}`);
+      109 |     await page.fill('input[placeholder*="邮箱"]', `temp_${timestamp}@example.com`);
+    > 110 |     await page.fill('input[placeholder*="真实姓名"]', 'Temp User');
+          |                ^
+      111 |
+      112 |     const passwordInputs = page.locator('input[type="password"]');
+      113 |     await passwordInputs.nth(0).fill('Password123');
+        at G:\nifa\ProManage\frontend\e2e\auth.spec.ts:110:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-注册时密码不匹配应该显示错误-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-注册时密码不匹配应该显示错误-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\auth-用户认证功能-注册时密码不匹配应该显示错误-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-注册时密码不匹配应该显示错误-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\test-results\auth-用户认证功能-注册时密码不匹配应该显示错误-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-用户认证功能-注册时密码不匹配应该显示错误-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|auth-用户认证功能-注册时密码不匹配应该显示错误-chromium\video.webm]]
+
+[[ATTACHMENT|auth-用户认证功能-注册时密码不匹配应该显示错误-chromium\error-context.md]]
+
+[[ATTACHMENT|auth-用户认证功能-注册时密码不匹配应该显示错误-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="用户认证功能 › 应该能够登出" classname="auth.spec.ts" time="12.567">
+<failure message="auth.spec.ts:123:3 应该能够登出" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:123:3 › 用户认证功能 › 应该能够登出 ────────────────────────────────────────────────
+
+    TimeoutError: page.click: Timeout 10000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("登录")')
+
+
+      126 |     await page.fill('input[placeholder*="用户名"]', testUsername);
+      127 |     await page.fill('input[type="password"]', testPassword);
+    > 128 |     await page.click('button:has-text("登录")');
+          |                ^
+      129 |
+      130 |     // 等待登录成功
+      131 |     await page.waitForURL(/\/(dashboard|home)/);
+        at G:\nifa\ProManage\frontend\e2e\auth.spec.ts:128:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该能够登出-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该能够登出-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\auth-用户认证功能-应该能够登出-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\test-results\auth-用户认证功能-应该能够登出-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\test-results\auth-用户认证功能-应该能够登出-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|auth-用户认证功能-应该能够登出-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|auth-用户认证功能-应该能够登出-chromium\video.webm]]
+
+[[ATTACHMENT|auth-用户认证功能-应该能够登出-chromium\error-context.md]]
+
+[[ATTACHMENT|auth-用户认证功能-应该能够登出-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="页面访问控制 › 未登录时访问受保护页面应该重定向到登录页" classname="auth.spec.ts" time="3.864">
+</testcase>
+</testsuite>
+<testsuite name="basic.spec.ts" timestamp="2025-10-09T13:57:56.291Z" hostname="chromium" tests="11" failures="3" skipped="0" time="19.248" errors="0">
+<testcase name="基础页面功能 › 首页应该正常加载" classname="basic.spec.ts" time="0.781">
+</testcase>
+<testcase name="基础页面功能 › 登录页面应该正常加载" classname="basic.spec.ts" time="5.733">
+<failure message="basic.spec.ts:20:3 登录页面应该正常加载" type="FAILURE">
+<![CDATA[  [chromium] › basic.spec.ts:20:3 › 基础页面功能 › 登录页面应该正常加载 ────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  getByRole('button', { name: /登录|登錄|Login/i })
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByRole('button', { name: /登录|登錄|Login/i })
+
+
+      30 |     // 验证登录按钮
+      31 |     const loginButton = page.getByRole('button', { name: /登录|登錄|Login/i });
+    > 32 |     await expect(loginButton).toBeVisible();
+         |                               ^
+      33 |   });
+      34 |
+      35 |   test('注册页面应该正常加载', async ({ page }) => {
+        at G:\nifa\ProManage\frontend\e2e\basic.spec.ts:32:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\basic-基础页面功能-登录页面应该正常加载-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\basic-基础页面功能-登录页面应该正常加载-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\basic-基础页面功能-登录页面应该正常加载-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\test-results\basic-基础页面功能-登录页面应该正常加载-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\test-results\basic-基础页面功能-登录页面应该正常加载-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|basic-基础页面功能-登录页面应该正常加载-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|basic-基础页面功能-登录页面应该正常加载-chromium\video.webm]]
+
+[[ATTACHMENT|basic-基础页面功能-登录页面应该正常加载-chromium\error-context.md]]
+
+[[ATTACHMENT|basic-基础页面功能-登录页面应该正常加载-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="基础页面功能 › 注册页面应该正常加载" classname="basic.spec.ts" time="6.049">
+<failure message="basic.spec.ts:35:3 注册页面应该正常加载" type="FAILURE">
+<![CDATA[  [chromium] › basic.spec.ts:35:3 › 基础页面功能 › 注册页面应该正常加载 ────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  getByRole('button', { name: /注册|註冊|Register|Sign Up/i })
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByRole('button', { name: /注册|註冊|Register|Sign Up/i })
+
+
+      46 |     // 验证注册按钮
+      47 |     const registerButton = page.getByRole('button', { name: /注册|註冊|Register|Sign Up/i });
+    > 48 |     await expect(registerButton).toBeVisible();
+         |                                  ^
+      49 |   });
+      50 |
+      51 |   test('页面应该有正确的字符编码', async ({ page }) => {
+        at G:\nifa\ProManage\frontend\e2e\basic.spec.ts:48:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\basic-基础页面功能-注册页面应该正常加载-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\basic-基础页面功能-注册页面应该正常加载-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\basic-基础页面功能-注册页面应该正常加载-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\test-results\basic-基础页面功能-注册页面应该正常加载-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\test-results\basic-基础页面功能-注册页面应该正常加载-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|basic-基础页面功能-注册页面应该正常加载-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|basic-基础页面功能-注册页面应该正常加载-chromium\video.webm]]
+
+[[ATTACHMENT|basic-基础页面功能-注册页面应该正常加载-chromium\error-context.md]]
+
+[[ATTACHMENT|basic-基础页面功能-注册页面应该正常加载-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="基础页面功能 › 页面应该有正确的字符编码" classname="basic.spec.ts" time="0.764">
+</testcase>
+<testcase name="基础页面功能 › 页面应该有响应式视口设置" classname="basic.spec.ts" time="0.674">
+</testcase>
+<testcase name="基础页面功能 › 前端资源应该正常加载" classname="basic.spec.ts" time="1.165">
+</testcase>
+<testcase name="基础页面功能 › 控制台不应该有严重错误" classname="basic.spec.ts" time="1.278">
+</testcase>
+<testcase name="API健康检查 › 后端API应该可访问" classname="basic.spec.ts" time="0.215">
+<failure message="basic.spec.ts:122:3 后端API应该可访问" type="FAILURE">
+<![CDATA[  [chromium] › basic.spec.ts:122:3 › API健康检查 › 后端API应该可访问 ──────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 503
+
+      124 |     const response = await request.get('http://localhost:8080/actuator/health');
+      125 |
+    > 126 |     expect(response.status()).toBe(200);
+          |                               ^
+      127 |
+      128 |     const health = await response.json();
+      129 |     expect(health.status).toBe('UP');
+        at G:\nifa\ProManage\frontend\e2e\basic.spec.ts:126:31
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\test-results\basic-API健康检查-后端API应该可访问-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\test-results\basic-API健康检查-后端API应该可访问-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|basic-API健康检查-后端API应该可访问-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="API健康检查 › API应该支持CORS" classname="basic.spec.ts" time="0.17">
+</testcase>
+<testcase name="性能测试 › 首页加载时间应该合理" classname="basic.spec.ts" time="1.294">
+<system-out>
+<![CDATA[首页加载时间: 819ms
+]]>
+</system-out>
+</testcase>
+<testcase name="性能测试 › 登录页面加载时间应该合理" classname="basic.spec.ts" time="1.125">
+<system-out>
+<![CDATA[登录页加载时间: 725ms
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

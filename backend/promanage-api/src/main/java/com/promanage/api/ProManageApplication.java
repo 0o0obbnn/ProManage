@@ -51,8 +51,18 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * @since 2025-09-30
  */
 @SpringBootApplication(
-        scanBasePackages = {"com.promanage"},
-        exclude = {org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration.class}
+        scanBasePackages = {
+                "com.promanage.api",
+                "com.promanage.service",
+                "com.promanage.infrastructure",
+                "com.promanage.common"
+        },
+        exclude = {
+                org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration.class,
+                org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration.class,
+                org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration.class,
+                org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration.class
+        }
 )
 @MapperScan("com.promanage.service.mapper")
 @EnableCaching

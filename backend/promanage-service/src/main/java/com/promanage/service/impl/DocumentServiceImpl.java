@@ -10,10 +10,14 @@ import com.promanage.infrastructure.cache.CacheService;
 import com.promanage.infrastructure.security.SecurityUtils;
 import com.promanage.service.entity.Document;
 import com.promanage.service.entity.DocumentVersion;
+import com.promanage.service.entity.DocumentFavorite;
+import com.promanage.service.entity.Project;
 import com.promanage.service.mapper.DocumentMapper;
 import com.promanage.service.mapper.DocumentVersionMapper;
+import com.promanage.service.mapper.DocumentFavoriteMapper;
 import com.promanage.service.service.IDocumentService;
 import com.promanage.service.service.IDocumentFolderService;
+import com.promanage.service.service.IProjectService;
 import com.promanage.service.dto.request.CreateDocumentRequest;
 import com.promanage.service.dto.request.UpdateDocumentRequest;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +29,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Collections;
@@ -47,8 +52,10 @@ public class DocumentServiceImpl implements IDocumentService {
 
     private final DocumentMapper documentMapper;
     private final DocumentVersionMapper documentVersionMapper;
+    private final DocumentFavoriteMapper documentFavoriteMapper;
     private final CacheService cacheService;
     private final IDocumentFolderService documentFolderService;
+    private final IProjectService projectService;
 
     /**
      * View count persistence threshold
@@ -243,8 +250,18 @@ public class DocumentServiceImpl implements IDocumentService {
 
         // 设置标签
         if (request.getTags() != null && !request.getTags().isEmpty()) {
-            // TODO: 标签功能待实现，需要创建Tag实体和服务
-            log.warn("标签功能尚未实现, tags={}", request.getTags());
+            // TODO: 标签功能需要完整的Tag系统支持
+            // 当前系统尚未实现标签管理模块，需要以下步骤：
+            // 1. 创建Tag实体类 (id, name, color, category)
+            // 2. 创建TagMapper接口
+            // 3. 创建ITagService接口和TagServiceImpl实现类
+            // 4. 创建DocumentTag关联表 (document_id, tag_id)
+            // 5. 实现标签的CRUD操作
+            // 6. 实现文档与标签的关联关系管理
+            //
+            // 临时方案：可以将tags作为JSON字符串存储在document表的tags字段中
+            // document.setTags(String.join(",", request.getTags()));
+            log.warn("标签功能尚未实现，需要完整的Tag系统, tags={}", request.getTags());
         }
 
         // 创建文档
@@ -870,16 +887,32 @@ public class DocumentServiceImpl implements IDocumentService {
     public int getWeekViewCount(Long documentId) {
         log.info("获取文档周浏览量, documentId={}", documentId);
 
-        // TODO: 实现周浏览量统计
-        // 需要在Redis中记录每日浏览量，或在数据库中创建浏览记录表
-        // 暂时返回总浏览量的估算值（假设最近一周占总浏览量的30%）
+        // TODO: 实现基于Redis的周浏览量统计
+        // 推荐实现方案：
+        // 1. 在incrementViewCountAtomic()方法中，除了增加总浏览量，同时维护每日浏览量
+        //    使用Redis键格式: "document:viewcount:daily:{documentId}:{date}"
+        //    例如: "document:viewcount:daily:123:2025-10-09"
+        //
+        // 2. 在此方法中，查询最近7天的Redis键，累加浏览量
+        //    LocalDate today = LocalDate.now();
+        //    int weekViewCount = 0;
+        //    for (int i = 0; i < 7; i++) {
+        //        String dateKey = today.minusDays(i).toString();
+        //        String cacheKey = "document:viewcount:daily:" + documentId + ":" + dateKey;
+        //        Long dailyCount = cacheService.get(cacheKey);
+        //        weekViewCount += (dailyCount != null ? dailyCount.intValue() : 0);
+        //    }
+        //
+        // 3. 设置每日计数的TTL为8天，自动清理过期数据
+        //
+        // 暂时返回总浏览量的30%作为估算值
         Document document = getByIdWithoutView(documentId);
         if (document == null || document.getViewCount() == null) {
             return 0;
         }
 
         int weekViewCount = (int) (document.getViewCount() * 0.3);
-        log.warn("周浏览量功能尚未完全实现，返回估算值: {}", weekViewCount);
+        log.warn("周浏览量功能尚未完全实现（需要Redis日浏览量追踪），返回估算值: {}", weekViewCount);
         return weekViewCount;
     }
 
@@ -900,10 +933,21 @@ public class DocumentServiceImpl implements IDocumentService {
             throw new BusinessException(ResultCode.NOT_FOUND, "文档不存在");
         }
 
-        // TODO: 实现收藏功能
-        // 需要创建tb_document_favorite表来存储收藏关系
-        // 暂时只记录日志
-        log.warn("收藏功能尚未实现，需要创建tb_document_favorite表");
+        // 检查是否已经收藏
+        int existingCount = documentFavoriteMapper.countByDocumentIdAndUserId(documentId, userId);
+        if (existingCount > 0) {
+            log.warn("文档已经被收藏, documentId={}, userId={}", documentId, userId);
+            throw new BusinessException(ResultCode.CONFLICT, "文档已经被收藏");
+        }
+
+        // 创建收藏记录
+        DocumentFavorite favorite = new DocumentFavorite();
+        favorite.setDocumentId(documentId);
+        favorite.setUserId(userId);
+        favorite.setCreatedAt(LocalDateTime.now());
+
+        documentFavoriteMapper.insert(favorite);
+        log.info("文档收藏成功, documentId={}, userId={}", documentId, userId);
     }
 
     /**
@@ -917,9 +961,21 @@ public class DocumentServiceImpl implements IDocumentService {
     public void unfavoriteDocument(Long documentId, Long userId) {
         log.info("取消收藏文档, documentId={}, userId={}", documentId, userId);
 
-        // TODO: 实现取消收藏功能
-        // 需要从tb_document_favorite表中删除收藏记录
-        log.warn("取消收藏功能尚未实现，需要创建tb_document_favorite表");
+        // 检查收藏记录是否存在
+        int existingCount = documentFavoriteMapper.countByDocumentIdAndUserId(documentId, userId);
+        if (existingCount == 0) {
+            log.warn("收藏记录不存在, documentId={}, userId={}", documentId, userId);
+            throw new BusinessException(ResultCode.NOT_FOUND, "收藏记录不存在");
+        }
+
+        // 删除收藏记录
+        int deletedCount = documentFavoriteMapper.deleteByDocumentIdAndUserId(documentId, userId);
+        if (deletedCount > 0) {
+            log.info("取消收藏成功, documentId={}, userId={}", documentId, userId);
+        } else {
+            log.error("取消收藏失败, documentId={}, userId={}", documentId, userId);
+            throw new BusinessException(ResultCode.INTERNAL_SERVER_ERROR, "取消收藏失败");
+        }
     }
 
     /**
@@ -932,10 +988,14 @@ public class DocumentServiceImpl implements IDocumentService {
     public int getFavoriteCount(Long documentId) {
         log.info("获取文档收藏数量, documentId={}", documentId);
 
-        // TODO: 实现收藏数量统计
-        // 需要从tb_document_favorite表中统计
-        log.warn("收藏数量统计功能尚未实现，返回0");
-        return 0;
+        try {
+            int count = documentFavoriteMapper.countByDocumentId(documentId);
+            log.info("文档收藏数量: {}, documentId={}", count, documentId);
+            return count;
+        } catch (Exception e) {
+            log.error("获取文档收藏数量失败, documentId={}", documentId, e);
+            return 0;
+        }
     }
 
     
@@ -957,10 +1017,15 @@ public class DocumentServiceImpl implements IDocumentService {
     public boolean isFavorited(Long documentId, Long userId) {
         log.info("检查文档是否已收藏, documentId={}, userId={}", documentId, userId);
 
-        // TODO: 实现收藏状态检查
-        // 需要查询tb_document_favorite表
-        log.warn("收藏状态检查功能尚未实现，返回false");
-        return false;
+        try {
+            int count = documentFavoriteMapper.countByDocumentIdAndUserId(documentId, userId);
+            boolean isFavorited = count > 0;
+            log.info("文档收藏状态: {}, documentId={}, userId={}", isFavorited, documentId, userId);
+            return isFavorited;
+        } catch (Exception e) {
+            log.error("检查文档收藏状态失败, documentId={}, userId={}", documentId, userId, e);
+            return false;
+        }
     }
 
     /**
@@ -977,10 +1042,29 @@ public class DocumentServiceImpl implements IDocumentService {
             return Collections.emptyMap();
         }
 
-        // TODO: 实现项目名称批量查询
-        // 需要注入IProjectService并调用批量查询方法
-        log.warn("项目名称批量查询功能尚未实现，返回空映射");
-        return Collections.emptyMap();
+        try {
+            // 使用stream批量获取项目信息并转换为Map
+            return projectIds.stream()
+                    .distinct() // 去重
+                    .map(projectId -> {
+                        try {
+                            Project project = projectService.getById(projectId);
+                            return project;
+                        } catch (Exception e) {
+                            log.warn("获取项目失败, projectId={}", projectId, e);
+                            return null;
+                        }
+                    })
+                    .filter(project -> project != null) // 过滤null
+                    .collect(Collectors.toMap(
+                            Project::getId,
+                            Project::getName,
+                            (existing, replacement) -> existing // 重复key时保留第一个
+                    ));
+        } catch (Exception e) {
+            log.error("批量获取项目名称失败, projectIds={}", projectIds, e);
+            return Collections.emptyMap();
+        }
     }
 
     /**

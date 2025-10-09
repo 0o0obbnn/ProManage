@@ -1,0 +1,48 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - img "ProManage" [ref=e6]
+    - heading "创建账号" [level=1] [ref=e7]
+    - paragraph [ref=e8]: 加入 ProManage，开始您的项目管理之旅
+  - generic [ref=e9]:
+    - generic [ref=e12]:
+      - generic [ref=e15]:
+        - img "user" [ref=e17]:
+          - img [ref=e18]
+        - textbox "用户名" [ref=e20]: e2e_user_1760018277074
+      - alert [ref=e22]:
+        - generic [ref=e23]: 用户名最多20个字符
+    - generic [ref=e29]:
+      - img "mail" [ref=e31]:
+        - img [ref=e32]
+      - textbox "邮箱地址" [active] [ref=e34]: e2e_test_1760018277074@example.com
+    - generic [ref=e40]:
+      - img "lock" [ref=e42]:
+        - img [ref=e43]
+      - textbox "密码" [ref=e45]
+      - img "eye-invisible" [ref=e47] [cursor=pointer]:
+        - img [ref=e48] [cursor=pointer]
+    - generic [ref=e56]:
+      - img "lock" [ref=e58]:
+        - img [ref=e59]
+      - textbox "确认密码" [ref=e61]
+      - img "eye-invisible" [ref=e63] [cursor=pointer]:
+        - img [ref=e64] [cursor=pointer]
+    - generic [ref=e72] [cursor=pointer]:
+      - checkbox "我已阅读并同意 服务条款 和 隐私政策" [ref=e74] [cursor=pointer]
+      - generic [ref=e76] [cursor=pointer]:
+        - text: 我已阅读并同意
+        - link "服务条款" [ref=e77] [cursor=pointer]:
+          - /url: "#"
+        - text: 和
+        - link "隐私政策" [ref=e78] [cursor=pointer]:
+          - /url: "#"
+    - button "创建账号" [ref=e84] [cursor=pointer]:
+      - generic [ref=e85] [cursor=pointer]: 创建账号
+    - generic [ref=e87]:
+      - text: 已有账号?
+      - link "立即登录" [ref=e88] [cursor=pointer]:
+        - /url: /login
+```
