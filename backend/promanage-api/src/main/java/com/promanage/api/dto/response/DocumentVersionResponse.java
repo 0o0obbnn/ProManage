@@ -84,8 +84,9 @@ public class DocumentVersionResponse {
                 .fileSize(documentVersion.getFileSize())
                 .contentHash(documentVersion.getContentHash())
                 .creatorId(documentVersion.getCreatorId())
-                .creatorName(null) // TODO: 需要从用户服务获取 - 使用fromEntityWithUser方法
-                .creatorAvatar(null) // TODO: 需要从用户服务获取 - 使用fromEntityWithUser方法
+                // 创建者名称/头像仅在fromEntityWithUser提供
+                .creatorName(null)
+                .creatorAvatar(null)
                 .createTime(documentVersion.getCreateTime())
                 .isCurrent(documentVersion.getIsCurrent())
                 .build();

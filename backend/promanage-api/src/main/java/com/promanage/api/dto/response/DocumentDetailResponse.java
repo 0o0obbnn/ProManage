@@ -4,8 +4,9 @@ import com.promanage.service.entity.Document;
 import com.promanage.service.entity.DocumentVersion;
 import com.promanage.service.service.IDocumentService;
 import com.promanage.service.service.IUserService;
+import com.promanage.service.service.IDocumentCommentService;
+import com.promanage.service.service.IDocumentRelationService;
 import com.promanage.service.mapper.DocumentVersionMapper;
-import com.promanage.common.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -82,9 +83,9 @@ public class DocumentDetailResponse extends DocumentResponse {
                 .updateTime(baseResponse.getUpdateTime())
                 .updaterName(baseResponse.getUpdaterName())
                 .content(document.getContent())
-                .versions(null) // TODO: 从版本服务获取版本历史 - 使用fromEntityWithDetails方法
-                .relatedDocuments(null) // TODO: 从关联服务获取关联文档 - 使用fromEntityWithDetails方法
-                .statistics(null) // TODO: 从统计服务获取统计信息 - 使用fromEntityWithDetails方法
+                .versions(null) // 使用 fromEntityWithDetails 获取完整版本历史
+                .relatedDocuments(null) // 使用 fromEntityWithDetails 获取关联文档
+                .statistics(null) // 使用 fromEntityWithDetails 获取统计信息
                 .build();
     }
 
@@ -126,7 +127,8 @@ public class DocumentDetailResponse extends DocumentResponse {
             // 统计版本总数
             stats.setTotalVersions(documentVersionMapper.countByDocumentId(document.getId()));
 
-            // TODO: 设置评论数 - 需要实现DocumentComment实体和Mapper
+            // 评论数
+            // 需要调用重载方法设置 commentCount
             stats.setCommentCount(0);
 
             response.setStatistics(stats);
@@ -135,8 +137,43 @@ public class DocumentDetailResponse extends DocumentResponse {
             response.setStatistics(null);
         }
 
-        // TODO: 获取关联文档 - 需要实现IDocumentRelationService
         response.setRelatedDocuments(null);
+
+        return response;
+    }
+
+    /**
+     * 重载：包含评论统计和关联文档
+     */
+    public static DocumentDetailResponse fromEntityWithDetails(Document document,
+                                                               IDocumentService documentService,
+                                                               IUserService userService,
+                                                               DocumentVersionMapper documentVersionMapper,
+                                                               IDocumentCommentService documentCommentService,
+                                                               IDocumentRelationService documentRelationService) {
+        DocumentDetailResponse response = fromEntityWithDetails(document, documentService, userService, documentVersionMapper);
+        if (response == null) return null;
+
+        // 设置评论数
+        try {
+            if (response.getStatistics() == null) {
+                response.setStatistics(new DocumentStatistics());
+            }
+            int commentCount = documentCommentService.countByDocumentId(document.getId());
+            response.getStatistics().setCommentCount(commentCount);
+        } catch (Exception e) {
+            // ignore
+        }
+
+        // 关联文档
+        try {
+            List<Document> related = documentRelationService.findRelatedByTags(document.getId(), 10);
+            if (related != null && !related.isEmpty()) {
+                response.setRelatedDocuments(related.stream().map(DocumentResponse::fromEntity).collect(Collectors.toList()));
+            }
+        } catch (Exception e) {
+            // ignore
+        }
 
         return response;
     }

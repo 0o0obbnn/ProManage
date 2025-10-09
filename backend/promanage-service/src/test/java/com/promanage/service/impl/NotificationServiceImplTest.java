@@ -86,6 +86,7 @@ class NotificationServiceImplTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void testGetUserNotifications_Success() {
         // Given
         Long userId = 100L;
@@ -94,7 +95,7 @@ class NotificationServiceImplTest {
         Page<Notification> expectedPage = new Page<>(page, size);
         expectedPage.setRecords(Arrays.asList(testNotification));
 
-        when(notificationMapper.selectPage(any(Page.class), any())).thenReturn(expectedPage);
+        when(notificationMapper.selectPage(any(Page.class), org.mockito.ArgumentMatchers.<com.baomidou.mybatisplus.core.conditions.Wrapper<Notification>>any())).thenReturn(expectedPage);
 
         // When
         Page<Notification> result = notificationService.getUserNotifications(userId, page, size);
@@ -102,7 +103,7 @@ class NotificationServiceImplTest {
         // Then
         assertNotNull(result);
         assertEquals(1, result.getRecords().size());
-        verify(notificationMapper).selectPage(any(Page.class), any());
+        verify(notificationMapper).selectPage(any(Page.class), org.mockito.ArgumentMatchers.<com.baomidou.mybatisplus.core.conditions.Wrapper<Notification>>any());
     }
 
     @Test
@@ -201,6 +202,7 @@ class NotificationServiceImplTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void testGetNotificationsByType_Success() {
         // Given
         Long userId = 100L;
@@ -210,7 +212,7 @@ class NotificationServiceImplTest {
         Page<Notification> expectedPage = new Page<>(page, size);
         expectedPage.setRecords(Arrays.asList(testNotification));
 
-        when(notificationMapper.selectPage(any(Page.class), any())).thenReturn(expectedPage);
+        when(notificationMapper.selectPage(any(Page.class), org.mockito.ArgumentMatchers.<com.baomidou.mybatisplus.core.conditions.Wrapper<Notification>>any())).thenReturn(expectedPage);
 
         // When
         Page<Notification> result = notificationService.getNotificationsByType(userId, type, page, size);

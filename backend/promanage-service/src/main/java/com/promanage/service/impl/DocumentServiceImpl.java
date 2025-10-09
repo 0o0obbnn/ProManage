@@ -15,7 +15,11 @@ import com.promanage.service.entity.Project;
 import com.promanage.service.mapper.DocumentMapper;
 import com.promanage.service.mapper.DocumentVersionMapper;
 import com.promanage.service.mapper.DocumentFavoriteMapper;
+import com.promanage.service.mapper.DocumentTagMapper;
 import com.promanage.service.service.IDocumentService;
+import com.promanage.service.service.ITagService;
+import com.promanage.service.service.IDocumentTagService;
+import com.promanage.service.entity.Tag;
 import com.promanage.service.service.IDocumentFolderService;
 import com.promanage.service.service.IProjectService;
 import com.promanage.service.dto.request.CreateDocumentRequest;
@@ -30,6 +34,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Collections;
@@ -56,6 +63,9 @@ public class DocumentServiceImpl implements IDocumentService {
     private final CacheService cacheService;
     private final IDocumentFolderService documentFolderService;
     private final IProjectService projectService;
+    private final ITagService tagService;
+    private final IDocumentTagService documentTagService;
+    private final DocumentTagMapper documentTagMapper;
 
     /**
      * View count persistence threshold
@@ -112,6 +122,21 @@ public class DocumentServiceImpl implements IDocumentService {
 
             // 更新文档对象的浏览次数（用于返回给前端）
             document.setViewCount(newViewCount.intValue());
+
+            // 记录每日浏览量：document:viewcount:daily:{documentId}:{yyyy-MM-dd}
+            // TTL 8天，控制键数量增长
+            try {
+                LocalDate today = LocalDate.now();
+                String dateKey = today.format(DateTimeFormatter.ISO_LOCAL_DATE);
+                String dailyCacheKey = "document:viewcount:daily:" + documentId + ":" + dateKey;
+                Long newDaily = cacheService.increment(dailyCacheKey, 1L);
+                if (newDaily == null) {
+                    // 初始化当日计数并设置TTL 8天
+                    cacheService.set(dailyCacheKey, 1L, Duration.ofDays(8));
+                }
+            } catch (Exception dailyEx) {
+                log.warn("记录每日浏览量失败, id={}", documentId, dailyEx);
+            }
 
             // 每100次浏览持久化一次到数据库
             if (newViewCount % VIEW_COUNT_PERSIST_THRESHOLD == 0) {
@@ -213,6 +238,48 @@ public class DocumentServiceImpl implements IDocumentService {
                     .or().like(Document::getContent, keyword)
                     .or().like(Document::getSummary, keyword)
             );
+            // 支持 #tag: 前缀的标签过滤
+            if (keyword.startsWith("#tag:")) {
+                String tagName = keyword.substring(5).trim();
+                try {
+                    Tag tag = tagService.getTagByName(tagName, projectId);
+                    if (tag != null) {
+                        java.util.List<Long> docIds = documentTagMapper.findDocumentIdsByTagId(tag.getId());
+                        if (docIds != null && !docIds.isEmpty()) {
+                            queryWrapper.in(Document::getId, docIds);
+                        } else {
+                            // 无匹配，返回空
+                            queryWrapper.eq(Document::getId, -1L);
+                        }
+                    } else {
+                        queryWrapper.eq(Document::getId, -1L);
+                    }
+                } catch (Exception e) {
+                    log.warn("标签过滤失败, keyword={}", keyword, e);
+                }
+            } else if (keyword.startsWith("#tags:")) {
+                String names = keyword.substring(6).trim();
+                try {
+                    String[] parts = names.split(",");
+                    java.util.Set<Long> unionDocIds = new java.util.HashSet<>();
+                    for (String raw : parts) {
+                        String name = raw.trim();
+                        if (name.isEmpty()) continue;
+                        Tag tag = tagService.getTagByName(name, projectId);
+                        if (tag != null) {
+                            java.util.List<Long> ids = documentTagMapper.findDocumentIdsByTagId(tag.getId());
+                            if (ids != null) unionDocIds.addAll(ids);
+                        }
+                    }
+                    if (unionDocIds.isEmpty()) {
+                        queryWrapper.eq(Document::getId, -1L);
+                    } else {
+                        queryWrapper.in(Document::getId, unionDocIds);
+                    }
+                } catch (Exception e) {
+                    log.warn("多标签过滤失败, keyword={}", keyword, e);
+                }
+            }
         }
         queryWrapper.orderByDesc(Document::getUpdateTime);
 
@@ -248,26 +315,21 @@ public class DocumentServiceImpl implements IDocumentService {
                 .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
         document.setCreatorId(currentUserId);
 
-        // 设置标签
+        // 如果包含标签，先创建文档后建立关联
         if (request.getTags() != null && !request.getTags().isEmpty()) {
-            // TODO: 标签功能需要完整的Tag系统支持
-            // 当前系统尚未实现标签管理模块，需要以下步骤：
-            // 1. 创建Tag实体类 (id, name, color, category)
-            // 2. 创建TagMapper接口
-            // 3. 创建ITagService接口和TagServiceImpl实现类
-            // 4. 创建DocumentTag关联表 (document_id, tag_id)
-            // 5. 实现标签的CRUD操作
-            // 6. 实现文档与标签的关联关系管理
-            //
-            // 临时方案：可以将tags作为JSON字符串存储在document表的tags字段中
-            // document.setTags(String.join(",", request.getTags()));
-            log.warn("标签功能尚未实现，需要完整的Tag系统, tags={}", request.getTags());
+            Long documentId = create(document);
+            try {
+                java.util.List<Tag> ensured = tagService.ensureTagsExist(request.getTags());
+                java.util.List<Long> tagIds = ensured.stream().map(Tag::getId).collect(java.util.stream.Collectors.toList());
+                documentTagService.setDocumentTags(documentId, tagIds);
+            } catch (Exception e) {
+                log.error("创建文档后设置标签失败, documentId={}, tags={}", documentId, request.getTags(), e);
+            }
+            return getById(documentId);
         }
 
-        // 创建文档
+        // 无标签则直接创建
         Long documentId = create(document);
-
-        // 返回创建的文档
         return getById(documentId);
     }
 
@@ -278,9 +340,6 @@ public class DocumentServiceImpl implements IDocumentService {
 
     @Override
     public Document updateDocument(Long documentId, UpdateDocumentRequest request) {
-        // 获取现有文档
-        Document existingDocument = getByIdWithoutView(documentId);
-
         // 更新文档字段
         Document document = new Document();
         document.setTitle(request.getTitle());
@@ -300,6 +359,17 @@ public class DocumentServiceImpl implements IDocumentService {
 
         // 更新文档
         update(documentId, document, request.getChangelog());
+
+        // 同步标签关联
+        if (request.getTags() != null) {
+            try {
+                java.util.List<Tag> ensured = tagService.ensureTagsExist(request.getTags());
+                java.util.List<Long> tagIds = ensured.stream().map(Tag::getId).collect(java.util.stream.Collectors.toList());
+                documentTagService.setDocumentTags(documentId, tagIds);
+            } catch (Exception e) {
+                log.error("更新文档标签失败, documentId={}, tags={}", documentId, request.getTags(), e);
+            }
+        }
 
         // 返回更新后的文档
         return getById(documentId);
@@ -887,33 +957,28 @@ public class DocumentServiceImpl implements IDocumentService {
     public int getWeekViewCount(Long documentId) {
         log.info("获取文档周浏览量, documentId={}", documentId);
 
-        // TODO: 实现基于Redis的周浏览量统计
-        // 推荐实现方案：
-        // 1. 在incrementViewCountAtomic()方法中，除了增加总浏览量，同时维护每日浏览量
-        //    使用Redis键格式: "document:viewcount:daily:{documentId}:{date}"
-        //    例如: "document:viewcount:daily:123:2025-10-09"
-        //
-        // 2. 在此方法中，查询最近7天的Redis键，累加浏览量
-        //    LocalDate today = LocalDate.now();
-        //    int weekViewCount = 0;
-        //    for (int i = 0; i < 7; i++) {
-        //        String dateKey = today.minusDays(i).toString();
-        //        String cacheKey = "document:viewcount:daily:" + documentId + ":" + dateKey;
-        //        Long dailyCount = cacheService.get(cacheKey);
-        //        weekViewCount += (dailyCount != null ? dailyCount.intValue() : 0);
-        //    }
-        //
-        // 3. 设置每日计数的TTL为8天，自动清理过期数据
-        //
-        // 暂时返回总浏览量的30%作为估算值
-        Document document = getByIdWithoutView(documentId);
-        if (document == null || document.getViewCount() == null) {
+        try {
+            LocalDate today = LocalDate.now();
+            int weekViewCount = 0;
+            for (int i = 0; i < 7; i++) {
+                String dateKey = today.minusDays(i).format(DateTimeFormatter.ISO_LOCAL_DATE);
+                String dailyKey = "document:viewcount:daily:" + documentId + ":" + dateKey;
+                Object dailyValue = cacheService.get(dailyKey);
+                if (dailyValue instanceof Number) {
+                    weekViewCount += ((Number) dailyValue).intValue();
+                } else if (dailyValue != null) {
+                    try {
+                        weekViewCount += Integer.parseInt(String.valueOf(dailyValue));
+                    } catch (NumberFormatException ignore) {
+                        // ignore malformed value
+                    }
+                }
+            }
+            return weekViewCount;
+        } catch (Exception e) {
+            log.warn("统计周浏览量失败，回退到0, documentId={}", documentId, e);
             return 0;
         }
-
-        int weekViewCount = (int) (document.getViewCount() * 0.3);
-        log.warn("周浏览量功能尚未完全实现（需要Redis日浏览量追踪），返回估算值: {}", weekViewCount);
-        return weekViewCount;
     }
 
     /**

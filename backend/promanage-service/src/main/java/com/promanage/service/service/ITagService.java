@@ -113,4 +113,9 @@ public interface ITagService {
      * @return 标签实体
      */
     Tag getOrCreateTag(String name, Long projectId, Long creatorId);
+
+    /**
+     * 批量确保标签存在（按名称），返回对应的标签列表
+     */
+    List<Tag> ensureTagsExist(List<String> tagNames);
 }

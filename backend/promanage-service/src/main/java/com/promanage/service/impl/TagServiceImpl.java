@@ -37,6 +37,54 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements ITagS
 
     private final TagMapper tagMapper;
     private final DocumentTagMapper documentTagMapper;
+    // Backward-compatible helper methods (not part of current ITagService)
+    public Tag getById(Long tagId) {
+        return tagId == null ? null : super.getById(tagId);
+    }
+
+    public Tag getByName(String name) {
+        if (StringUtils.isBlank(name)) return null;
+        return tagMapper.findByName(name, null);
+    }
+
+    public List<Tag> listAll() {
+        return this.list();
+    }
+
+    public void updateTag(Tag tag) {
+        if (tag == null || tag.getId() == null) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "标签ID不能为空");
+        }
+        tag.setUpdatedAt(LocalDateTime.now());
+        updateById(tag);
+    }
+
+    @Override
+    public List<Tag> ensureTagsExist(List<String> tagNames) {
+        List<Tag> result = new ArrayList<>();
+        if (tagNames == null || tagNames.isEmpty()) {
+            return result;
+        }
+        Long currentUserId = SecurityUtils.getCurrentUserId().orElse(null);
+        for (String name : tagNames) {
+            if (StringUtils.isBlank(name)) continue;
+            Tag existing = tagMapper.findByName(name, null);
+            if (existing != null) {
+                result.add(existing);
+            } else {
+                Tag newTag = new Tag();
+                newTag.setName(name.trim());
+                newTag.setIsActive(true);
+                newTag.setUsageCount(0);
+                newTag.setCreatorId(currentUserId);
+                newTag.setCreatedAt(LocalDateTime.now());
+                newTag.setUpdatedAt(LocalDateTime.now());
+                save(newTag);
+                result.add(newTag);
+            }
+        }
+        return result;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
