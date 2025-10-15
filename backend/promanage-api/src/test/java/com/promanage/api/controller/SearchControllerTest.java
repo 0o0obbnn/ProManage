@@ -1,6 +1,6 @@
 package com.promanage.api.controller;
 
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.service.service.ISearchService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -2,7 +2,7 @@ package com.promanage.api.controller;
 
 import com.promanage.api.dto.request.CreateTimeTrackingRequest;
 import com.promanage.api.dto.request.UpdateTimeTrackingRequest;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.domain.Result;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.infrastructure.utils.SecurityUtils;

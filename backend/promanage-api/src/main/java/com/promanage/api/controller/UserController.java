@@ -7,7 +7,7 @@ import com.promanage.api.dto.request.UserUpdatePasswordRequest;
 import com.promanage.api.dto.request.UserUpdateStatusRequest;
 import com.promanage.api.dto.response.UserResponse;
 import com.promanage.api.dto.response.RoleResponse;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.domain.Result;
 import com.promanage.common.domain.ResultCode;
 import com.promanage.common.exception.BusinessException;

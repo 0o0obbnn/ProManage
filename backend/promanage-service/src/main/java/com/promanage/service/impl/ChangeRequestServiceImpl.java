@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.promanage.common.domain.BatchOperationResult;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.domain.ResultCode;
 import com.promanage.common.enums.ChangeRequestStatus;
 import com.promanage.common.enums.Priority;
@@ -20,6 +20,7 @@ import com.promanage.service.mapper.ChangeRequestImpactMapper;
 import com.promanage.service.mapper.CommentMapper;
 import com.promanage.service.service.IChangeRequestService;
 import com.promanage.service.IProjectService;
+import com.promanage.service.service.IPermissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,7 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
     private final ChangeRequestApprovalMapper changeRequestApprovalMapper;
     private final CommentMapper commentMapper;
     private final IProjectService projectService;
+    private final IPermissionService permissionService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -68,6 +70,15 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
             throw new BusinessException(ResultCode.PARAM_ERROR, "项目ID不能为空");
         }
 
+        // 获取当前用户
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "未登录"));
+
+        // 权限检查：必须是项目成员才能创建变更请求
+        if (!permissionService.isProjectMember(currentUserId, changeRequest.getProjectId())) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "您不是该项目成员，无权创建变更请求");
+        }
+
         // 设置默认值
         if (changeRequest.getStatus() == null) {
             changeRequest.setStatus(ChangeRequestStatus.DRAFT.getCode());
@@ -77,8 +88,6 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 设置创建信息
-        Long currentUserId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "未登录"));
         changeRequest.setRequesterId(currentUserId);
         changeRequest.setCreatorId(currentUserId);
         changeRequest.setUpdaterId(currentUserId);
@@ -102,8 +111,17 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
             throw new BusinessException(ResultCode.PARAM_ERROR, "变更请求ID不能为空");
         }
 
+        // 获取当前用户
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "未登录"));
+
+        // 权限检查：必须有权限访问该变更请求
+        if (!permissionService.canAccessChangeRequest(currentUserId, changeRequest.getId())) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "您无权修改此变更请求");
+        }
+
         // 检查变更请求是否存在
-        ChangeRequest existing = getChangeRequestById(changeRequest.getId());
+        ChangeRequest existing = getChangeRequestByIdWithoutPermissionCheck(changeRequest.getId());
         if (existing == null) {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND, "变更请求不存在");
         }
@@ -115,8 +133,6 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 设置更新信息
-        Long currentUserId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "未登录"));
         changeRequest.setUpdaterId(currentUserId);
 
         // 更新变更请求
@@ -137,15 +153,15 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
             throw new BusinessException(ResultCode.PARAM_ERROR, "变更请求ID不能为空");
         }
 
-        // 检查变更请求是否存在
-        ChangeRequest changeRequest = getChangeRequestById(changeRequestId);
-        if (changeRequest == null) {
-            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "变更请求不存在");
+        // 权限检查：必须有权限访问该变更请求
+        if (!permissionService.canAccessChangeRequest(userId, changeRequestId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "您无权删除此变更请求");
         }
 
-        // 检查权限（只有请求人或项目负责人可以删除）
-        if (!hasChangeRequestPermission(changeRequestId, userId)) {
-            throw new BusinessException(ResultCode.UNAUTHORIZED, "没有权限删除此变更请求");
+        // 检查变更请求是否存在
+        ChangeRequest changeRequest = getChangeRequestByIdWithoutPermissionCheck(changeRequestId);
+        if (changeRequest == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "变更请求不存在");
         }
 
         // 检查状态（只有草稿状态可以删除）
@@ -172,10 +188,34 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
             return null;
         }
 
+        // 获取当前用户
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "未登录"));
+
+        // 权限检查：必须有权限访问该变更请求
+        if (!permissionService.canAccessChangeRequest(currentUserId, changeRequestId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "您无权访问此变更请求");
+        }
+
         log.debug("查询变更请求详情, id={}", changeRequestId);
         ChangeRequest changeRequest = changeRequestMapper.selectById(changeRequestId);
         if (changeRequest != null && !changeRequest.getDeleted()) {
             log.debug("变更请求查询成功, id={}, title={}", changeRequestId, changeRequest.getTitle());
+            return changeRequest;
+        }
+        return null;
+    }
+
+    /**
+     * 内部方法：不进行权限检查的getById，用于内部调用
+     */
+    private ChangeRequest getChangeRequestByIdWithoutPermissionCheck(Long changeRequestId) {
+        if (changeRequestId == null) {
+            return null;
+        }
+
+        ChangeRequest changeRequest = changeRequestMapper.selectById(changeRequestId);
+        if (changeRequest != null && !changeRequest.getDeleted()) {
             return changeRequest;
         }
         return null;
@@ -265,15 +305,15 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
             throw new BusinessException(ResultCode.PARAM_ERROR, "审批决定无效");
         }
 
-        // 检查变更请求是否存在
-        ChangeRequest changeRequest = getChangeRequestById(changeRequestId);
-        if (changeRequest == null) {
-            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "变更请求不存在");
+        // 权限检查：只有项目管理员可以审批变更请求
+        if (!permissionService.canApproveChangeRequest(userId, changeRequestId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "您无权审批此变更请求，需要项目管理员权限");
         }
 
-        // 检查是否有审批权限
-        if (!canApproveChangeRequest(changeRequestId, userId)) {
-            throw new BusinessException(ResultCode.UNAUTHORIZED, "没有权限审批此变更请求");
+        // 检查变更请求是否存在
+        ChangeRequest changeRequest = getChangeRequestByIdWithoutPermissionCheck(changeRequestId);
+        if (changeRequest == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "变更请求不存在");
         }
 
         // 检查状态（只有待审批状态可以审批）
@@ -456,7 +496,7 @@ public class ChangeRequestServiceImpl implements IChangeRequestService {
         }
 
         // 项目成员有权限
-        return projectService.isMember(changeRequest.getProjectId(), userId);
+        return projectService.isProjectMember(changeRequest.getProjectId(), userId);
     }
 
     @Override

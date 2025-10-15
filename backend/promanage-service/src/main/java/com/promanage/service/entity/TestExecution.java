@@ -1,9 +1,7 @@
 package com.promanage.service.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.promanage.common.domain.BaseEntity;
+import com.promanage.common.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,13 +22,6 @@ import lombok.EqualsAndHashCode;
 public class TestExecution extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 测试执行ID
-     */
-    @TableId(type = IdType.AUTO)
-    @Schema(description = "测试执行ID", example = "1")
-    private Long id;
 
     /**
      * 测试用例ID (不能为空)

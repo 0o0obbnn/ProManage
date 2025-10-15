@@ -2,16 +2,34 @@ package com.promanage.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.promanage.common.entity.Organization;
+import com.promanage.common.entity.User;
+import com.promanage.common.exception.BusinessException;
 import com.promanage.service.dto.request.AssignPermissionsRequest;
 import com.promanage.service.dto.request.CreatePermissionRequest;
 import com.promanage.service.dto.request.UpdatePermissionRequest;
 import com.promanage.service.dto.response.PermissionResponse;
 import com.promanage.service.dto.response.PermissionTreeResponse;
-import com.promanage.common.exception.BusinessException;
+import com.promanage.service.entity.ChangeRequest;
+import com.promanage.service.entity.Document;
+import com.promanage.service.entity.Notification;
 import com.promanage.service.entity.Permission;
+import com.promanage.service.entity.Project;
+import com.promanage.service.entity.ProjectMember;
+import com.promanage.service.entity.Role;
 import com.promanage.service.entity.RolePermission;
+import com.promanage.service.entity.Task;
 import com.promanage.service.entity.UserRole;
+import com.promanage.service.mapper.ChangeRequestMapper;
+import com.promanage.service.mapper.DocumentMapper;
+import com.promanage.service.mapper.NotificationMapper;
+import com.promanage.service.mapper.OrganizationMapper;
 import com.promanage.service.mapper.PermissionMapper;
+import com.promanage.service.mapper.ProjectMapper;
+import com.promanage.service.mapper.ProjectMemberMapper;
+import com.promanage.service.mapper.RoleMapper;
+import com.promanage.service.mapper.TaskMapper;
+import com.promanage.service.mapper.UserMapper;
 import com.promanage.service.mapper.RolePermissionMapper;
 import com.promanage.service.mapper.UserRoleMapper;
 import com.promanage.service.service.IPermissionService;
@@ -30,6 +48,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -51,11 +71,22 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permission> implements IPermissionService {
 
+    private static final Set<String> SUPER_ADMIN_ROLE_CODES = Set.of("ROLE_SUPER_ADMIN", "SUPER_ADMIN", "SYSTEM_ADMIN");
+    private static final Set<Long> PROJECT_ADMIN_ROLE_IDS = Set.of(1L);
+
     private final PermissionMapper permissionMapper;
     private final RolePermissionMapper rolePermissionMapper;
     private final UserRoleMapper userRoleMapper;
+    private final UserMapper userMapper;
+    private final OrganizationMapper organizationMapper;
+    private final ProjectMapper projectMapper;
+    private final ProjectMemberMapper projectMemberMapper;
+    private final TaskMapper taskMapper;
+    private final DocumentMapper documentMapper;
+    private final NotificationMapper notificationMapper;
+    private final ChangeRequestMapper changeRequestMapper;
+    private final RoleMapper roleMapper;
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "permissions", allEntries = true)
     public Long createPermission(CreatePermissionRequest request) {
@@ -93,7 +124,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return permission.getId();
     }
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "permissions", allEntries = true)
     public Boolean updatePermission(Long id, UpdatePermissionRequest request) {
@@ -133,7 +163,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return updated > 0;
     }
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "permissions", allEntries = true)
     public Boolean deletePermission(Long id) {
@@ -168,7 +197,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return deleted > 0;
     }
 
-    @Override
     @Cacheable(value = "permissions", key = "#id")
     public PermissionResponse getPermissionById(Long id) {
         log.debug("根据ID获取权限, permissionId={}", id);
@@ -178,7 +206,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return convertToResponse(permission);
     }
 
-    @Override
     @Cacheable(value = "permissions", key = "'all'")
     public List<PermissionResponse> listAllPermissions() {
         log.debug("获取所有权限列表");
@@ -195,7 +222,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
                 .collect(Collectors.toList());
     }
 
-    @Override
     @Cacheable(value = "permissions", key = "'type:' + #type")
     public List<PermissionResponse> listPermissionsByType(String type) {
         log.debug("根据类型获取权限列表, type={}", type);
@@ -213,7 +239,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
                 .collect(Collectors.toList());
     }
 
-    @Override
     @Cacheable(value = "permissions", key = "'tree'")
     public List<PermissionTreeResponse> getPermissionTree() {
         log.debug("获取权限树形结构");
@@ -225,7 +250,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return buildPermissionTree(allPermissions, 0L);
     }
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = {"permissions", "rolePermissions"}, allEntries = true)
     public Boolean assignPermissionsToRole(AssignPermissionsRequest request) {
@@ -275,7 +299,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return true;
     }
 
-    @Override
     @Cacheable(value = "rolePermissions", key = "#roleId")
     public List<PermissionResponse> getRolePermissions(Long roleId) {
         log.debug("获取角色权限列表, roleId={}", roleId);
@@ -307,7 +330,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
                 .collect(Collectors.toList());
     }
 
-    @Override
     @Cacheable(value = "userPermissions", key = "#userId")
     public List<PermissionResponse> getUserPermissions(Long userId) {
         log.debug("获取用户权限列表, userId={}", userId);
@@ -355,7 +377,6 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
                 .collect(Collectors.toList());
     }
 
-    @Override
     @Cacheable(value = "userPermissionCheck", key = "#userId + ':' + #permissionCode")
     public Boolean checkUserPermission(Long userId, String permissionCode) {
         log.debug("检查用户权限, userId={}, permissionCode={}", userId, permissionCode);
@@ -368,32 +389,26 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
                 .anyMatch(permission -> permission.getPermissionCode().equals(permissionCode));
     }
 
-    @Override
     public boolean hasPermissionViewPermission(Long userId) {
         return checkUserPermission(userId, "permission:view");
     }
 
-    @Override
     public boolean hasPermissionCreatePermission(Long userId) {
         return checkUserPermission(userId, "permission:create");
     }
 
-    @Override
     public boolean hasPermissionEditPermission(Long userId) {
         return checkUserPermission(userId, "permission:edit");
     }
 
-    @Override
     public boolean hasPermissionDeletePermission(Long userId) {
         return checkUserPermission(userId, "permission:delete");
     }
 
-    @Override
     public boolean hasPermissionAssignPermission(Long userId) {
         return checkUserPermission(userId, "permission:assign");
     }
 
-    @Override
     public Object getPermissionStatistics() {
         log.debug("获取权限统计信息");
 
@@ -437,6 +452,177 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         statistics.put("disabledCount", permissionMapper.selectCount(disabledWrapper));
 
         return statistics;
+    }
+
+    @Override
+    public boolean isOrganizationMember(Long userId, Long organizationId) {
+        if (userId == null || organizationId == null) {
+            return false;
+        }
+        User user = userMapper.selectById(userId);
+        if (user == null || user.getDeleted()) {
+            return false;
+        }
+        return Objects.equals(organizationId, user.getOrganizationId());
+    }
+
+    @Override
+    public boolean isProjectMember(Long userId, Long projectId) {
+        if (userId == null || projectId == null) {
+            return false;
+        }
+        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProjectMember::getProjectId, projectId)
+               .eq(ProjectMember::getUserId, userId)
+               .eq(ProjectMember::getStatus, 1)
+               .isNull(ProjectMember::getDeletedAt);
+        return projectMemberMapper.selectCount(wrapper) > 0;
+    }
+
+    @Override
+    public boolean isProjectAdmin(Long userId, Long projectId) {
+        if (userId == null || projectId == null) {
+            return false;
+        }
+        if (isSuperAdmin(userId)) {
+            return true;
+        }
+
+        Project project = projectMapper.selectById(projectId);
+        if (project != null && !project.getDeleted() && Objects.equals(project.getOwnerId(), userId)) {
+            return true;
+        }
+
+        LambdaQueryWrapper<ProjectMember> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProjectMember::getProjectId, projectId)
+               .eq(ProjectMember::getUserId, userId)
+               .eq(ProjectMember::getStatus, 1)
+               .isNull(ProjectMember::getDeletedAt);
+        if (!PROJECT_ADMIN_ROLE_IDS.isEmpty()) {
+            wrapper.in(ProjectMember::getRoleId, PROJECT_ADMIN_ROLE_IDS);
+        }
+        return projectMemberMapper.selectOne(wrapper) != null;
+    }
+
+    @Override
+    public boolean canAccessTask(Long userId, Long taskId) {
+        if (userId == null || taskId == null) {
+            return false;
+        }
+        Task task = taskMapper.selectById(taskId);
+        if (task == null || task.getDeleted() || task.getProjectId() == null) {
+            return false;
+        }
+        return isProjectMember(userId, task.getProjectId()) || isProjectAdmin(userId, task.getProjectId());
+    }
+
+    @Override
+    public boolean canAccessDocument(Long userId, Long documentId) {
+        if (userId == null || documentId == null) {
+            return false;
+        }
+        Document document = documentMapper.selectById(documentId);
+        if (document == null || document.getDeleted() || document.getProjectId() == null) {
+            return false;
+        }
+        return isProjectMember(userId, document.getProjectId()) || isProjectAdmin(userId, document.getProjectId());
+    }
+
+    @Override
+    public boolean canAccessNotification(Long userId, Long notificationId) {
+        if (userId == null || notificationId == null) {
+            return false;
+        }
+        Notification notification = notificationMapper.selectById(notificationId);
+        if (notification == null || Boolean.TRUE.equals(notification.getDeleted())) {
+            return false;
+        }
+        return Objects.equals(notification.getUserId(), userId);
+    }
+
+    @Override
+    public boolean isOrganizationAdmin(Long userId, Long organizationId) {
+        if (userId == null || organizationId == null) {
+            return false;
+        }
+        if (isSuperAdmin(userId)) {
+            return true;
+        }
+        Organization organization = organizationMapper.selectById(organizationId);
+        if (organization == null || organization.getDeleted()) {
+            return false;
+        }
+        return Objects.equals(organization.getCreatorId(), userId);
+    }
+
+    @Override
+    public boolean canAccessChangeRequest(Long userId, Long changeRequestId) {
+        if (userId == null || changeRequestId == null) {
+            return false;
+        }
+        ChangeRequest changeRequest = changeRequestMapper.selectById(changeRequestId);
+        if (changeRequest == null || changeRequest.getDeleted() || changeRequest.getProjectId() == null) {
+            return false;
+        }
+        return isProjectMember(userId, changeRequest.getProjectId());
+    }
+
+    @Override
+    public boolean canApproveChangeRequest(Long userId, Long changeRequestId) {
+        if (userId == null || changeRequestId == null) {
+            return false;
+        }
+        ChangeRequest changeRequest = changeRequestMapper.selectById(changeRequestId);
+        if (changeRequest == null || changeRequest.getDeleted() || changeRequest.getProjectId() == null) {
+            return false;
+        }
+        return isProjectAdmin(userId, changeRequest.getProjectId());
+    }
+
+    @Override
+    public boolean canModifyUser(Long actorId, Long targetUserId) {
+        if (actorId == null || targetUserId == null) {
+            return false;
+        }
+        if (Objects.equals(actorId, targetUserId)) {
+            return true;
+        }
+        return isSuperAdmin(actorId);
+    }
+
+    @Override
+    public boolean isSuperAdmin(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+
+        LambdaQueryWrapper<UserRole> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(UserRole::getUserId, userId);
+        List<UserRole> relations = userRoleMapper.selectList(wrapper);
+        if (CollectionUtils.isEmpty(relations)) {
+            return false;
+        }
+
+        List<Long> roleIds = relations.stream()
+                .map(UserRole::getRoleId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(roleIds)) {
+            return false;
+        }
+
+        List<Role> roles = roleMapper.selectList(new LambdaQueryWrapper<Role>().in(Role::getId, roleIds));
+        if (CollectionUtils.isEmpty(roles)) {
+            return false;
+        }
+
+        return roles.stream()
+                .filter(Objects::nonNull)
+                .filter(role -> !role.getDeleted())
+                .map(Role::getRoleCode)
+                .filter(Objects::nonNull)
+                .map(String::toUpperCase)
+                .anyMatch(SUPER_ADMIN_ROLE_CODES::contains);
     }
 
     // ==================== 私有辅助方法 ====================

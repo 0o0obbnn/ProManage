@@ -1,0 +1,5 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="200" fill="#ffebee"/>
+  <path d="M100 60 L140 140 L60 140 Z" fill="#f44336"/>
+  <text x="100" y="130" text-anchor="middle" fill="white" font-size="24" font-weight="bold">!</text>
+</svg>

@@ -3,48 +3,48 @@ package com.promanage.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.promanage.common.domain.PageResult;
 import com.promanage.common.domain.ResultCode;
+import com.promanage.common.enums.DocumentStatus;
 import com.promanage.common.exception.BusinessException;
-import com.promanage.infrastructure.cache.CacheService;
-import com.promanage.infrastructure.security.SecurityUtils;
+import com.promanage.common.result.PageResult;
+import com.promanage.infrastructure.utils.SecurityUtils;
+import com.promanage.service.IProjectService;
+import com.promanage.service.dto.request.CreateDocumentRequest;
+import com.promanage.service.dto.request.DocumentSearchRequest;
+import com.promanage.service.dto.request.DocumentUploadRequest;
+import com.promanage.service.dto.request.UpdateDocumentRequest;
+import com.promanage.service.dto.response.DocumentDownloadInfo;
+import com.promanage.service.dto.response.DocumentFolderDTO;
 import com.promanage.service.entity.Document;
+import com.promanage.service.entity.DocumentFolder;
 import com.promanage.service.entity.DocumentVersion;
-import com.promanage.service.entity.DocumentFavorite;
 import com.promanage.service.entity.Project;
+import com.promanage.service.entity.Tag;
 import com.promanage.service.mapper.DocumentMapper;
 import com.promanage.service.mapper.DocumentVersionMapper;
-import com.promanage.service.mapper.DocumentFavoriteMapper;
-import com.promanage.service.service.IDocumentService;
 import com.promanage.service.service.IDocumentFolderService;
-import com.promanage.service.service.IProjectService;
-import com.promanage.service.dto.request.CreateDocumentRequest;
-import com.promanage.service.dto.request.UpdateDocumentRequest;
+import com.promanage.service.service.IDocumentService;
+import com.promanage.service.service.IDocumentTagService;
+import com.promanage.service.service.IDocumentViewCountService;
+import com.promanage.service.service.ITagService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * 文档服务实现类
- * <p>
- * 实现文档管理的所有业务逻辑,包括CRUD操作、版本管理和搜索功能
- * 使用Redis缓存提高查询性能,使用事务保证数据一致性
- * </p>
- *
- * @author ProManage Team
- * @date 2025-09-30
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -52,141 +52,44 @@ public class DocumentServiceImpl implements IDocumentService {
 
     private final DocumentMapper documentMapper;
     private final DocumentVersionMapper documentVersionMapper;
-    private final DocumentFavoriteMapper documentFavoriteMapper;
-    private final CacheService cacheService;
     private final IDocumentFolderService documentFolderService;
     private final IProjectService projectService;
-
-    /**
-     * View count persistence threshold
-     * Persist to database every 100 views
-     */
-    private static final long VIEW_COUNT_PERSIST_THRESHOLD = 100L;
-
-    /**
-     * Redis key prefix for document view count
-     */
-    private static final String VIEW_COUNT_CACHE_KEY_PREFIX = "document:viewcount:";
+    private final IDocumentViewCountService documentViewCountService;
+    private final IDocumentTagService documentTagService;
+    private final ITagService tagService;
 
     @Override
-    public Document getById(Long id) {
-        log.info("查询文档详情, id={}", id);
+    public Document getById(Long id, Long userId, boolean incrementView) {
+        log.info("查询文档详情, id={}, userId={}, incrementView={}", id, userId, incrementView);
+
+        // 权限检查 - 验证用户有权访问此文档
+        validateDocumentAccess(id, userId);
 
         // 查询文档
         Document document = getByIdWithoutView(id);
 
-        // 使用 Redis 原子操作增加浏览次数
-        try {
-            incrementViewCountAtomic(id, document);
-        } catch (Exception e) {
-            log.error("增加文档浏览次数失败, id={}", id, e);
-            // 不影响主流程，继续返回文档
-        }
-
-        return document;
-    }
-
-    /**
-     * 原子性增加浏览次数
-     * <p>
-     * 使用 Redis INCR 命令保证原子性，避免并发问题。
-     * 每100次浏览异步持久化到数据库一次，减少数据库压力。
-     * </p>
-     *
-     * @param documentId 文档ID
-     * @param document   文档对象
-     */
-    private void incrementViewCountAtomic(Long documentId, Document document) {
-        String cacheKey = VIEW_COUNT_CACHE_KEY_PREFIX + documentId;
-
-        try {
-            // 使用 Redis INCR 原子操作
-            Long newViewCount = cacheService.increment(cacheKey, 1L);
-
-            if (newViewCount == null) {
-                // 首次访问，初始化 Redis 计数器
-                Integer currentCount = document.getViewCount() != null ? document.getViewCount() : 0;
-                cacheService.set(cacheKey, currentCount + 1, java.time.Duration.ofSeconds(86400L)); // 24小时过期
-                newViewCount = (long) (currentCount + 1);
-            }
-
-            // 更新文档对象的浏览次数（用于返回给前端）
-            document.setViewCount(newViewCount.intValue());
-
-            // 每100次浏览持久化一次到数据库
-            if (newViewCount % VIEW_COUNT_PERSIST_THRESHOLD == 0) {
-                asyncPersistViewCount(documentId, newViewCount);
-            }
-
-            log.debug("增加文档浏览次数, id={}, newCount={}", documentId, newViewCount);
-
-        } catch (Exception e) {
-            log.error("Redis增加浏览次数失败, 回退到数据库操作, id={}", documentId, e);
-            // Redis 失败时回退到数据库操作（可能有并发问题，但至少能工作）
+        // 如果需要增加浏览次数
+        if (incrementView) {
             try {
-                documentMapper.incrementViewCount(documentId);
-            } catch (Exception dbError) {
-                log.error("数据库增加浏览次数也失败, id={}", documentId, dbError);
+                documentViewCountService.incrementViewCount(id);
+                // For immediate reflection in the response, get the latest count from cache
+                Integer latestViewCount = documentViewCountService.getViewCount(id);
+                if (latestViewCount != null) {
+                    document.setViewCount(latestViewCount);
+                }
+            } catch (Exception e) {
+                log.error("增加文档浏览次数失败, id={}", id, e);
+                // 不影响主流程，继续返回文档
             }
-        }
-    }
-
-    /**
-     * 异步持久化浏览次数到数据库
-     * <p>
-     * 使用异步方式减少对主流程的影响
-     * </p>
-     *
-     * @param documentId 文档ID
-     * @param viewCount  浏览次数
-     */
-    @Async
-    protected void asyncPersistViewCount(Long documentId, Long viewCount) {
-        try {
-            log.info("持久化文档浏览次数到数据库, id={}, viewCount={}", documentId, viewCount);
-
-            // 直接更新浏览次数
-            Document document = new Document();
-            document.setId(documentId);
-            document.setViewCount(viewCount.intValue());
-
-            int updated = documentMapper.updateById(document);
-
-            if (updated > 0) {
-                log.debug("持久化浏览次数成功, id={}, viewCount={}", documentId, viewCount);
-
-                // 清除文档缓存，强制下次查询时从数据库读取最新数据
-                String cacheKey = "documents::" + documentId;
-                cacheService.delete(cacheKey);
-            } else {
-                log.warn("持久化浏览次数失败，文档可能已被删除, id={}", documentId);
-            }
-
-        } catch (Exception e) {
-            log.error("异步持久化浏览次数失败, id={}, viewCount={}", documentId, viewCount, e);
-            // 异步操作失败不抛异常，记录日志即可
-        }
-    }
-
-    @Override
-    @Cacheable(value = "documents", key = "#id", unless = "#result == null")
-    public Document getByIdWithoutView(Long id) {
-        log.info("查询文档详情(不增加浏览次数), id={}", id);
-
-        if (id == null) {
-            throw new BusinessException(ResultCode.PARAM_ERROR, "文档ID不能为空");
-        }
-
-        Document document = documentMapper.selectById(id);
-        if (document == null || document.getDeleted()) {
-            log.warn("文档不存在, id={}", id);
-            throw new BusinessException(ResultCode.PARAM_ERROR, "文档不存在");
         }
 
         return document;
     }
 
-    @Override
+    public PageResult<Document> listDocuments(Long projectId, Integer page, Integer size) {
+        return listDocuments(page, size, null, projectId, null, null);
+    }
+
     public PageResult<Document> listDocuments(Integer page, Integer pageSize, String keyword,
                                               Long projectId, String type, Integer status) {
         log.info("分页查询文档列表, page={}, pageSize={}, keyword={}, projectId={}, type={}, status={}",
@@ -223,13 +126,71 @@ public class DocumentServiceImpl implements IDocumentService {
         return PageResult.of(result.getRecords(), result.getTotal(), page, pageSize);
     }
 
-    @Override
-    public PageResult<Document> listDocuments(Long projectId, Integer page, Integer size) {
-        return listDocuments(page, size, null, projectId, null, null);
+    public List<Document> searchByKeyword(String keyword) {
+        log.info("搜索文档, keyword={}", keyword);
+
+        if (StringUtils.isBlank(keyword)) {
+            return List.of();
+        }
+
+        return documentMapper.searchByKeyword(keyword);
+    }
+
+    public Document getByIdWithoutView(Long id) {
+        log.info("查询文档详情(不增加浏览次数), id={}", id);
+
+        if (id == null) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "文档ID不能为空");
+        }
+
+        Document document = documentMapper.selectById(id);
+        if (document == null) {
+            log.warn("文档不存在, id={}", id);
+            throw new BusinessException(ResultCode.PARAM_ERROR, "文档不存在");
+        }
+
+        return document;
+    }
+
+    public List<DocumentFolder> getDocumentFolders(Long projectId) {
+        log.info("获取文档文件夹树形结构, projectId={}", projectId);
+        
+        // 使用DocumentFolderService获取文件夹树形结构
+        List<IDocumentFolderService.DocumentFolderTreeNode> treeNodes = documentFolderService.getFolderTree(projectId);
+        
+        // 转换为DocumentFolder列表
+        return convertTreeNodesToFolders(treeNodes);
+    }
+
+    public void delete(Long id, Long deleterId) {
+        log.info("删除文档, id={}, deleterId={}", id, deleterId);
+
+        // 权限检查 - 验证用户有权删除此文档
+        validateDocumentDeleteAccess(id, deleterId);
+
+        // 检查文档是否存在
+        getByIdWithoutView(id);
+
+        Document update = new Document();
+        update.setId(id);
+        update.setDeletedBy(deleterId);
+        documentMapper.updateById(update);
+
+        // 逻辑删除文档
+        documentMapper.deleteById(id);
+
+        // 注意: 版本历史不删除,保留审计记录
+
+        log.info("删除文档成功, id={}", id);
     }
 
     @Override
-    public Document createDocument(Long projectId, CreateDocumentRequest request) {
+    public Document createDocument(Long projectId, CreateDocumentRequest request, Long creatorId) {
+        log.info("创建文档, projectId={}, creatorId={}", projectId, creatorId);
+
+        // 权限检查 - 验证用户有权在此项目中创建文档
+        validateProjectCreateAccess(projectId, creatorId);
+
         // 创建文档实体
         Document document = new Document();
         document.setTitle(request.getTitle());
@@ -242,42 +203,21 @@ public class DocumentServiceImpl implements IDocumentService {
         document.setFolderId(request.getFolderId() != null ? request.getFolderId() : 0L);
         document.setIsTemplate(request.getIsTemplate());
         document.setPriority(request.getPriority());
-
-        // 从安全上下文获取当前用户ID
-        Long currentUserId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
-        document.setCreatorId(currentUserId);
-
-        // 设置标签
-        if (request.getTags() != null && !request.getTags().isEmpty()) {
-            // TODO: 标签功能需要完整的Tag系统支持
-            // 当前系统尚未实现标签管理模块，需要以下步骤：
-            // 1. 创建Tag实体类 (id, name, color, category)
-            // 2. 创建TagMapper接口
-            // 3. 创建ITagService接口和TagServiceImpl实现类
-            // 4. 创建DocumentTag关联表 (document_id, tag_id)
-            // 5. 实现标签的CRUD操作
-            // 6. 实现文档与标签的关联关系管理
-            //
-            // 临时方案：可以将tags作为JSON字符串存储在document表的tags字段中
-            // document.setTags(String.join(",", request.getTags()));
-            log.warn("标签功能尚未实现，需要完整的Tag系统, tags={}", request.getTags());
-        }
-
-        // 创建文档
+        document.setCreatorId(creatorId);
         Long documentId = create(document);
 
-        // 返回创建的文档
-        return getById(documentId);
+        syncDocumentTags(documentId, request.getTags(), projectId, creatorId);
+
+        return getByIdWithoutView(documentId);
     }
 
     @Override
-    public Document getDocumentById(Long documentId) {
-        return getById(documentId);
-    }
+    public Document updateDocument(Long documentId, UpdateDocumentRequest request, Long updaterId) {
+        log.info("更新文档, documentId={}, updaterId={}", documentId, updaterId);
 
-    @Override
-    public Document updateDocument(Long documentId, UpdateDocumentRequest request) {
+        // 权限检查 - 验证用户有权更新此文档
+        validateDocumentUpdateAccess(documentId, updaterId);
+
         // 获取现有文档
         Document existingDocument = getByIdWithoutView(documentId);
 
@@ -292,27 +232,58 @@ public class DocumentServiceImpl implements IDocumentService {
         document.setFolderId(request.getFolderId());
         document.setPriority(request.getPriority());
         document.setReviewerId(request.getReviewerId());
-
-        // 从安全上下文获取当前用户ID
-        Long currentUserId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
-        document.setUpdaterId(currentUserId);
+        document.setUpdaterId(updaterId);
 
         // 更新文档
         update(documentId, document, request.getChangelog());
 
+        syncDocumentTags(documentId, request.getTags(), existingDocument.getProjectId(), updaterId);
+
         // 返回更新后的文档
-        return getById(documentId);
+        return getByIdWithoutView(documentId);
     }
 
     @Override
-    public void deleteDocument(Long documentId) {
-        delete(documentId);
+    public void deleteDocument(Long documentId, Long deleterId) {
+        log.info("删除文档, documentId={}, deleterId={}", documentId, deleterId);
+
+        // 权限检查 - 验证用户有权删除此文档
+        validateDocumentDeleteAccess(documentId, deleterId);
+
+        delete(documentId, deleterId);
     }
 
     @Override
-    public List<Document> listByProjectId(Long projectId) {
-        log.info("查询项目文档, projectId={}", projectId);
+    public PageResult<Document> listByProject(Long projectId, Integer page, Integer pageSize, Long userId) {
+        log.info("查询项目文档列表, projectId={}, page={}, pageSize={}, userId={}", projectId, page, pageSize, userId);
+
+        // 权限检查 - 验证用户有权访问此项目
+        validateProjectAccess(projectId, userId);
+
+        if (projectId == null) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "项目ID不能为空");
+        }
+
+        // 构建分页对象
+        Page<Document> pageParam = new Page<>(page != null ? page : 1, pageSize != null ? pageSize : 20);
+
+        // 构建查询条件
+        LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Document::getProjectId, projectId);
+        queryWrapper.orderByDesc(Document::getUpdateTime);
+
+        // 执行查询
+        IPage<Document> result = documentMapper.selectPage(pageParam, queryWrapper);
+
+        return PageResult.of(result.getRecords(), result.getTotal(), (int) pageParam.getCurrent(), (int) pageParam.getSize());
+    }
+
+    @Override
+    public List<Document> listByProject(Long projectId, Long userId) {
+        log.info("查询项目的所有文档, projectId={}, userId={}", projectId, userId);
+
+        // 权限检查 - 验证用户有权访问此项目
+        validateProjectAccess(projectId, userId);
 
         if (projectId == null) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "项目ID不能为空");
@@ -322,25 +293,17 @@ public class DocumentServiceImpl implements IDocumentService {
     }
 
     @Override
-    public List<Document> listByCreatorId(Long creatorId) {
-        log.info("查询用户创建的文档, creatorId={}", creatorId);
+    public List<Document> listByCreator(Long creatorId, Long userId) {
+        log.info("查询用户创建的文档, creatorId={}, userId={}", creatorId, userId);
+
+        // 权限检查 - 验证用户有权查看此创建者的文档
+        validateCreatorAccess(creatorId, userId);
 
         if (creatorId == null) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "创建人ID不能为空");
         }
 
         return documentMapper.findByCreatorId(creatorId);
-    }
-
-    @Override
-    public List<Document> searchByKeyword(String keyword) {
-        log.info("搜索文档, keyword={}", keyword);
-
-        if (StringUtils.isBlank(keyword)) {
-            return List.of();
-        }
-
-        return documentMapper.searchByKeyword(keyword);
     }
 
     @Override
@@ -396,6 +359,7 @@ public class DocumentServiceImpl implements IDocumentService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "documents", key = "#id")
+    @PreAuthorize("hasPermission(#id, 'Document', 'document:update')")
     public void update(Long id, Document document, String changeLog) {
         log.info("更新文档, id={}", id);
 
@@ -448,49 +412,41 @@ public class DocumentServiceImpl implements IDocumentService {
         documentMapper.updateById(existingDocument);
 
         // 创建新版本记录
-        DocumentVersion version = new DocumentVersion();
-        version.setDocumentId(id);
-        version.setVersionNumber(newVersion);
-        version.setTitle(existingDocument.getTitle());
-        version.setContent(existingDocument.getContent());
-        version.setContentType(existingDocument.getContentType());
-        version.setChangeLog(StringUtils.isNotBlank(changeLog) ? changeLog : "文档更新");
-        version.setFileUrl(existingDocument.getFileUrl());
-        version.setFileSize(existingDocument.getFileSize());
-        version.setCreatorId(document.getUpdaterId() != null ? document.getUpdaterId() : existingDocument.getCreatorId());
-        documentVersionMapper.insert(version);
+        DocumentVersion newVersionRecord = new DocumentVersion();
+        newVersionRecord.setDocumentId(id);
+        newVersionRecord.setVersionNumber(newVersion);
+        newVersionRecord.setTitle(existingDocument.getTitle());
+        newVersionRecord.setContent(existingDocument.getContent());
+        newVersionRecord.setContentType(existingDocument.getContentType());
+        newVersionRecord.setChangeLog(StringUtils.isNotBlank(changeLog) ? changeLog : "文档更新");
+        newVersionRecord.setFileUrl(existingDocument.getFileUrl());
+        newVersionRecord.setFileSize(existingDocument.getFileSize());
+        newVersionRecord.setCreatorId(document.getUpdaterId() != null ? document.getUpdaterId() : existingDocument.getCreatorId());
+        documentVersionMapper.insert(newVersionRecord);
 
         log.info("更新文档成功, id={}, newVersion={}", id, newVersion);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "documents", key = "#id")
-    public void delete(Long id) {
-        log.info("删除文档, id={}", id);
-
-        // 检查文档是否存在
-        getByIdWithoutView(id);
-
-        // 逻辑删除文档
-        documentMapper.deleteById(id);
-
-        // 注意: 版本历史不删除,保留审计记录
-
-        log.info("删除文档成功, id={}", id);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "documents", allEntries = true)
-    public int batchDelete(List<Long> ids) {
-        log.info("批量删除文档, ids={}", ids);
+    public int batchDelete(List<Long> ids, Long deleterId) {
+        log.info("批量删除文档, ids={}, deleterId={}", ids, deleterId);
 
-        if (ids == null || ids.isEmpty()) {
+        if (CollectionUtils.isEmpty(ids)) {
             return 0;
         }
 
-        int count = documentMapper.deleteByIds(ids);
+        int count = 0;
+        // 权限检查 - 验证用户有权删除这些文档
+        for (Long id : ids) {
+            validateDocumentDeleteAccess(id, deleterId);
+            Document update = new Document();
+            update.setId(id);
+            update.setDeletedBy(deleterId);
+            documentMapper.updateById(update);
+            count += documentMapper.deleteById(id);
+        }
 
         log.info("批量删除文档成功, count={}", count);
         return count;
@@ -499,10 +455,13 @@ public class DocumentServiceImpl implements IDocumentService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "documents", key = "#id")
-    public void publish(Long id) {
-        log.info("发布文档, id={}", id);
+    public void publish(Long id, Long updaterId) {
+        log.info("发布文档, id={}, updaterId={}", id, updaterId);
 
-        updateStatus(id, 2); // 状态2表示已发布
+        // 权限检查 - 验证用户有权发布此文档
+        validateDocumentUpdateAccess(id, updaterId);
+
+        updateStatus(id, DocumentStatus.PUBLISHED, updaterId);
 
         log.info("发布文档成功, id={}", id);
     }
@@ -510,30 +469,35 @@ public class DocumentServiceImpl implements IDocumentService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "documents", key = "#id")
-    public void archive(Long id) {
-        log.info("归档文档, id={}", id);
+    public void archive(Long id, Long updaterId) {
+        log.info("归档文档, id={}, updaterId={}", id, updaterId);
 
-        updateStatus(id, 3); // 状态3表示已归档
+        // 权限检查 - 验证用户有权归档此文档
+        validateDocumentUpdateAccess(id, updaterId);
+
+        updateStatus(id, DocumentStatus.ARCHIVED, updaterId);
 
         log.info("归档文档成功, id={}", id);
     }
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "documents", key = "#id")
-    public void updateStatus(Long id, Integer status) {
-        log.info("更新文档状态, id={}, status={}", id, status);
+    public void updateStatus(Long id, DocumentStatus status, Long updaterId) {
+        log.info("更新文档状态, id={}, status={}, updaterId={}", id, status, updaterId);
 
         // 参数验证
-        if (status == null || status < 0 || status > 3) {
+        if (status == null) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "状态值无效");
         }
+
+        // 权限检查 - 验证用户有权更新此文档状态
+        validateDocumentUpdateAccess(id, updaterId);
 
         // 检查文档是否存在
         Document document = getByIdWithoutView(id);
 
         // 更新状态
-        document.setStatus(status);
+        document.setStatus(status.getCode());
         documentMapper.updateById(document);
 
         log.info("更新文档状态成功, id={}, status={}", id, status);
@@ -541,24 +505,30 @@ public class DocumentServiceImpl implements IDocumentService {
 
     @Override
     @Cacheable(value = "documentVersions", key = "#documentId")
-    public List<DocumentVersion> listVersions(Long documentId) {
-        log.info("查询文档版本列表, documentId={}", documentId);
+    public List<DocumentVersion> listVersions(Long documentId, Long userId) {
+        log.info("查询文档版本列表, documentId={}, userId={}", documentId, userId);
 
         if (documentId == null) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "文档ID不能为空");
         }
+
+        // 权限检查 - 验证用户有权查看此文档版本
+        validateDocumentAccess(documentId, userId);
 
         return documentVersionMapper.findByDocumentId(documentId);
     }
 
     @Override
     @Cacheable(value = "documentVersions", key = "#documentId + ':' + #version")
-    public DocumentVersion getVersion(Long documentId, String version) {
-        log.info("查询文档版本, documentId={}, version={}", documentId, version);
+    public DocumentVersion getVersion(Long documentId, String version, Long userId) {
+        log.info("查询文档版本, documentId={}, version={}, userId={}", documentId, version, userId);
 
         if (documentId == null || StringUtils.isBlank(version)) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "文档ID和版本号不能为空");
         }
+
+        // 权限检查 - 验证用户有权查看此文档版本
+        validateDocumentAccess(documentId, userId);
 
         DocumentVersion documentVersion = documentVersionMapper.findByDocumentIdAndVersion(documentId, version);
         if (documentVersion == null) {
@@ -571,14 +541,20 @@ public class DocumentServiceImpl implements IDocumentService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "documentVersions", allEntries = true)
-    public Long createVersion(DocumentVersion documentVersion) {
-        log.info("创建文档版本, documentId={}, version={}",
-                documentVersion.getDocumentId(), documentVersion.getVersionNumber());
+    public Long createVersion(DocumentVersion documentVersion, Long creatorId) {
+        log.info("创建文档版本, documentId={}, version={}, creatorId={}",
+                documentVersion.getDocumentId(), documentVersion.getVersionNumber(), creatorId);
 
         // 参数验证
         if (documentVersion.getDocumentId() == null || StringUtils.isBlank(documentVersion.getVersionNumber())) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "文档ID和版本号不能为空");
         }
+
+        // 权限检查 - 验证用户有权为此文档创建版本
+        validateDocumentUpdateAccess(documentVersion.getDocumentId(), creatorId);
+
+        // 设置创建者ID
+        documentVersion.setCreatorId(creatorId);
 
         // 保存版本
         documentVersionMapper.insert(documentVersion);
@@ -590,14 +566,17 @@ public class DocumentServiceImpl implements IDocumentService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = {"documents", "documentVersions"}, allEntries = true)
-    public void rollbackToVersion(Long documentId, String version) {
-        log.info("回滚文档到指定版本, documentId={}, version={}", documentId, version);
+    public Document rollbackToVersion(Long documentId, String version, Long updaterId) {
+        log.info("回滚文档到指定版本, documentId={}, version={}, updaterId={}", documentId, version, updaterId);
+
+        // 权限检查 - 验证用户有权回滚此文档
+        validateDocumentUpdateAccess(documentId, updaterId);
 
         // 检查文档是否存在
         Document document = getByIdWithoutView(documentId);
 
         // 获取指定版本
-        DocumentVersion targetVersion = getVersion(documentId, version);
+        DocumentVersion targetVersion = getVersion(documentId, version, updaterId);
 
         // 恢复内容
         document.setContent(targetVersion.getContent());
@@ -617,15 +596,19 @@ public class DocumentServiceImpl implements IDocumentService {
         newVersionRecord.setContent(targetVersion.getContent());
         newVersionRecord.setChangeLog("回滚到版本 " + version);
         newVersionRecord.setFileUrl(targetVersion.getFileUrl());
-        newVersionRecord.setCreatorId(targetVersion.getCreatorId());
+        newVersionRecord.setCreatorId(updaterId);
         documentVersionMapper.insert(newVersionRecord);
 
         log.info("回滚文档成功, documentId={}, targetVersion={}, newVersion={}", documentId, version, newVersion);
+        return getByIdWithoutView(documentId);
     }
 
     @Override
-    public int countByProjectId(Long projectId) {
-        log.info("统计项目文档数量, projectId={}", projectId);
+    public int countByProject(Long projectId, Long userId) {
+        log.info("统计项目文档数量, projectId={}, userId={}", projectId, userId);
+
+        // 权限检查 - 验证用户有权访问此项目
+        validateProjectAccess(projectId, userId);
 
         if (projectId == null) {
             return 0;
@@ -635,8 +618,11 @@ public class DocumentServiceImpl implements IDocumentService {
     }
 
     @Override
-    public int countByCreatorId(Long creatorId) {
-        log.info("统计用户创建的文档数量, creatorId={}", creatorId);
+    public int countByCreator(Long creatorId, Long userId) {
+        log.info("统计用户创建的文档数量, creatorId={}, userId={}", creatorId, userId);
+
+        // 权限检查 - 验证用户有权查看此创建者的文档
+        validateCreatorAccess(creatorId, userId);
 
         if (creatorId == null) {
             return 0;
@@ -645,19 +631,6 @@ public class DocumentServiceImpl implements IDocumentService {
         return documentMapper.countByCreatorId(creatorId);
     }
 
-    /**
-     * 查询当前用户可访问的所有文档（跨项目）
-     * <p>
-     * 根据用户权限过滤文档，支持多种过滤条件和搜索
-     * </p>
-     *
-     * @param page      页码
-     * @param pageSize  每页大小
-     * @param projectId 项目ID（可选，为null时查询所有项目）
-     * @param status    文档状态（可选）
-     * @param keyword   搜索关键词（可选，在标题和内容中搜索）
-     * @return 分页结果
-     */
     @Override
     public PageResult<Document> listAllDocuments(Integer page, Integer pageSize,
                                                  Long projectId, String status, String keyword) {
@@ -674,10 +647,10 @@ public class DocumentServiceImpl implements IDocumentService {
 
         // 如果指定了状态，按状态过滤
         if (StringUtils.isNotBlank(status)) {
-            try {
-                Integer statusValue = Integer.parseInt(status);
+            Integer statusValue = DocumentStatus.toCode(status);
+            if (statusValue != null) {
                 queryWrapper.eq(Document::getStatus, statusValue);
-            } catch (NumberFormatException e) {
+            } else {
                 log.warn("无效的状态值: {}", status);
             }
         }
@@ -711,85 +684,70 @@ public class DocumentServiceImpl implements IDocumentService {
         );
     }
 
-    /**
-     * 高级搜索文档
-     * <p>
-     * 支持多种过滤条件的文档搜索
-     * </p>
-     *
-     * @param page      页码
-     * @param pageSize  每页大小
-     * @param projectId 项目ID（可选）
-     * @param status    文档状态（可选）
-     * @param keyword   搜索关键词（可选）
-     * @param folderId  文件夹ID（可选）
-     * @param creatorId 创建人ID（可选）
-     * @param type      文档类型（可选）
-     * @param startTime 创建时间开始（可选）
-     * @param endTime   创建时间结束（可选）
-     * @return 分页结果
-     */
-    @Override
-    public PageResult<Document> searchDocuments(Integer page, Integer pageSize,
-                                                Long projectId, Integer status, String keyword,
-                                                Long folderId, Long creatorId, String type,
-                                                java.time.LocalDateTime startTime,
-                                                java.time.LocalDateTime endTime) {
-        log.info("高级搜索文档, page={}, pageSize={}, projectId={}, status={}, keyword={}, folderId={}, creatorId={}, type={}, startTime={}, endTime={}",
-                page, pageSize, projectId, status, keyword, folderId, creatorId, type, startTime, endTime);
+    private PageResult<Document> searchDocuments(DocumentSearchRequest request) {
+        log.info("高级搜索文档, page={}, pageSize={}, projectId={}, status={}, keyword={}, folderId={}, creatorId={}, type={}, categoryId={}, tags={}, startTime={}, endTime={}",
+                request.getPage(), request.getPageSize(), request.getProjectId(), request.getStatus(), request.getKeyword(), request.getFolderId(), request.getCreatorId(), request.getType(), request.getCategoryId(), request.getTags(), request.getStartTime(), request.getEndTime());
 
         // 构建分页对象
-        Page<Document> pageParam = new Page<>(page, pageSize);
+        Page<Document> pageParam = new Page<>(request.getPage(), request.getPageSize());
 
         // 构建查询条件
         LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
 
         // 项目ID过滤
-        if (projectId != null) {
-            queryWrapper.eq(Document::getProjectId, projectId);
+        if (request.getProjectId() != null) {
+            queryWrapper.eq(Document::getProjectId, request.getProjectId());
         }
 
         // 状态过滤
-        if (status != null) {
-            queryWrapper.eq(Document::getStatus, status);
+        if (StringUtils.isNotBlank(request.getStatus())) {
+            Integer statusCode = DocumentStatus.toCode(request.getStatus());
+            if (statusCode != null) {
+                queryWrapper.eq(Document::getStatus, statusCode);
+            } else {
+                log.warn("忽略未知的文档状态: {}", request.getStatus());
+            }
         }
 
         // 文件夹ID过滤
-        if (folderId != null) {
-            queryWrapper.eq(Document::getFolderId, folderId);
+        if (request.getFolderId() != null) {
+            queryWrapper.eq(Document::getFolderId, request.getFolderId());
         }
 
         // 创建人ID过滤
-        if (creatorId != null) {
-            queryWrapper.eq(Document::getCreatorId, creatorId);
+        if (request.getCreatorId() != null) {
+            queryWrapper.eq(Document::getCreatorId, request.getCreatorId());
         }
 
         // 文档类型过滤
-        if (StringUtils.isNotBlank(type)) {
-            queryWrapper.eq(Document::getType, type);
+        if (StringUtils.isNotBlank(request.getType())) {
+            queryWrapper.eq(Document::getType, request.getType());
+        }
+        if (request.getCategoryId() != null) {
+            queryWrapper.eq(Document::getCategoryId, request.getCategoryId());
         }
 
         // 时间范围过滤
-        if (startTime != null) {
-            queryWrapper.ge(Document::getCreateTime, startTime);
+        if (request.getStartTime() != null) {
+            queryWrapper.ge(Document::getCreateTime, request.getStartTime());
         }
-        if (endTime != null) {
-            queryWrapper.le(Document::getCreateTime, endTime);
+        if (request.getEndTime() != null) {
+            queryWrapper.le(Document::getCreateTime, request.getEndTime());
+        }
+        if (StringUtils.isNotBlank(request.getTags())) {
+            log.info("暂不支持标签过滤, 参数已接收 tags={}", request.getTags());
         }
 
         // 关键词搜索
-        if (StringUtils.isNotBlank(keyword)) {
+        if (StringUtils.isNotBlank(request.getKeyword())) {
             queryWrapper.and(wrapper -> wrapper
-                    .like(Document::getTitle, keyword)
+                    .like(Document::getTitle, request.getKeyword())
                     .or()
-                    .like(Document::getContent, keyword)
+                    .like(Document::getContent, request.getKeyword())
                     .or()
-                    .like(Document::getSummary, keyword)
+                    .like(Document::getSummary, request.getKeyword())
             );
         }
-
-        // 只查询未删除的文档
-        queryWrapper.eq(Document::getDeleted, false);
 
         // 按更新时间倒序排列
         queryWrapper.orderByDesc(Document::getUpdateTime);
@@ -806,43 +764,7 @@ public class DocumentServiceImpl implements IDocumentService {
                 (int) result.getSize()
         );
     }
-
-    /**
-     * 重载方法，保持向后兼容
-     */
-    @Override
-    public PageResult<Document> searchDocuments(Integer page, Integer pageSize,
-                                                Long projectId, Integer status, String keyword,
-                                                Long folderId, Long creatorId, String type) {
-        return searchDocuments(page, pageSize, projectId, status, keyword, folderId, creatorId, type, null, null);
-    }
-
-    /**
-     * 获取文档文件夹树形结构
-     * <p>
-     * 返回文档的文件夹组织结构，支持按项目过滤
-     * </p>
-     *
-     * @param projectId 项目ID（可选，为null时返回所有项目的文件夹）
-     * @return 文件夹树形结构列表
-     */
-    @Override
-    public List<DocumentFolder> getDocumentFolders(Long projectId) {
-        log.info("获取文档文件夹树形结构, projectId={}", projectId);
-        
-        // 使用DocumentFolderService获取文件夹树形结构
-        List<IDocumentFolderService.DocumentFolderTreeNode> treeNodes = documentFolderService.getFolderTree(projectId);
-        
-        // 转换为DocumentFolder列表
-        return convertTreeNodesToFolders(treeNodes);
-    }
-
-    /**
-     * 将文件夹树节点转换为DocumentFolder对象
-     *
-     * @param treeNodes 文件夹树节点列表
-     * @return DocumentFolder列表
-     */
+    
     private List<DocumentFolder> convertTreeNodesToFolders(List<IDocumentFolderService.DocumentFolderTreeNode> treeNodes) {
         if (treeNodes == null || treeNodes.isEmpty()) {
             return List.of();
@@ -851,12 +773,6 @@ public class DocumentServiceImpl implements IDocumentService {
         return treeNodes.stream().map(this::convertTreeNodeToFolder).collect(Collectors.toList());
     }
     
-    /**
-     * 将文件夹树节点转换为DocumentFolder对象
-     *
-     * @param treeNode 文件夹树节点
-     * @return DocumentFolder对象
-     */
     private DocumentFolder convertTreeNodeToFolder(IDocumentFolderService.DocumentFolderTreeNode treeNode) {
         DocumentFolder folder = new DocumentFolder();
         folder.setId(treeNode.getId());
@@ -874,188 +790,35 @@ public class DocumentServiceImpl implements IDocumentService {
         return folder;
     }
 
-    /**
-     * 统计文档的周浏览量
-     * <p>
-     * 统计最近7天的浏览次数
-     * </p>
-     *
-     * @param documentId 文档ID
-     * @return 周浏览量
-     */
     @Override
-    public int getWeekViewCount(Long documentId) {
-        log.info("获取文档周浏览量, documentId={}", documentId);
+    public int getWeeklyViewCount(Long documentId, Long userId) {
+        log.info("获取文档周浏览量, documentId={}, userId={}", documentId, userId);
 
-        // TODO: 实现基于Redis的周浏览量统计
-        // 推荐实现方案：
-        // 1. 在incrementViewCountAtomic()方法中，除了增加总浏览量，同时维护每日浏览量
-        //    使用Redis键格式: "document:viewcount:daily:{documentId}:{date}"
-        //    例如: "document:viewcount:daily:123:2025-10-09"
-        //
-        // 2. 在此方法中，查询最近7天的Redis键，累加浏览量
-        //    LocalDate today = LocalDate.now();
-        //    int weekViewCount = 0;
-        //    for (int i = 0; i < 7; i++) {
-        //        String dateKey = today.minusDays(i).toString();
-        //        String cacheKey = "document:viewcount:daily:" + documentId + ":" + dateKey;
-        //        Long dailyCount = cacheService.get(cacheKey);
-        //        weekViewCount += (dailyCount != null ? dailyCount.intValue() : 0);
-        //    }
-        //
-        // 3. 设置每日计数的TTL为8天，自动清理过期数据
-        //
-        // 暂时返回总浏览量的30%作为估算值
-        Document document = getByIdWithoutView(documentId);
-        if (document == null || document.getViewCount() == null) {
-            return 0;
-        }
+        // 权限检查 - 验证用户有权查看此文档统计
+        validateDocumentAccess(documentId, userId);
 
-        int weekViewCount = (int) (document.getViewCount() * 0.3);
-        log.warn("周浏览量功能尚未完全实现（需要Redis日浏览量追踪），返回估算值: {}", weekViewCount);
-        return weekViewCount;
+        return documentViewCountService.getWeeklyViewCount(documentId);
     }
 
-    /**
-     * 收藏文档
-     *
-     * @param documentId 文档ID
-     * @param userId     用户ID
-     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void favoriteDocument(Long documentId, Long userId) {
-        log.info("收藏文档, documentId={}, userId={}", documentId, userId);
-
-        // 验证文档是否存在
-        Document document = getByIdWithoutView(documentId);
-        if (document == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND, "文档不存在");
-        }
-
-        // 检查是否已经收藏
-        int existingCount = documentFavoriteMapper.countByDocumentIdAndUserId(documentId, userId);
-        if (existingCount > 0) {
-            log.warn("文档已经被收藏, documentId={}, userId={}", documentId, userId);
-            throw new BusinessException(ResultCode.CONFLICT, "文档已经被收藏");
-        }
-
-        // 创建收藏记录
-        DocumentFavorite favorite = new DocumentFavorite();
-        favorite.setDocumentId(documentId);
-        favorite.setUserId(userId);
-        favorite.setCreatedAt(LocalDateTime.now());
-
-        documentFavoriteMapper.insert(favorite);
-        log.info("文档收藏成功, documentId={}, userId={}", documentId, userId);
-    }
-
-    /**
-     * 取消收藏文档
-     *
-     * @param documentId 文档ID
-     * @param userId     用户ID
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void unfavoriteDocument(Long documentId, Long userId) {
-        log.info("取消收藏文档, documentId={}, userId={}", documentId, userId);
-
-        // 检查收藏记录是否存在
-        int existingCount = documentFavoriteMapper.countByDocumentIdAndUserId(documentId, userId);
-        if (existingCount == 0) {
-            log.warn("收藏记录不存在, documentId={}, userId={}", documentId, userId);
-            throw new BusinessException(ResultCode.NOT_FOUND, "收藏记录不存在");
-        }
-
-        // 删除收藏记录
-        int deletedCount = documentFavoriteMapper.deleteByDocumentIdAndUserId(documentId, userId);
-        if (deletedCount > 0) {
-            log.info("取消收藏成功, documentId={}, userId={}", documentId, userId);
-        } else {
-            log.error("取消收藏失败, documentId={}, userId={}", documentId, userId);
-            throw new BusinessException(ResultCode.INTERNAL_SERVER_ERROR, "取消收藏失败");
-        }
-    }
-
-    /**
-     * 获取文档收藏数量
-     *
-     * @param documentId 文档ID
-     * @return 收藏数量
-     */
-    @Override
-    public int getFavoriteCount(Long documentId) {
-        log.info("获取文档收藏数量, documentId={}", documentId);
-
-        try {
-            int count = documentFavoriteMapper.countByDocumentId(documentId);
-            log.info("文档收藏数量: {}, documentId={}", count, documentId);
-            return count;
-        } catch (Exception e) {
-            log.error("获取文档收藏数量失败, documentId={}", documentId, e);
-            return 0;
-        }
-    }
-
-    
-
-    
-
-    
-
-    
-    
-    /**
-     * 检查用户是否收藏了文档
-     *
-     * @param documentId 文档ID
-     * @param userId     用户ID
-     * @return 是否已收藏
-     */
-    @Override
-    public boolean isFavorited(Long documentId, Long userId) {
-        log.info("检查文档是否已收藏, documentId={}, userId={}", documentId, userId);
-
-        try {
-            int count = documentFavoriteMapper.countByDocumentIdAndUserId(documentId, userId);
-            boolean isFavorited = count > 0;
-            log.info("文档收藏状态: {}, documentId={}, userId={}", isFavorited, documentId, userId);
-            return isFavorited;
-        } catch (Exception e) {
-            log.error("检查文档收藏状态失败, documentId={}, userId={}", documentId, userId, e);
-            return false;
-        }
-    }
-
-    /**
-     * 根据项目ID列表获取项目名称映射
-     *
-     * @param projectIds 项目ID列表
-     * @return 项目ID到项目名称的映射
-     */
-    @Override
-    public Map<Long, String> getProjectNamesByIds(List<Long> projectIds) {
-        log.info("批量获取项目名称, projectIds={}", projectIds);
+    public Map<Long, String> getProjectNames(List<Long> projectIds, Long userId) {
+        log.info("批量获取项目名称, projectIds={}, userId={}", projectIds, userId);
 
         if (projectIds == null || projectIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
         try {
-            // 使用stream批量获取项目信息并转换为Map
-            return projectIds.stream()
-                    .distinct() // 去重
-                    .map(projectId -> {
-                        try {
-                            Project project = projectService.getById(projectId);
-                            return project;
-                        } catch (Exception e) {
-                            log.warn("获取项目失败, projectId={}", projectId, e);
-                            return null;
-                        }
-                    })
-                    .filter(project -> project != null) // 过滤null
+            // 解决N+1查询问题：批量查询项目信息
+            List<Project> projects = projectService.listByIds(projectIds);
+            
+            // 权限检查：验证用户有权访问这些项目
+            for (Project project : projects) {
+                validateProjectAccess(project.getId(), userId);
+            }
+            
+            // 转换为Map
+            return projects.stream()
                     .collect(Collectors.toMap(
                             Project::getId,
                             Project::getName,
@@ -1067,12 +830,6 @@ public class DocumentServiceImpl implements IDocumentService {
         }
     }
 
-    /**
-     * 验证文档信息
-     *
-     * @param document  文档实体
-     * @param isCreate  是否为创建操作
-     */
     private void validateDocument(Document document, boolean isCreate) {
         if (document == null) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "文档信息不能为空");
@@ -1099,16 +856,6 @@ public class DocumentServiceImpl implements IDocumentService {
         }
     }
 
-    /**
-     * 生成下一个版本号
-     * <p>
-     * 简化版本策略: 只增加修订号
-     * 例如: 1.0.0 -> 1.0.1, 1.2.5 -> 1.2.6
-     * </p>
-     *
-     * @param currentVersion 当前版本号
-     * @return 新版本号
-     */
     private String generateNextVersion(String currentVersion) {
         if (StringUtils.isBlank(currentVersion)) {
             return "1.0.0";
@@ -1128,4 +875,300 @@ public class DocumentServiceImpl implements IDocumentService {
 
         return "1.0.0";
     }
+
+    // ==================== 权限检查方法 ====================
+
+    private void validateDocumentAccess(Long documentId, Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        Document document = getByIdWithoutView(documentId);
+        if (document == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "文档不存在");
+        }
+
+        // 检查用户是否有权访问文档所属的项目
+        validateProjectAccess(document.getProjectId(), userId);
+    }
+
+    private void validateDocumentUpdateAccess(Long documentId, Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        Document document = getByIdWithoutView(documentId);
+        if (document == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "文档不存在");
+        }
+
+        // 检查用户是否有权更新文档所属的项目
+        validateProjectUpdateAccess(document.getProjectId(), userId);
+
+        // 文档创建者可以更新自己的文档
+        if (!userId.equals(document.getCreatorId())) {
+            // 非创建者需要项目管理员权限
+            if (!hasProjectAdminPermission(document.getProjectId(), userId)) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "无权更新此文档");
+            }
+        }
+    }
+
+    private void validateDocumentDeleteAccess(Long documentId, Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        Document document = getByIdWithoutView(documentId);
+        if (document == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "文档不存在");
+        }
+
+        // 检查用户是否有权删除文档所属的项目
+        validateProjectDeleteAccess(document.getProjectId(), userId);
+
+        // 文档创建者可以删除自己的文档
+        if (!userId.equals(document.getCreatorId())) {
+            // 非创建者需要项目管理员权限
+            if (!hasProjectAdminPermission(document.getProjectId(), userId)) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "无权删除此文档");
+            }
+        }
+    }
+
+    private void validateProjectAccess(Long projectId, Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        Project project = projectService.getById(projectId);
+        if (project == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "项目不存在");
+        }
+
+        // 检查用户是否是项目成员
+        if (!isProjectMember(projectId, userId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "无权访问此项目");
+        }
+    }
+
+    private void validateProjectCreateAccess(Long projectId, Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        Project project = projectService.getById(projectId);
+        if (project == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "项目不存在");
+        }
+
+        // 检查用户是否是项目成员
+        if (!isProjectMember(projectId, userId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "无权在此项目中创建文档");
+        }
+    }
+
+    private void validateProjectUpdateAccess(Long projectId, Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        Project project = projectService.getById(projectId);
+        if (project == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "项目不存在");
+        }
+
+        // 检查用户是否是项目成员
+        if (!isProjectMember(projectId, userId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "无权更新此项目");
+        }
+    }
+
+    private void validateProjectDeleteAccess(Long projectId, Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        Project project = projectService.getById(projectId);
+        if (project == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "项目不存在");
+        }
+
+        // 检查用户是否是项目管理员
+        if (!hasProjectAdminPermission(projectId, userId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "无权删除此项目中的文档");
+        }
+    }
+
+    private void validateCreatorAccess(Long creatorId, Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        // 用户可以查看自己的文档
+        if (userId.equals(creatorId)) {
+            return;
+        }
+
+        // 查看他人文档需要管理员权限
+        if (!hasSystemAdminPermission(userId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "无权查看此用户的文档");
+        }
+    }
+
+    private boolean isProjectMember(Long projectId, Long userId) {
+        // TODO: 实现项目成员检查逻辑
+        // 需要查询项目成员表，检查用户是否是项目成员
+        throw new BusinessException(ResultCode.INTERNAL_SERVER_ERROR, "权限检查功能尚未实现");
+    }
+
+    private boolean hasProjectAdminPermission(Long projectId, Long userId) {
+        // TODO: 实现项目管理员权限检查逻辑
+        // 需要查询项目成员表，检查用户是否有管理员角色
+        throw new BusinessException(ResultCode.INTERNAL_SERVER_ERROR, "权限检查功能尚未实现");
+    }
+
+    private boolean hasSystemAdminPermission(Long userId) {
+        // TODO: 实现系统管理员权限检查逻辑
+        // 需要查询用户角色表，检查用户是否有系统管理员角色
+        throw new BusinessException(ResultCode.INTERNAL_SERVER_ERROR, "权限检查功能尚未实现");
+    }
+
+    // ==================== 新增接口方法实现 ====================
+
+    @Override
+    public PageResult<Document> searchDocuments(DocumentSearchRequest request, Long userId) {
+        log.info("搜索文档, userId={}", userId);
+
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        return searchDocuments(request);
+    }
+
+    @Override
+    public List<DocumentFolderDTO> getFolderTree(Long projectId, Long userId) {
+        log.info("获取文档文件夹树形结构, projectId={}, userId={}", projectId, userId);
+
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        // 权限检查
+        if (projectId != null) {
+            validateProjectAccess(projectId, userId);
+        }
+
+        // TODO: 实现文件夹树形结构获取逻辑
+        // 需要实现DocumentFolderDTO和相关的转换逻辑
+        return List.of();
+    }
+
+    @Override
+    public Document upload(DocumentUploadRequest request, Long uploaderId) throws IOException {
+        log.info("上传文档, uploaderId={}", uploaderId);
+
+        if (uploaderId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        // 权限检查
+        validateProjectCreateAccess(request.getProjectId(), uploaderId);
+
+        // TODO: 实现文档上传逻辑
+        throw new BusinessException(ResultCode.INTERNAL_SERVER_ERROR, "文档上传功能尚未实现");
+    }
+
+    @Override
+    public DocumentDownloadInfo getDownloadInfo(Long id, Long userId) {
+        log.info("获取文档下载信息, id={}, userId={}", id, userId);
+
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        // 权限检查
+        validateDocumentAccess(id, userId);
+
+        // TODO: 实现文档下载信息获取逻辑
+        throw new BusinessException(ResultCode.INTERNAL_SERVER_ERROR, "文档下载功能尚未实现");
+    }
+
+    @Override
+    public void downloadDocument(Long id, Long userId, HttpServletResponse response) throws IOException {
+        log.info("下载文档, id={}, userId={}", id, userId);
+
+        if (userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
+
+        // 权限检查
+        validateDocumentAccess(id, userId);
+
+        // TODO: 实现文档下载逻辑
+        throw new BusinessException(ResultCode.INTERNAL_SERVER_ERROR, "文档下载功能尚未实现");
+    }
+
+    // ==================== 标签管理方法 ====================
+
+    private void syncDocumentTags(Long documentId, List<String> tagNames, Long projectId, Long userId) {
+        if (documentId == null) {
+            return;
+        }
+
+        if (CollectionUtils.isEmpty(tagNames)) {
+            documentTagService.setDocumentTags(documentId, List.of());
+            return;
+        }
+
+        List<String> normalizedNames = tagNames.stream()
+                .map(StringUtils::trimToNull)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (normalizedNames.isEmpty()) {
+            documentTagService.setDocumentTags(documentId, List.of());
+            return;
+        }
+
+        List<Tag> tags = tagService.ensureTagsExist(normalizedNames);
+        List<Long> tagIds = tags.stream()
+                .map(Tag::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        documentTagService.setDocumentTags(documentId, tagIds);
+        log.info("同步文档标签成功, documentId={}, tagCount={}", documentId, tagIds.size());
+    }
+
+    // ==================== 实现缺失的接口方法 ====================
+
+    @Override
+    public void delete(Long id) {
+        delete(id, SecurityUtils.getCurrentUserId().orElse(null));
+    }
+
+    @Override
+    public void toggleFavorite(Long documentId, Long userId, boolean favorite) {
+        log.info("切换文档收藏状态, documentId={}, userId={}, favorite={}", documentId, userId, favorite);
+        // TODO: 实现收藏功能
+        throw new BusinessException(ResultCode.INTERNAL_SERVER_ERROR, "收藏功能尚未实现");
+    }
+
+    @Override
+    public boolean isFavorited(Long documentId, Long userId) {
+        log.info("检查文档收藏状态, documentId={}, userId={}", documentId, userId);
+        // TODO: 实现收藏状态检查
+        return false;
+    }
+
+    @Override
+    public int getFavoriteCount(Long documentId, Long userId) {
+        log.info("获取文档收藏数量, documentId={}, userId={}", documentId, userId);
+        // TODO: 实现收藏数量统计
+        return 0;
+    }
+
 }

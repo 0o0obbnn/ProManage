@@ -4,7 +4,7 @@ import com.promanage.common.entity.User;
 import com.promanage.service.entity.TestCase;
 import com.promanage.service.service.ITestCaseService;
 import com.promanage.service.service.IUserService;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -204,3 +204,4 @@ class TestCaseProjectIntegrationTest extends BaseIntegrationTest {
         assertTrue(createdList.stream().anyMatch(tc -> tc.getId().equals(createdTestCaseId)));
     }
 }
+

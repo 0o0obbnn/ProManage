@@ -1,9 +1,7 @@
 package com.promanage.service.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.promanage.common.domain.BaseEntity;
+import com.promanage.common.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -22,13 +20,6 @@ import java.time.LocalDate;
 @TableName("tb_change_request")
 @Schema(description = "变更请求信息")
 public class ChangeRequest extends BaseEntity {
-
-    /**
-     * 变更请求ID
-     */
-    @TableId(type = IdType.AUTO)
-    @Schema(description = "变更请求ID", example = "1")
-    private Long id;
 
     /**
      * 变更标题

@@ -1,9 +1,7 @@
 package com.promanage.service.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.promanage.common.domain.BaseEntity;
+import com.promanage.common.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,13 +21,6 @@ import lombok.EqualsAndHashCode;
 @TableName("tb_comment")
 @Schema(description = "评论信息")
 public class Comment extends BaseEntity {
-
-    /**
-     * 评论ID
-     */
-    @TableId(type = IdType.AUTO)
-    @Schema(description = "评论ID", example = "1")
-    private Long id;
 
     /**
      * 实体类型：DOCUMENT-文档, TASK-任务, CHANGE_REQUEST-变更请求, TEST_CASE-测试用例

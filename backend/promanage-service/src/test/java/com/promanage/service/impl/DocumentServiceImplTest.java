@@ -1,7 +1,8 @@
 package com.promanage.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
+import com.promanage.service.dto.request.DocumentSearchRequest;
 import com.promanage.service.entity.Document;
 import com.promanage.service.mapper.DocumentMapper;
 import com.promanage.service.mapper.DocumentVersionMapper;
@@ -56,8 +57,19 @@ class DocumentServiceImplTest {
         when(documentMapper.selectPage(any(), any())).thenReturn(page);
 
         // When
-        PageResult<Document> result = documentService.searchDocuments(
-                1, 20, projectId, status, keyword, folderId, creatorId, type, startTime, endTime);
+        DocumentSearchRequest request = new DocumentSearchRequest();
+        request.setPage(1);
+        request.setPageSize(20);
+        request.setProjectId(projectId);
+        request.setStatus(String.valueOf(status));
+        request.setKeyword(keyword);
+        request.setFolderId(folderId);
+        request.setCreatorId(creatorId);
+        request.setType(type);
+        request.setStartTime(startTime);
+        request.setEndTime(endTime);
+        
+        PageResult<Document> result = documentService.searchDocuments(request, 1L);
 
         // Then
         assertNotNull(result);
@@ -75,8 +87,11 @@ class DocumentServiceImplTest {
         when(documentMapper.selectPage(any(), any())).thenReturn(page);
 
         // When
-        PageResult<Document> result = documentService.searchDocuments(
-                1, 20, null, null, null, null, null, null, null, null);
+        DocumentSearchRequest request = new DocumentSearchRequest();
+        request.setPage(1);
+        request.setPageSize(20);
+        
+        PageResult<Document> result = documentService.searchDocuments(request, 1L);
 
         // Then
         assertNotNull(result);

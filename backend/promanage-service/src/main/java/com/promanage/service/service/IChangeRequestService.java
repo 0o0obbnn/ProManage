@@ -1,6 +1,6 @@
 package com.promanage.service.service;
 
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.service.entity.ChangeRequest;
 import com.promanage.service.entity.ChangeRequestApproval;
 import com.promanage.service.entity.ChangeRequestImpact;

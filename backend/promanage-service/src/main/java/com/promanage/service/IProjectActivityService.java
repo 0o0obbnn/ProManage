@@ -1,7 +1,7 @@
 package com.promanage.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.service.entity.ProjectActivity;
 
 public interface IProjectActivityService extends IService<ProjectActivity> {
@@ -26,3 +26,4 @@ public interface IProjectActivityService extends IService<ProjectActivity> {
      */
     PageResult<ProjectActivity> getProjectActivities(Long projectId, Integer page, Integer pageSize);
 }
+

@@ -57,4 +57,22 @@ public enum DocumentStatus {
         }
         return null;
     }
+
+    /**
+     * 根据状态字符串获取状态码
+     *
+     * @param status 状态字符串
+     * @return 状态码
+     */
+    public static Integer toCode(String status) {
+        if (status == null) {
+            return null;
+        }
+        for (DocumentStatus ds : values()) {
+            if (ds.name().equalsIgnoreCase(status) || ds.getDescription().equalsIgnoreCase(status)) {
+                return ds.getCode();
+            }
+        }
+        return null;
+    }
 }

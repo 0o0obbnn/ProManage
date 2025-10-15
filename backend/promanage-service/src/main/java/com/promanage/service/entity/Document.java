@@ -2,7 +2,7 @@ package com.promanage.service.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.promanage.common.domain.BaseEntity;
+import com.promanage.common.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -182,20 +182,4 @@ public class Document extends BaseEntity {
     @Schema(description = "归档时间")
     private java.time.LocalDateTime archivedAt;
 
-    /**
-     * 创建人ID (不能为空)
-     * <p>
-     * 注意: BaseEntity中已有creatorId,此字段用于业务关联
-     * </p>
-     */
-    @TableField("creator_id")
-    @Schema(description = "创建人ID", example = "1", required = true)
-    private Long creatorId;
-
-    /**
-     * 最后更新人ID
-     */
-    @TableField("updater_id")
-    @Schema(description = "最后更新人ID", example = "1")
-    private Long updaterId;
 }

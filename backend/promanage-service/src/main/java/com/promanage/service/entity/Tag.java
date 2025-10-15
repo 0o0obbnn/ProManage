@@ -1,15 +1,10 @@
 package com.promanage.service.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.promanage.common.domain.BaseEntity;
+import com.promanage.common.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.time.LocalDateTime;
 
 /**
  * 标签实体类
@@ -26,13 +21,6 @@ import java.time.LocalDateTime;
 @TableName("tags")
 @Schema(description = "标签信息")
 public class Tag extends BaseEntity {
-
-    /**
-     * 标签ID
-     */
-    @TableId(type = IdType.AUTO)
-    @Schema(description = "标签ID", example = "1")
-    private Long id;
 
     /**
      * 标签名称
@@ -59,12 +47,6 @@ public class Tag extends BaseEntity {
     private Long projectId;
 
     /**
-     * 创建人ID
-     */
-    @Schema(description = "创建人ID", example = "1")
-    private Long creatorId;
-
-    /**
      * 使用次数
      */
     @Schema(description = "使用次数", example = "10")
@@ -76,30 +58,4 @@ public class Tag extends BaseEntity {
     @Schema(description = "是否激活", example = "true")
     private Boolean isActive;
 
-    /**
-     * 创建时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @Schema(description = "创建时间")
-    private LocalDateTime createdAt;
-
-    /**
-     * 更新时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @Schema(description = "更新时间")
-    private LocalDateTime updatedAt;
-
-    /**
-     * 逻辑删除时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @Schema(description = "逻辑删除时间")
-    private LocalDateTime deletedAt;
-
-    /**
-     * 删除人ID
-     */
-    @Schema(description = "删除人ID", example = "1")
-    private Long deletedBy;
 }

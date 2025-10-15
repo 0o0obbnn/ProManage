@@ -1,6 +1,6 @@
 package com.promanage.service.impl;
 
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.service.dto.SearchResultDTO;
 import com.promanage.service.mapper.DocumentMapper;
 import com.promanage.service.mapper.ProjectMapper;

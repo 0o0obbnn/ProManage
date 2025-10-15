@@ -5,7 +5,7 @@ import com.promanage.api.dto.request.UpdateTestCaseRequest;
 import com.promanage.api.dto.request.ExecuteTestCaseRequest;
 import com.promanage.api.dto.response.TestCaseResponse;
 import com.promanage.api.dto.response.TestCaseDetailResponse;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.domain.Result;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.infrastructure.utils.SecurityUtils;

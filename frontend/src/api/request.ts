@@ -5,26 +5,8 @@ import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosError } f
 import { message } from 'ant-design-vue'
 import type { ApiResponse } from '@/types/global'
 import * as authApi from './modules/auth'
-
-// 是否正在刷新 token 的标志
-let isRefreshing = false
-// 存储待重试的请求队列
-let refreshSubscribers: ((token: string) => void)[] = []
-
-/**
- * 订阅 token 刷新
- */
-function subscribeTokenRefresh(callback: (token: string) => void) {
-  refreshSubscribers.push(callback)
-}
-
-/**
- * 通知所有订阅者 token 已刷新
- */
-function onRefreshed(token: string) {
-  refreshSubscribers.forEach((callback) => callback(token))
-  refreshSubscribers = []
-}
+import { tokenRefreshManager } from '@/utils/tokenRefreshManager'
+import { requestDeduplication } from '@/utils/requestDeduplication'
 
 /**
  * 错误报告函数
@@ -80,6 +62,18 @@ service.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // 添加 CSRF Token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    if (csrfToken && ['post', 'put', 'delete', 'patch'].includes(config.method?.toLowerCase() || '')) {
+      config.headers['X-CSRF-Token'] = csrfToken
+    }
+
+    // 请求去重（只对GET请求去重）
+    if (config.method?.toLowerCase() === 'get') {
+      const controller = requestDeduplication.addPendingRequest(config)
+      config.signal = controller.signal
+    }
     
     // 在开发环境下记录请求
     if (import.meta.env.DEV) {
@@ -97,6 +91,11 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response) => {
+    // 移除待处理请求
+    if (response.config.method?.toLowerCase() === 'get') {
+      requestDeduplication.removePendingRequest(response.config)
+    }
+
     const { code, message: msg, data } = response.data as ApiResponse
 
     if (code === 200) {
@@ -115,6 +114,16 @@ service.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean }
 
+    // 移除待处理请求
+    if (originalRequest && originalRequest.method?.toLowerCase() === 'get') {
+      requestDeduplication.removePendingRequest(originalRequest)
+    }
+
+    // 忽略取消的请求
+    if (axios.isCancel(error)) {
+      return Promise.reject(error)
+    }
+
     // 记录错误
     reportError(error, `API Response Error: ${originalRequest?.url || 'Unknown URL'}`)
 
@@ -125,42 +134,28 @@ service.interceptors.response.use(
 
       // 处理 401 未授权错误
       if (status === 401 && !originalRequest._retry) {
-        if (isRefreshing) {
-          // 如果正在刷新 token，将请求加入队列
-          return new Promise((resolve) => {
-            subscribeTokenRefresh((newToken: string) => {
-              if (originalRequest.headers) {
-                originalRequest.headers.Authorization = `Bearer ${newToken}`
-              }
-              resolve(service(originalRequest))
-            })
-          })
-        }
-
         originalRequest._retry = true
-        isRefreshing = true
 
         try {
-          const refreshToken = localStorage.getItem('refreshToken')
-          if (!refreshToken) {
-            throw new Error('No refresh token')
+          let token: string
+
+          // 如果正在刷新，订阅刷新结果
+          if (tokenRefreshManager.isRefreshingToken()) {
+            token = await tokenRefreshManager.subscribe()
+          } else {
+            // 开始刷新
+            const refreshToken = localStorage.getItem('refreshToken')
+            if (!refreshToken) {
+              throw new Error('No refresh token')
+            }
+
+            token = await tokenRefreshManager.refresh(() => authApi.refreshToken(refreshToken))
           }
-
-          // 刷新 token
-          const response = await authApi.refreshToken(refreshToken)
-          const { token, refreshToken: newRefreshToken } = response
-
-          // 更新本地存储
-          localStorage.setItem('token', token)
-          localStorage.setItem('refreshToken', newRefreshToken)
 
           // 更新请求头
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${token}`
           }
-
-          // 通知所有等待的请求
-          onRefreshed(token)
 
           // 重试原始请求
           return service(originalRequest)
@@ -169,11 +164,10 @@ service.interceptors.response.use(
           message.error('登录已过期，请重新登录')
           localStorage.removeItem('token')
           localStorage.removeItem('refreshToken')
+          localStorage.removeItem('userInfo')
           window.location.href = '/login'
           reportError(refreshError, 'Token Refresh Failed')
           return Promise.reject(refreshError)
-        } finally {
-          isRefreshing = false
         }
       } else if (status === 401) {
         // 刷新 token 后仍然 401，说明 refresh token 也过期了

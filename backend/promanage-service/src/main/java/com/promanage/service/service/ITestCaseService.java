@@ -1,6 +1,6 @@
 package com.promanage.service.service;
 
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.service.entity.TestCase;
 
 import java.util.List;

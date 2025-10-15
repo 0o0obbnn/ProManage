@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.domain.ResultCode;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.dto.TaskTimeTrackingDTO;
@@ -375,3 +375,4 @@ public class TaskTimeTrackingServiceImpl extends ServiceImpl<TaskTimeTrackingMap
         return dto;
     }
 }
+

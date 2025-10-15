@@ -2,7 +2,7 @@ package com.promanage.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.service.entity.*;
 import com.promanage.service.mapper.*;
 import org.junit.jupiter.api.BeforeEach;

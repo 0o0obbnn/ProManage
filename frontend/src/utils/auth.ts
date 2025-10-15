@@ -1,6 +1,7 @@
 /**
  * 认证工具函数
  */
+import { SecureStorage } from './storage'
 
 /**
  * Token存储键
@@ -13,51 +14,51 @@ export const USER_INFO_KEY = 'userInfo'
  * 获取Token
  */
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY)
+  return SecureStorage.getItem(TOKEN_KEY, false) // Token不加密，由后端验证
 }
 
 /**
  * 设置Token
  */
 export function setToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token)
+  SecureStorage.setItem(TOKEN_KEY, token, false)
 }
 
 /**
  * 移除Token
  */
 export function removeToken(): void {
-  localStorage.removeItem(TOKEN_KEY)
+  SecureStorage.removeItem(TOKEN_KEY)
 }
 
 /**
  * 获取RefreshToken
  */
 export function getRefreshToken(): string | null {
-  return localStorage.getItem(REFRESH_TOKEN_KEY)
+  return SecureStorage.getItem(REFRESH_TOKEN_KEY, false)
 }
 
 /**
  * 设置RefreshToken
  */
 export function setRefreshToken(refreshToken: string): void {
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
+  SecureStorage.setItem(REFRESH_TOKEN_KEY, refreshToken, false)
 }
 
 /**
  * 移除RefreshToken
  */
 export function removeRefreshToken(): void {
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  SecureStorage.removeItem(REFRESH_TOKEN_KEY)
 }
 
 /**
  * 清除所有认证信息
  */
 export function clearAuth(): void {
-  localStorage.removeItem(TOKEN_KEY)
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
-  localStorage.removeItem(USER_INFO_KEY)
+  SecureStorage.removeItem(TOKEN_KEY)
+  SecureStorage.removeItem(REFRESH_TOKEN_KEY)
+  SecureStorage.removeItem(USER_INFO_KEY)
 }
 
 /**

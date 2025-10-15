@@ -6,7 +6,7 @@ import com.promanage.api.dto.request.UpdateChangeRequestRequest;
 import com.promanage.api.dto.response.ChangeRequestResponse;
 import com.promanage.api.dto.response.ChangeRequestImpactResponse;
 import com.promanage.api.dto.response.ChangeRequestApprovalResponse;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.domain.Result;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.infrastructure.utils.SecurityUtils;

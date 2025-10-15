@@ -1,8 +1,9 @@
 package com.promanage.api.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.promanage.common.entity.User;
 import com.promanage.service.entity.DocumentVersion;
 import com.promanage.service.service.IUserService;
-import com.promanage.common.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +11,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+
+/**
+ * 文档版本响应
+ */
 
 /**
  * 文档版本响应DTO
@@ -37,6 +42,10 @@ public class DocumentVersionResponse {
     @Schema(description = "版本号", example = "v1.2.0")
     private String version;
 
+    @Schema(description = "版本标题", example = "新增变更管理章节")
+    private String title;
+
+    @JsonProperty("changelog")
     @Schema(description = "变更说明", example = "添加了新的功能需求，修改了部分业务逻辑")
     private String changeLog;
 
@@ -49,15 +58,20 @@ public class DocumentVersionResponse {
     @Schema(description = "内容哈希值", example = "a3b2c1d4e5f6...")
     private String contentHash;
 
-    @Schema(description = "创建者ID", example = "5")
+    @Schema(hidden = true)
     private Long creatorId;
 
-    @Schema(description = "创建者姓名", example = "李开发")
+    @Schema(hidden = true)
     private String creatorName;
 
-    @Schema(description = "创建者头像", example = "https://example.com/avatar/user5.jpg")
+    @Schema(hidden = true)
     private String creatorAvatar;
 
+    @JsonProperty("author")
+    @Schema(description = "版本作者信息")
+    private DocumentUserSummary author;
+
+    @JsonProperty("created_at")
     @Schema(description = "创建时间", example = "2025-09-25T16:20:00")
     private LocalDateTime createTime;
 
@@ -79,13 +93,16 @@ public class DocumentVersionResponse {
                 .id(documentVersion.getId())
                 .documentId(documentVersion.getDocumentId())
                 .version(documentVersion.getVersionNumber())
+                .title(documentVersion.getTitle())
                 .changeLog(documentVersion.getChangeLog())
                 .fileUrl(documentVersion.getFileUrl())
                 .fileSize(documentVersion.getFileSize())
                 .contentHash(documentVersion.getContentHash())
                 .creatorId(documentVersion.getCreatorId())
-                .creatorName(null) // TODO: 需要从用户服务获取 - 使用fromEntityWithUser方法
-                .creatorAvatar(null) // TODO: 需要从用户服务获取 - 使用fromEntityWithUser方法
+                .author(null)
+                // 创建者名称/头像仅在fromEntityWithUser提供
+                .creatorName(null)
+                .creatorAvatar(null)
                 .createTime(documentVersion.getCreateTime())
                 .isCurrent(documentVersion.getIsCurrent())
                 .build();
@@ -106,6 +123,7 @@ public class DocumentVersionResponse {
         // 获取创建者信息
         String creatorName = null;
         String creatorAvatar = null;
+        DocumentUserSummary authorInfo = null;
 
         if (documentVersion.getCreatorId() != null) {
             try {
@@ -113,6 +131,12 @@ public class DocumentVersionResponse {
                 if (creator != null) {
                     creatorName = creator.getRealName();
                     creatorAvatar = creator.getAvatar();
+                    authorInfo = DocumentUserSummary.builder()
+                            .id(creator.getId())
+                            .username(creator.getUsername())
+                            .displayName(creatorName != null ? creatorName : creator.getUsername())
+                            .avatar(creatorAvatar)
+                            .build();
                 }
             } catch (Exception e) {
                 // 如果获取用户信息失败，保持为null
@@ -123,6 +147,7 @@ public class DocumentVersionResponse {
                 .id(documentVersion.getId())
                 .documentId(documentVersion.getDocumentId())
                 .version(documentVersion.getVersionNumber())
+                .title(documentVersion.getTitle())
                 .changeLog(documentVersion.getChangeLog())
                 .fileUrl(documentVersion.getFileUrl())
                 .fileSize(documentVersion.getFileSize())
@@ -130,6 +155,7 @@ public class DocumentVersionResponse {
                 .creatorId(documentVersion.getCreatorId())
                 .creatorName(creatorName)
                 .creatorAvatar(creatorAvatar)
+                .author(authorInfo)
                 .createTime(documentVersion.getCreateTime())
                 .isCurrent(documentVersion.getIsCurrent())
                 .build();

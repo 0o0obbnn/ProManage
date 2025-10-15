@@ -11,6 +11,10 @@ import { getToken, isTokenExpired, clearAuth } from '@/utils/auth'
  */
 const whiteList = ['Login', 'Register', 'ForgotPassword', 'NotFound', 'Forbidden']
 
+// 用户信息获取重试计数
+let fetchUserInfoRetries = 0
+const MAX_FETCH_RETRIES = 3
+
 /**
  * 配置路由守卫
  */
@@ -50,19 +54,26 @@ export function setupRouterGuards(router: Router) {
       }
 
       // 已登录但没有用户信息，尝试获取
-      if (!userStore.userInfo) {
+      if (!userStore.userInfo && fetchUserInfoRetries < MAX_FETCH_RETRIES) {
         try {
           await userStore.fetchUserInfo()
+          fetchUserInfoRetries = 0 // 成功后重置计数
         } catch (error) {
-          console.error('获取用户信息失败:', error)
-          message.error('登录状态已失效，请重新登录')
-          clearAuth()
-          await userStore.logout()
-          next({
-            name: 'Login',
-            query: { redirect: to.fullPath }
-          })
-          return
+          fetchUserInfoRetries++
+          console.error(`获取用户信息失败 (${fetchUserInfoRetries}/${MAX_FETCH_RETRIES}):`, error)
+          
+          if (fetchUserInfoRetries >= MAX_FETCH_RETRIES) {
+            message.error('登录状态已失效，请重新登录')
+            clearAuth()
+            await userStore.logout()
+            fetchUserInfoRetries = 0 // 重置计数
+            next({
+              name: 'Login',
+              query: { redirect: to.fullPath }
+            })
+            return
+          }
+          // 未达到最大重试次数，允许继续
         }
       }
 

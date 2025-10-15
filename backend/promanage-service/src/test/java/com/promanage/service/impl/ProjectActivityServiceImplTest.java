@@ -1,7 +1,7 @@
 package com.promanage.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.service.entity.ProjectActivity;
 import com.promanage.service.mapper.ProjectActivityMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -66,3 +66,4 @@ class ProjectActivityServiceImplTest {
         verify(projectActivityMapper).selectPage(any(), any());
     }
 }
+

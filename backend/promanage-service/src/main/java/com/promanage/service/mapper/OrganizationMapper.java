@@ -1,7 +1,7 @@
 package com.promanage.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.promanage.service.entity.Organization;
+import com.promanage.common.entity.Organization;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -137,7 +137,13 @@ public interface OrganizationMapper extends BaseMapper<Organization> {
      * @param days 天数
      * @return List<Organization> 组织列表
      */
-    @Select("SELECT * FROM organizations WHERE subscription_expires_at <= CURRENT_TIMESTAMP + INTERVAL '#{days} days' AND subscription_expires_at > CURRENT_TIMESTAMP AND deleted_at IS NULL")
+    @Select("""
+            SELECT *
+            FROM organizations
+            WHERE deleted_at IS NULL
+              AND subscription_expires_at <= CURRENT_TIMESTAMP + (#{days} || ' days')::interval
+              AND subscription_expires_at > CURRENT_TIMESTAMP
+            """)
     List<Organization> findExpiringSubscriptions(@Param("days") Integer days);
 
     /**
@@ -159,6 +165,6 @@ public interface OrganizationMapper extends BaseMapper<Organization> {
      *
      * @return List<Organization> 组织列表
      */
-    @Select("SELECT * FROM organizations WHERE subscription_plan IS NULL OR subscription_plan = '' AND deleted_at IS NULL")
+    @Select("SELECT * FROM organizations WHERE deleted_at IS NULL AND (subscription_plan IS NULL OR subscription_plan = '')")
     List<Organization> findOrganizationsWithoutSubscription();
 }

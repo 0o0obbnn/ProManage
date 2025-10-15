@@ -4,14 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.service.entity.TestCase;
 import com.promanage.service.entity.TestExecution;
-import com.promanage.service.entity.ProjectMember;
 import com.promanage.service.mapper.TestCaseMapper;
 import com.promanage.service.mapper.TestExecutionMapper;
-import com.promanage.service.service.IProjectService;
+import com.promanage.service.IProjectService;
 import com.promanage.service.service.ITestCaseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  * 测试用例服务实现类
@@ -79,7 +84,7 @@ public class TestCaseServiceImpl implements ITestCaseService {
     @Override
     public PageResult<TestCase> listTestCases(Long projectId, Integer page, Integer pageSize,
                                               Integer status, Integer priority, String type,
-                                              Long assigneeId, Long creatorId, String module,
+                                              Long assigneeId, Long creatorId, String moduleId,
                                               String keyword, String tags) {
         log.info("Listing test cases for project: {}", projectId);
 
@@ -104,8 +109,8 @@ public class TestCaseServiceImpl implements ITestCaseService {
         if (creatorId != null) {
             wrapper.eq(TestCase::getCreatorId, creatorId);
         }
-        if (module != null && !module.isEmpty()) {
-            wrapper.eq(TestCase::getModule, module);
+        if (moduleId != null && !moduleId.isEmpty()) {
+            wrapper.eq(TestCase::getModule, moduleId);
         }
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.and(w -> w.like(TestCase::getTitle, keyword)
@@ -188,7 +193,7 @@ public class TestCaseServiceImpl implements ITestCaseService {
         log.info("Executing test case: {} by user: {}", testCaseId, executorId);
 
         // Validate test case exists
-        TestCase testCase = getTestCaseById(testCaseId);
+        getTestCaseById(testCaseId);
 
         // Map result string to integer
         Integer resultCode = mapResultStringToCode(result);
@@ -354,7 +359,7 @@ public class TestCaseServiceImpl implements ITestCaseService {
     }
 
     @Override
-    public PageResult<TestCaseExecutionHistory> listTestCaseExecutionHistory(Long testCaseId, Integer page, Integer pageSize) {
+    public PageResult<ITestCaseService.TestCaseExecutionHistory> listTestCaseExecutionHistory(Long testCaseId, Integer page, Integer pageSize) {
         log.info("Listing execution history for test case: {}", testCaseId);
 
         Page<TestExecution> pageParam = new Page<>(page, pageSize);
@@ -366,9 +371,9 @@ public class TestCaseServiceImpl implements ITestCaseService {
         IPage<TestExecution> result = testExecutionMapper.selectPage(pageParam, wrapper);
 
         // Convert TestExecution entities to TestCaseExecutionHistory
-        List<TestCaseExecutionHistory> historyList = new ArrayList<>();
+        List<ITestCaseService.TestCaseExecutionHistory> historyList = new ArrayList<>();
         for (TestExecution execution : result.getRecords()) {
-            TestCaseExecutionHistory history = new TestCaseExecutionHistory();
+            ITestCaseService.TestCaseExecutionHistory history = new ITestCaseService.TestCaseExecutionHistory();
             history.setId(execution.getId());
             history.setTestCaseId(execution.getTestCaseId());
             history.setResult(mapResultCodeToString(execution.getResult()));
@@ -383,7 +388,7 @@ public class TestCaseServiceImpl implements ITestCaseService {
             historyList.add(history);
         }
 
-        return PageResult.<TestCaseExecutionHistory>builder()
+        return PageResult.<ITestCaseService.TestCaseExecutionHistory>builder()
                 .list(historyList)
                 .total(result.getTotal())
                 .page(page)
@@ -406,12 +411,12 @@ public class TestCaseServiceImpl implements ITestCaseService {
     }
 
     @Override
-    public TestCaseStatistics getTestCaseStatistics(Long projectId) {
+    public ITestCaseService.TestCaseStatistics getTestCaseStatistics(Long projectId) {
         log.info("Getting test case statistics for project: {}", projectId);
 
         Map<String, Object> statsMap = testExecutionMapper.getProjectStatistics(projectId);
 
-        TestCaseStatistics stats = new TestCaseStatistics();
+        ITestCaseService.TestCaseStatistics stats = new ITestCaseService.TestCaseStatistics();
         stats.setTotalCount(getIntValue(statsMap, "totalcount"));
         stats.setDraftCount(getIntValue(statsMap, "draftcount"));
         stats.setPendingCount(getIntValue(statsMap, "pendingcount"));
@@ -440,12 +445,12 @@ public class TestCaseServiceImpl implements ITestCaseService {
     }
 
     @Override
-    public TestCaseExecutionStatistics getTestCaseExecutionStatistics(Long testCaseId) {
+    public ITestCaseService.TestCaseExecutionStatistics getTestCaseExecutionStatistics(Long testCaseId) {
         log.info("Getting execution statistics for test case: {}", testCaseId);
 
         Map<String, Object> statsMap = testExecutionMapper.getExecutionStatistics(testCaseId);
 
-        TestCaseExecutionStatistics stats = new TestCaseExecutionStatistics();
+        ITestCaseService.TestCaseExecutionStatistics stats = new ITestCaseService.TestCaseExecutionStatistics();
         stats.setTotalExecutions(getIntValue(statsMap, "total"));
         stats.setPassCount(getIntValue(statsMap, "pass"));
         stats.setFailCount(getIntValue(statsMap, "fail"));
@@ -651,21 +656,43 @@ public class TestCaseServiceImpl implements ITestCaseService {
     }
 
     /**
-     * Export test cases to Excel format
-     * TODO: Implement using Apache POI library
-     *
-     * Required dependencies:
-     * - org.apache.poi:poi:5.2.3
-     * - org.apache.poi:poi-ooxml:5.2.3
+     * Export test cases to Excel-compatible format without external deps.
+     * Generates a tab-separated .xls file that Excel can open.
      */
     private String exportToExcel(List<TestCase> testCases) {
-        // TODO: Implement Excel export
-        // 1. Create workbook and sheet
-        // 2. Create header row with columns: ID, Title, Description, Type, Status, Priority, etc.
-        // 3. Populate data rows with test case information
-        // 4. Save to file storage (MinIO or local)
-        // 5. Return file URL
-        throw new BusinessException("Excel导出功能待实现，需要添加Apache POI依赖");
+        try {
+            StringBuilder tsv = new StringBuilder();
+            // Header
+            tsv.append("ID\t标题\t描述\t类型\t状态\t优先级\t模块\t创建人ID\t指派人ID\t创建时间\n");
+            // Rows
+            for (TestCase testCase : testCases) {
+                tsv.append(testCase.getId()).append('\t')
+                   .append(safeTab(testCase.getTitle())).append('\t')
+                   .append(safeTab(testCase.getDescription())).append('\t')
+                   .append(nullToEmpty(testCase.getType())).append('\t')
+                   .append(nullToEmpty(testCase.getStatus())).append('\t')
+                   .append(nullToEmpty(testCase.getPriority())).append('\t')
+                   .append(safeTab(testCase.getModule())).append('\t')
+                   .append(nullToEmpty(testCase.getCreatorId())).append('\t')
+                   .append(testCase.getAssigneeId() != null ? testCase.getAssigneeId() : "").append('\t')
+                   .append(nullToEmpty(testCase.getCreateTime())).append('\n');
+            }
+
+            String fileName = "test_cases_" + System.currentTimeMillis() + ".xls";
+            Path exportDir = Paths.get("exports");
+            if (!Files.exists(exportDir)) {
+                Files.createDirectories(exportDir);
+            }
+            Path filePath = exportDir.resolve(fileName);
+            Files.write(filePath, tsv.toString().getBytes(StandardCharsets.UTF_8));
+
+            String fileUrl = "/exports/" + fileName;
+            log.info("Excel export completed: {} (path: {})", fileUrl, filePath.toAbsolutePath());
+            return fileUrl;
+        } catch (Exception e) {
+            log.error("Error exporting to Excel (TSV)", e);
+            throw new BusinessException("Excel导出失败: " + e.getMessage());
+        }
     }
 
     /**
@@ -692,12 +719,17 @@ public class TestCaseServiceImpl implements ITestCaseService {
                    .append(testCase.getCreateTime()).append("\n");
             }
 
-            // Save to file storage
-            // TODO: Save to MinIO or local file system
+            // Persist to local filesystem under exports/
             String fileName = "test_cases_" + System.currentTimeMillis() + ".csv";
-            String fileUrl = "/exports/" + fileName;
+            Path exportDir = Paths.get("exports");
+            if (!Files.exists(exportDir)) {
+                Files.createDirectories(exportDir);
+            }
+            Path filePath = exportDir.resolve(fileName);
+            Files.write(filePath, csv.toString().getBytes(StandardCharsets.UTF_8));
 
-            log.info("CSV export completed: {}", fileUrl);
+            String fileUrl = "/exports/" + fileName;
+            log.info("CSV export completed: {} (path: {})", fileUrl, filePath.toAbsolutePath());
             return fileUrl;
         } catch (Exception e) {
             log.error("Error exporting to CSV", e);
@@ -706,21 +738,10 @@ public class TestCaseServiceImpl implements ITestCaseService {
     }
 
     /**
-     * Export test cases to PDF format
-     * TODO: Implement using iText library
-     *
-     * Required dependencies:
-     * - com.itextpdf:itext7-core:7.2.5
+     * Export test cases to PDF format (not enabled without external deps).
      */
     private String exportToPdf(List<TestCase> testCases) {
-        // TODO: Implement PDF export
-        // 1. Create PDF document
-        // 2. Add header with project information
-        // 3. Create table with test case data
-        // 4. Format test cases with proper styling
-        // 5. Save to file storage (MinIO or local)
-        // 6. Return file URL
-        throw new BusinessException("PDF导出功能待实现，需要添加iText依赖");
+        throw new BusinessException("当前环境未启用PDF导出，请使用CSV/Excel导出");
     }
 
     /**
@@ -739,33 +760,174 @@ public class TestCaseServiceImpl implements ITestCaseService {
     }
 
     @Override
-    public TestCaseImportResult importTestCases(Long projectId, String fileUrl, Long userId) {
+    public ITestCaseService.TestCaseImportResult importTestCases(Long projectId, String fileUrl, Long userId) {
         log.info("Importing test cases for project: {} from file: {}", projectId, fileUrl);
 
-        TestCaseImportResult result = new TestCaseImportResult();
+        ITestCaseService.TestCaseImportResult result = new ITestCaseService.TestCaseImportResult();
         result.setTotalCount(0);
         result.setSuccessCount(0);
         result.setFailureCount(0);
         result.setErrorMessages(new ArrayList<>());
 
         try {
-            // TODO: Implement import logic
-            // 1. Download file from fileUrl
-            // 2. Parse file based on extension (xlsx, csv, etc.)
-            // 3. Validate each row
-            // 4. Create TestCase entities
-            // 5. Insert to database
-            // 6. Track success/failure count
+            if (fileUrl == null || fileUrl.isBlank()) {
+                throw new BusinessException("文件地址不能为空");
+            }
+            Path path;
+            if (fileUrl.startsWith("/exports/")) {
+                path = Paths.get("exports", fileUrl.substring("/exports/".length()));
+            } else {
+                path = Paths.get(fileUrl);
+            }
+            if (!Files.exists(path)) {
+                throw new BusinessException("文件不存在: " + path.toAbsolutePath());
+            }
 
-            // For now, return placeholder result
-            result.getErrorMessages().add("导入功能待实现");
-            log.warn("Test case import is not yet implemented");
+            String lower = path.getFileName().toString().toLowerCase();
+            if (lower.endsWith(".csv") || lower.endsWith(".txt")) {
+                // CSV import
+                List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+                if (lines.size() > 10001) {
+                    throw new BusinessException("单次导入最大支持10000行（含表头）");
+                }
+                result.setTotalCount(lines.size() > 0 ? lines.size() - 1 : 0);
+                boolean headerSkipped = false;
+                for (String line : lines) {
+                    if (!headerSkipped) { headerSkipped = true; continue; }
+                    if (line.isBlank()) continue;
+                    String[] cols = parseCsvLine(line);
+                    importRow(projectId, userId, result, cols);
+                }
+            } else if (lower.endsWith(".xls")) {
+                // TSV-like .xls (we output as TSV earlier); handle as tab-separated text
+                List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+                if (lines.size() > 10001) {
+                    throw new BusinessException("单次导入最大支持10000行（含表头）");
+                }
+                result.setTotalCount(lines.size() > 0 ? lines.size() - 1 : 0);
+                boolean headerSkipped = false;
+                for (String line : lines) {
+                    if (!headerSkipped) { headerSkipped = true; continue; }
+                    if (line.isBlank()) continue;
+                    String[] cols = line.split("\t", -1);
+                    // align columns to CSV layout
+                    importRow(projectId, userId, result, cols);
+                }
+            } else if (lower.endsWith(".xlsx")) {
+                try (Workbook workbook = new XSSFWorkbook(Files.newInputStream(path))) {
+                    Sheet sheet = workbook.getSheetAt(0);
+                    int rowCount = sheet.getPhysicalNumberOfRows();
+                    result.setTotalCount(Math.max(0, rowCount - 1));
 
+                    boolean headerSkipped = false;
+                    for (Row row : sheet) {
+                        if (!headerSkipped) { headerSkipped = true; continue; }
+                        List<String> colsList = new ArrayList<>();
+                        int last = Math.max(10, row.getLastCellNum());
+                        for (int i = 0; i < last; i++) {
+                            colsList.add(getCellString(row.getCell(i)));
+                        }
+                        String[] cols = colsList.toArray(new String[0]);
+                        importRow(projectId, userId, result, cols);
+                    }
+                }
+            } else {
+                throw new BusinessException("不支持的文件格式: " + lower);
+            }
         } catch (Exception e) {
             log.error("Error importing test cases", e);
             result.getErrorMessages().add("导入失败: " + e.getMessage());
         }
 
         return result;
+    }
+
+    private void importRow(Long projectId, Long userId, ITestCaseService.TestCaseImportResult result, String[] cols) {
+        try {
+            TestCase tc = new TestCase();
+            tc.setProjectId(projectId);
+            tc.setTitle(getCsv(cols, 1));
+            tc.setDescription(getCsv(cols, 2));
+            tc.setType(getCsv(cols, 3));
+            tc.setStatus(parseIntSafe(getCsv(cols, 4)));
+            tc.setPriority(parseIntSafe(getCsv(cols, 5)));
+            tc.setModule(getCsv(cols, 6));
+            tc.setCreatorId(userId);
+            tc.setAssigneeId(parseLongSafe(getCsv(cols, 8)));
+            tc.setCreateTime(LocalDateTime.now());
+            tc.setUpdateTime(LocalDateTime.now());
+            testCaseMapper.insert(tc);
+            result.setSuccessCount(result.getSuccessCount() + 1);
+        } catch (Exception rowErr) {
+            result.setFailureCount(result.getFailureCount() + 1);
+            result.getErrorMessages().add("行导入失败: " + rowErr.getMessage());
+        }
+    }
+
+    private String getCellString(Cell cell) {
+        if (cell == null) return "";
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue();
+            case NUMERIC -> {
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    java.util.Date d = cell.getDateCellValue();
+                    yield new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(d);
+                } else {
+                    yield String.valueOf((long) cell.getNumericCellValue());
+                }
+            }
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            case FORMULA -> cell.getCellFormula();
+            default -> "";
+        };
+    }
+
+    private String safeTab(String s) {
+        if (s == null) return "";
+        return s.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ');
+    }
+
+    private String nullToEmpty(Object o) {
+        return o == null ? "" : String.valueOf(o);
+    }
+
+    private String[] parseCsvLine(String line) {
+        // simple CSV split handling quoted values
+        List<String> parts = new ArrayList<>();
+        StringBuilder cur = new StringBuilder();
+        boolean inQuote = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                inQuote = !inQuote;
+            } else if (c == ',' && !inQuote) {
+                parts.add(cur.toString());
+                cur.setLength(0);
+            } else {
+                cur.append(c);
+            }
+        }
+        parts.add(cur.toString());
+        // unescape quotes
+        for (int i = 0; i < parts.size(); i++) {
+            String p = parts.get(i);
+            if (p.startsWith("\"") && p.endsWith("\"")) {
+                p = p.substring(1, p.length() - 1).replace("\"\"", "\"");
+            }
+            parts.set(i, p);
+        }
+        return parts.toArray(new String[0]);
+    }
+
+    private String getCsv(String[] cols, int idx) {
+        return idx >= 0 && idx < cols.length ? cols[idx] : "";
+    }
+
+    private Integer parseIntSafe(String s) {
+        try { return s == null || s.isBlank() ? null : Integer.parseInt(s.trim()); } catch (Exception e) { return null; }
+    }
+
+    private Long parseLongSafe(String s) {
+        try { return s == null || s.isBlank() ? null : Long.parseLong(s.trim()); } catch (Exception e) { return null; }
     }
 }

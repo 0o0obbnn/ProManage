@@ -1,12 +1,18 @@
 package com.promanage.service.service;
 
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
+import com.promanage.service.dto.request.CreateDocumentRequest;
+import com.promanage.service.dto.request.DocumentSearchRequest;
+import com.promanage.service.dto.request.DocumentUploadRequest;
+import com.promanage.service.dto.request.UpdateDocumentRequest;
+import com.promanage.service.dto.response.DocumentDownloadInfo;
+import com.promanage.service.dto.response.DocumentFolderDTO;
 import com.promanage.service.entity.Document;
 import com.promanage.service.entity.DocumentVersion;
+import com.promanage.common.enums.DocumentStatus;
+import jakarta.servlet.http.HttpServletResponse;
 
-import com.promanage.service.dto.request.CreateDocumentRequest;
-import com.promanage.service.dto.request.UpdateDocumentRequest;
-
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -23,106 +29,81 @@ public interface IDocumentService {
 
     /**
      * 根据ID查询文档详情
-     * <p>
-     * 会自动增加浏览次数
-     * </p>
      *
      * @param id 文档ID
+     * @param userId 用户ID
+     * @param incrementView 是否增加浏览次数
      * @return 文档实体
      */
-    Document getById(Long id);
+    Document getById(Long id, Long userId, boolean incrementView);
 
     /**
-     * 根据ID查询文档详情 (不增加浏览次数)
+     * 根据ID查询文档详情(默认增加浏览次数)
      *
      * @param id 文档ID
+     * @param userId 用户ID
      * @return 文档实体
      */
-    Document getByIdWithoutView(Long id);
-
-    /**
-     * 分页查询文档列表
-     *
-     * @param page      页码
-     * @param pageSize  每页大小
-     * @param keyword   搜索关键词
-     * @param projectId 项目ID (可选)
-     * @param type      文档类型 (可选)
-     * @param status    文档状态 (可选)
-     * @return 分页结果
-     */
-    PageResult<Document> listDocuments(Integer page, Integer pageSize, String keyword,
-                                       Long projectId, String type, Integer status);
+    default Document getById(Long id, Long userId) {
+        return getById(id, userId, true);
+    }
 
     /**
      * 获取项目文档列表
      *
      * @param projectId 项目ID
      * @param page      页码
-     * @param size      每页大小
+     * @param pageSize  每页大小
+     * @param userId    用户ID
      * @return 分页结果
      */
-    PageResult<Document> listDocuments(Long projectId, Integer page, Integer size);
+    PageResult<Document> listByProject(Long projectId, Integer page, Integer pageSize, Long userId);
+
+    /**
+     * 查询项目的所有文档
+     *
+     * @param projectId 项目ID
+     * @param userId    用户ID
+     * @return 文档列表
+     */
+    List<Document> listByProject(Long projectId, Long userId);
+
+    /**
+     * 查询用户创建的文档
+     *
+     * @param creatorId 创建人ID
+     * @param userId    用户ID
+     * @return 文档列表
+     */
+    List<Document> listByCreator(Long creatorId, Long userId);
 
     /**
      * 根据项目ID和创建文档请求创建文档
      *
      * @param projectId 项目ID
      * @param request   创建文档请求
+     * @param creatorId 创建人ID
      * @return 文档实体
      */
-    Document createDocument(Long projectId, CreateDocumentRequest request);
-
-    /**
-     * 根据文档ID获取文档详情
-     *
-     * @param documentId 文档ID
-     * @return 文档实体
-     */
-    Document getDocumentById(Long documentId);
+    Document createDocument(Long projectId, CreateDocumentRequest request, Long creatorId);
 
     /**
      * 根据文档ID和更新文档请求更新文档
      *
      * @param documentId 文档ID
      * @param request    更新文档请求
+     * @param updaterId  更新人ID
      * @return 文档实体
      */
-    Document updateDocument(Long documentId, UpdateDocumentRequest request);
+    Document updateDocument(Long documentId, UpdateDocumentRequest request, Long updaterId);
 
     /**
      * 根据文档ID删除文档
      *
      * @param documentId 文档ID
+     * @param deleterId  删除人ID
      */
-    void deleteDocument(Long documentId);
-
-    /**
-     * 查询项目的所有文档
-     *
-     * @param projectId 项目ID
-     * @return 文档列表
-     */
-    List<Document> listByProjectId(Long projectId);
-
-    /**
-     * 查询用户创建的文档
-     *
-     * @param creatorId 创建人ID
-     * @return 文档列表
-     */
-    List<Document> listByCreatorId(Long creatorId);
-
-    /**
-     * 搜索文档
-     * <p>
-     * 在标题、内容和摘要中搜索关键词
-     * </p>
-     *
-     * @param keyword 搜索关键词
-     * @return 文档列表
-     */
-    List<Document> searchByKeyword(String keyword);
+    void deleteDocument(Long documentId, Long deleterId);
 
     /**
      * 创建文档
@@ -131,6 +112,7 @@ public interface IDocumentService {
      * </p>
      *
      * @param document 文档实体
+     * @param creatorId 创建人ID
      * @return 文档ID
      */
     Long create(Document document);
@@ -144,6 +126,7 @@ public interface IDocumentService {
      * @param id        文档ID
      * @param document  文档实体
      * @param changeLog 变更日志
+     * @param updaterId 更新人ID
      */
     void update(Long id, Document document, String changeLog);
 
@@ -151,6 +134,7 @@ public interface IDocumentService {
      * 删除文档
      *
      * @param id 文档ID
+     * @param deleterId 删除人ID
      */
     void delete(Long id);
 
@@ -158,62 +142,67 @@ public interface IDocumentService {
      * 批量删除文档
      *
      * @param ids 文档ID列表
+     * @param deleterId 删除人ID
      * @return 删除的记录数
      */
-    int batchDelete(List<Long> ids);
-
-    /**
-     * 发布文档
-     * <p>
-     * 将文档状态从草稿改为已发布
-     * </p>
-     *
-     * @param id 文档ID
-     */
-    void publish(Long id);
-
-    /**
-     * 归档文档
-     * <p>
-     * 将文档状态改为已归档
-     * </p>
-     *
-     * @param id 文档ID
-     */
-    void archive(Long id);
+    int batchDelete(List<Long> ids, Long deleterId);
 
     /**
      * 更新文档状态
      *
      * @param id     文档ID
-     * @param status 状态值
+     * @param status 状态枚举
+     * @param updaterId 更新人ID
      */
-    void updateStatus(Long id, Integer status);
+    void updateStatus(Long id, DocumentStatus status, Long updaterId);
+
+    /**
+     * 发布文档
+     *
+     * @param id 文档ID
+     * @param updaterId 更新人ID
+     */
+    default void publish(Long id, Long updaterId) {
+        updateStatus(id, DocumentStatus.PUBLISHED, updaterId);
+    }
+
+    /**
+     * 归档文档
+     *
+     * @param id 文档ID
+     * @param updaterId 更新人ID
+     */
+    default void archive(Long id, Long updaterId) {
+        updateStatus(id, DocumentStatus.ARCHIVED, updaterId);
+    }
 
     /**
      * 查询文档的所有版本
      *
      * @param documentId 文档ID
+     * @param userId     用户ID
      * @return 版本列表
      */
-    List<DocumentVersion> listVersions(Long documentId);
+    List<DocumentVersion> listVersions(Long documentId, Long userId);
 
     /**
      * 根据版本号查询文档版本
      *
      * @param documentId 文档ID
      * @param version    版本号
+     * @param userId     用户ID
      * @return 文档版本实体
      */
-    DocumentVersion getVersion(Long documentId, String version);
+    DocumentVersion getVersion(Long documentId, String version, Long userId);
 
     /**
      * 创建文档版本
      *
      * @param documentVersion 文档版本实体
+     * @param creatorId       创建人ID
      * @return 版本ID
      */
-    Long createVersion(DocumentVersion documentVersion);
+    Long createVersion(DocumentVersion documentVersion, Long creatorId);
 
     /**
      * 回滚到指定版本
@@ -223,93 +212,79 @@ public interface IDocumentService {
      *
      * @param documentId 文档ID
      * @param version    版本号
+     * @param updaterId  更新人ID
      */
-    void rollbackToVersion(Long documentId, String version);
+    Document rollbackToVersion(Long documentId, String version, Long updaterId);
 
     /**
      * 统计项目文档数量
      *
      * @param projectId 项目ID
+     * @param userId    用户ID
      * @return 文档数量
      */
-    int countByProjectId(Long projectId);
+    int countByProject(Long projectId, Long userId);
 
     /**
      * 统计用户创建的文档数量
      *
      * @param creatorId 创建人ID
+     * @param userId    用户ID
      * @return 文档数量
      */
-    int countByCreatorId(Long creatorId);
+    int countByCreator(Long creatorId, Long userId);
 
     /**
-     * 查询当前用户可访问的所有文档（跨项目）
-     * <p>
-     * 根据用户权限过滤文档，支持多种过滤条件和搜索
-     * </p>
-     *
-     * @param page      页码
-     * @param pageSize  每页大小
-     * @param projectId 项目ID（可选，为null时查询所有项目）
-     * @param status    文档状态（可选）
-     * @param keyword   搜索关键词（可选，在标题和内容中搜索）
-     * @return 分页结果
-     */
-    PageResult<Document> listAllDocuments(Integer page, Integer pageSize,
-                                         Long projectId, String status, String keyword);
-
-    /**
-     * 高级搜索文档
-     * <p>
-     * 支持多种过滤条件的文档搜索
-     * </p>
+     * 查询当前用户可访问的所有文档
      *
      * @param page      页码
      * @param pageSize  每页大小
      * @param projectId 项目ID（可选）
      * @param status    文档状态（可选）
      * @param keyword   搜索关键词（可选）
-     * @param folderId  文件夹ID（可选）
-     * @param creatorId 创建人ID（可选）
-     * @param type      文档类型（可选）
-     * @param startTime 创建时间开始（可选）
-     * @param endTime   创建时间结束（可选）
      * @return 分页结果
      */
-    PageResult<Document> searchDocuments(Integer page, Integer pageSize,
-                                        Long projectId, Integer status, String keyword,
-                                        Long folderId, Long creatorId, String type,
-                                        java.time.LocalDateTime startTime,
-                                        java.time.LocalDateTime endTime);
+    PageResult<Document> listAllDocuments(Integer page, Integer pageSize,
+                                           Long projectId, String status, String keyword);
 
     /**
-     * 重载方法，保持向后兼容
+     * 搜索文档
+     * <p>
+     * 支持多种过滤条件的文档搜索
+     * </p>
+     *
+     * @param request 搜索请求参数
+     * @param userId  用户ID
+     * @return 分页结果
      */
-    PageResult<Document> searchDocuments(Integer page, Integer pageSize,
-                                        Long projectId, Integer status, String keyword,
-                                        Long folderId, Long creatorId, String type);
+    PageResult<Document> searchDocuments(DocumentSearchRequest request, Long userId);
 
     /**
      * 获取文档文件夹树形结构
-     * <p>
-     * 返回文档的文件夹组织结构，支持按项目过滤
-     * </p>
      *
      * @param projectId 项目ID（可选，为null时返回所有项目的文件夹）
+     * @param userId    用户ID
      * @return 文件夹树形结构列表
      */
-    List<DocumentFolder> getDocumentFolders(Long projectId);
+    List<DocumentFolderDTO> getFolderTree(Long projectId, Long userId);
 
     /**
-     * 统计文档的周浏览量
-     * <p>
-     * 统计最近7天的浏览次数
-     * </p>
+     * 统计文档的周浏览量(最近7天)
      *
      * @param documentId 文档ID
+     * @param userId     用户ID
      * @return 周浏览量
      */
-    int getWeekViewCount(Long documentId);
+    int getWeeklyViewCount(Long documentId, Long userId);
+
+    /**
+     * 收藏/取消收藏文档
+     *
+     * @param documentId 文档ID
+     * @param userId     用户ID
+     * @param favorite   true-收藏, false-取消收藏
+     */
+    void toggleFavorite(Long documentId, Long userId, boolean favorite);
 
     /**
      * 收藏文档
@@ -317,7 +292,9 @@ public interface IDocumentService {
      * @param documentId 文档ID
      * @param userId     用户ID
      */
-    void favoriteDocument(Long documentId, Long userId);
+    default void favorite(Long documentId, Long userId) {
+        toggleFavorite(documentId, userId, true);
+    }
 
     /**
      * 取消收藏文档
@@ -325,15 +302,18 @@ public interface IDocumentService {
      * @param documentId 文档ID
      * @param userId     用户ID
      */
-    void unfavoriteDocument(Long documentId, Long userId);
+    default void unfavorite(Long documentId, Long userId) {
+        toggleFavorite(documentId, userId, false);
+    }
 
     /**
      * 获取文档收藏数量
      *
      * @param documentId 文档ID
+     * @param userId     用户ID
      * @return 收藏数量
      */
-    int getFavoriteCount(Long documentId);
+    int getFavoriteCount(Long documentId, Long userId);
 
     /**
      * 检查用户是否收藏了文档
@@ -348,36 +328,39 @@ public interface IDocumentService {
      * 根据项目ID列表获取项目名称映射
      *
      * @param projectIds 项目ID列表
+     * @param userId     用户ID
      * @return 项目ID到项目名称的映射
      */
-    Map<Long, String> getProjectNamesByIds(List<Long> projectIds);
+    Map<Long, String> getProjectNames(List<Long> projectIds, Long userId);
 
     /**
-     * 文档文件夹DTO
+     * 上传文档
+     *
+     * @param request   上传请求
+     * @param uploaderId 上传人ID
+     * @return 文档实体
+     * @throws IOException IO异常
      */
-    class DocumentFolder {
-        private Long id;
-        private String name;
-        private String description;
-        private Long parentId;
-        private Long projectId;
-        private Integer documentCount;
-        private List<DocumentFolder> children;
+    Document upload(DocumentUploadRequest request, Long uploaderId) throws IOException;
 
-        // Getters and Setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
-        public Long getParentId() { return parentId; }
-        public void setParentId(Long parentId) { this.parentId = parentId; }
-        public Long getProjectId() { return projectId; }
-        public void setProjectId(Long projectId) { this.projectId = projectId; }
-        public Integer getDocumentCount() { return documentCount; }
-        public void setDocumentCount(Integer documentCount) { this.documentCount = documentCount; }
-        public List<DocumentFolder> getChildren() { return children; }
-        public void setChildren(List<DocumentFolder> children) { this.children = children; }
-    }
+    /**
+     * 获取文档下载信息
+     *
+     * @param id     文档ID
+     * @param userId 用户ID
+     * @return 下载信息
+     */
+    DocumentDownloadInfo getDownloadInfo(Long id, Long userId);
+
+    /**
+     * 下载文档(兼容旧接口)
+     *
+     * @param id       文档ID
+     * @param userId   用户ID
+     * @param response HTTP响应
+     * @throws IOException IO异常
+     * @deprecated 使用 {@link #getDownloadInfo(Long, Long)} 替代
+     */
+    @Deprecated
+    void downloadDocument(Long id, Long userId, HttpServletResponse response) throws IOException;
 }

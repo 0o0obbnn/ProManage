@@ -2,7 +2,7 @@ package com.promanage.service.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.promanage.common.domain.BaseEntity;
+import com.promanage.common.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -62,17 +62,4 @@ public class DocumentFolder extends BaseEntity {
     @Schema(description = "排序", example = "1", defaultValue = "0")
     private Integer sortOrder;
 
-    /**
-     * 创建人ID (不能为空)
-     */
-    @TableField("creator_id")
-    @Schema(description = "创建人ID", example = "1", required = true)
-    private Long creatorId;
-    
-    /**
-     * 是否删除
-     */
-    @TableField("deleted")
-    @Schema(description = "是否删除", example = "false", defaultValue = "false")
-    private Boolean deleted = false;
 }

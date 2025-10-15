@@ -1,295 +1,278 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
+import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
-import { message } from 'ant-design-vue'
 import Login from './Login.vue'
 import { useUserStore } from '@/stores/modules/user'
-import { nextTick } from 'vue'
+import type { UserInfo } from '@/types/global'
+import * as authApi from '@/api/modules/auth'
+import { message } from 'ant-design-vue'
 
-// Mock vue-router
-const mockPush = vi.fn()
-const mockRoute = {
-  query: {}
-}
-
-vi.mock('vue-router', () => ({
-  useRouter: () => ({
-    push: mockPush
-  }),
-  useRoute: () => mockRoute,
-  RouterLink: {
-    name: 'RouterLink',
-    props: ['to'],
-    template: '<a><slot /></a>'
+// Mock dependencies
+vi.mock('@/api/modules/auth')
+vi.mock('ant-design-vue', () => ({
+  message: {
+    success: vi.fn(),
+    error: vi.fn()
   }
 }))
 
-// Mock ant-design-vue message
-vi.mock('ant-design-vue', async () => {
-  const actual = await vi.importActual('ant-design-vue')
-  return {
-    ...actual,
-    message: {
-      success: vi.fn(),
-      error: vi.fn()
-    }
-  }
+// Mock router
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', component: { template: '<div>Home</div>' } },
+    { path: '/dashboard', component: { template: '<div>Dashboard</div>' } }
+  ]
 })
 
-describe('Login Component', () => {
+describe('LoginForm', () => {
+  let wrapper: any
+  let mockUserStore: any
+
   beforeEach(() => {
-    setActivePinia(createPinia())
-    vi.clearAllMocks()
-  })
+    // Create a fresh Pinia instance for each test
+    const pinia = createPinia()
+    setActivePinia(pinia)
 
-  it('should render login form correctly', () => {
-    const wrapper = mount(Login, {
+    // Mock user store
+    mockUserStore = {
+      login: vi.fn(),
+      userInfo: null,
+      token: ''
+    }
+
+    // Mount component with mocked dependencies
+    wrapper = mount(Login, {
       global: {
+        plugins: [router, pinia],
+        mocks: {
+          $router: router,
+          $route: { query: {} }
+        },
         stubs: {
-          'router-link': {
-            template: '<a><slot /></a>'
-          },
-          'user-outlined': true,
-          'lock-outlined': true
+          'router-link': true
         }
       }
     })
+  })
 
-    // Check if essential elements exist
-    expect(wrapper.find('h1').text()).toBe('ProManage')
-    expect(wrapper.find('p').text()).toBe('智能项目管理系统')
-    expect(wrapper.find('input[type="text"]').exists()).toBe(true)
-    expect(wrapper.find('input[type="password"]').exists()).toBe(true)
+  it('renders correctly', () => {
+    expect(wrapper.find('.login-container').exists()).toBe(true)
+    expect(wrapper.find('.login-box').exists()).toBe(true)
+    expect(wrapper.find('.login-header').exists()).toBe(true)
+    expect(wrapper.find('input[placeholder="用户名"]').exists()).toBe(true)
+    expect(wrapper.find('input[placeholder="密码"]').exists()).toBe(true)
     expect(wrapper.find('button[type="submit"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('ProManage')
+    expect(wrapper.text()).toContain('智能项目管理系统')
   })
 
-  it('should validate username field', async () => {
-    const wrapper = mount(Login, {
-      global: {
-        stubs: {
-          'router-link': {
-            template: '<a><slot /></a>'
-          },
-          'user-outlined': true,
-          'lock-outlined': true
-        }
-      }
-    })
+  it('validates username field', async () => {
+    const usernameInput = wrapper.find('input[placeholder="用户名"]')
+    const form = wrapper.findComponent({ name: 'AForm' })
 
-    // Find the form and trigger submit with empty fields
-    const form = wrapper.find('form')
+    // Test empty username
     await form.trigger('submit')
-    await flushPromises()
+    expect(wrapper.text()).toContain('请输入用户名')
 
-    // Check for validation messages
-    const formItemElements = wrapper.findAll('.ant-form-item-explain')
-    expect(formItemElements.length).toBeGreaterThan(0)
-  })
-
-  it('should validate password field', async () => {
-    const wrapper = mount(Login, {
-      global: {
-        stubs: {
-          'router-link': {
-            template: '<a><slot /></a>'
-          },
-          'user-outlined': true,
-          'lock-outlined': true
-        }
-      }
-    })
-
-    // Fill username but leave password empty
-    const usernameInput = wrapper.find('input[type="text"]')
-    await usernameInput.setValue('testuser')
-
-    // Trigger form submit
-    const form = wrapper.find('form')
+    // Test minimum length
+    await usernameInput.setValue('ab')
     await form.trigger('submit')
-    await flushPromises()
+    expect(wrapper.text()).toContain('长度至少3个字符')
 
-    // Check for password validation message
-    const formItemElements = wrapper.findAll('.ant-form-item-explain')
-    expect(formItemElements.some(el => el.text().includes('请输入密码'))).toBe(true)
+    // Test valid username
+    await usernameInput.setValue('admin')
+    await form.trigger('submit')
+    expect(wrapper.text()).not.toContain('长度至少3个字符')
   })
 
-  it('should call login with correct credentials', async () => {
-    const userStore = useUserStore()
-    userStore.login = vi.fn().mockResolvedValue(true)
-
-    const wrapper = mount(Login, {
-      global: {
-        stubs: {
-          'router-link': {
-            template: '<a><slot /></a>'
-          },
-          'user-outlined': true,
-          'lock-outlined': true
-        }
-      }
-    })
-
-    // Fill in form fields
-    const usernameInput = wrapper.find('input[type="text"]')
+  it('validates password field', async () => {
     const passwordInput = wrapper.find('input[type="password"]')
-    
-    await usernameInput.setValue('testuser')
+    const form = wrapper.findComponent({ name: 'AForm' })
+
+    // Test empty password
+    await form.trigger('submit')
+    expect(wrapper.text()).toContain('请输入密码')
+
+    // Test minimum length
+    await passwordInput.setValue('12345')
+    await form.trigger('submit')
+    expect(wrapper.text()).toContain('密码长度至少6个字符')
+
+    // Test valid password
     await passwordInput.setValue('password123')
+    await form.trigger('submit')
+    expect(wrapper.text()).not.toContain('密码长度至少6个字符')
+  })
+
+  it('submits form with valid credentials', async () => {
+    const userStore = useUserStore()
+    const mockResponse = {
+      token: 'mock-token',
+      refreshToken: 'mock-refresh-token',
+      userInfo: {
+        id: 1,
+        username: 'admin',
+        realName: '管理员',
+        roles: [{ roleCode: 'ROLE_ADMIN' }]
+      } as UserInfo
+    }
+
+    vi.mocked(userStore.login).mockResolvedValue(mockResponse)
+    vi.mocked(authApi.getUserPermissions).mockResolvedValue(['document:view', 'project:view'])
+
+    // Fill in form with valid credentials
+    await wrapper.find('input[placeholder="用户名"]').setValue('admin')
+    await wrapper.find('input[type="password"]').setValue('password123')
 
     // Submit form
-    const form = wrapper.find('form')
-    await form.trigger('submit')
-    await flushPromises()
+    await wrapper.find('form').trigger('submit')
 
-    // Verify login was called with correct parameters
-    expect(userStore.login).toHaveBeenCalledWith('testuser', 'password123', false)
+    // Wait for async operations
+    await wrapper.vm.$nextTick()
+
+    // Verify login was called with correct credentials
+    expect(userStore.login).toHaveBeenCalledWith('admin', 'password123', false)
     expect(message.success).toHaveBeenCalledWith('登录成功')
-    expect(mockPush).toHaveBeenCalledWith('/dashboard')
   })
 
-  it('should remember user when checkbox is checked', async () => {
-    const userStore = useUserStore()
-    userStore.login = vi.fn().mockResolvedValue(true)
-
-    const wrapper = mount(Login, {
-      global: {
-        stubs: {
-          'router-link': {
-            template: '<a><slot /></a>'
-          },
-          'user-outlined': true,
-          'lock-outlined': true
-        }
-      }
-    })
-
-    // Fill in form fields and check remember me
-    const usernameInput = wrapper.find('input[type="text"]')
-    const passwordInput = wrapper.find('input[type="password"]')
-    const rememberCheckbox = wrapper.find('.ant-checkbox-input')
-    
-    await usernameInput.setValue('testuser')
-    await passwordInput.setValue('password123')
-    await rememberCheckbox.setChecked(true)
-
-    // Submit form
-    const form = wrapper.find('form')
-    await form.trigger('submit')
-    await flushPromises()
-
-    // Verify login was called with remember=true
-    expect(userStore.login).toHaveBeenCalledWith('testuser', 'password123', true)
-  })
-
-  it('should handle login failure gracefully', async () => {
+  it('handles login failure', async () => {
     const userStore = useUserStore()
     const errorMessage = '用户名或密码错误'
-    userStore.login = vi.fn().mockRejectedValue(new Error(errorMessage))
-
-    const wrapper = mount(Login, {
-      global: {
-        stubs: {
-          'router-link': {
-            template: '<a><slot /></a>'
-          },
-          'user-outlined': true,
-          'lock-outlined': true
-        }
-      }
-    })
-
-    // Fill in form fields
-    const usernameInput = wrapper.find('input[type="text"]')
-    const passwordInput = wrapper.find('input[type="password"]')
     
-    await usernameInput.setValue('wronguser')
-    await passwordInput.setValue('wrongpassword')
+    vi.mocked(userStore.login).mockRejectedValue(new Error(errorMessage))
+
+    // Fill in form with invalid credentials
+    await wrapper.find('input[placeholder="用户名"]').setValue('invalid')
+    await wrapper.find('input[type="password"]').setValue('invalid')
 
     // Submit form
-    const form = wrapper.find('form')
-    await form.trigger('submit')
-    await flushPromises()
+    await wrapper.find('form').trigger('submit')
 
-    // Verify error message was shown
+    // Wait for async operations
+    await wrapper.vm.$nextTick()
+
+    // Verify error message is shown
     expect(message.error).toHaveBeenCalledWith(errorMessage)
-    expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it('should redirect to specified page after login', async () => {
-    // Set up route with redirect query parameter
-    mockRoute.query = { redirect: '/projects' }
-
+  it('shows loading state during login', async () => {
     const userStore = useUserStore()
-    userStore.login = vi.fn().mockResolvedValue(true)
-
-    const wrapper = mount(Login, {
-      global: {
-        stubs: {
-          'router-link': {
-            template: '<a><slot /></a>'
-          },
-          'user-outlined': true,
-          'lock-outlined': true
-        }
-      }
-    })
-
-    // Fill in form and submit
-    const usernameInput = wrapper.find('input[type="text"]')
-    const passwordInput = wrapper.find('input[type="password"]')
+    let resolveLogin: (value: any) => void
     
-    await usernameInput.setValue('testuser')
-    await passwordInput.setValue('password123')
-
-    const form = wrapper.find('form')
-    await form.trigger('submit')
-    await flushPromises()
-
-    // Should redirect to /projects instead of default /dashboard
-    expect(mockPush).toHaveBeenCalledWith('/projects')
-  })
-
-  it('should show loading state during login', async () => {
-    const userStore = useUserStore()
-    let resolveLogin: any
-    userStore.login = vi.fn().mockImplementation(() => 
-      new Promise((resolve) => {
-        resolveLogin = resolve
-      })
-    )
-
-    const wrapper = mount(Login, {
-      global: {
-        stubs: {
-          'router-link': {
-            template: '<a><slot /></a>'
-          },
-          'user-outlined': true,
-          'lock-outlined': true
-        }
-      }
+    // Create a promise that we can resolve later
+    const loginPromise = new Promise(resolve => {
+      resolveLogin = resolve
     })
-
-    // Fill in form fields
-    const usernameInput = wrapper.find('input[type="text"]')
-    const passwordInput = wrapper.find('input[type="password"]')
     
-    await usernameInput.setValue('testuser')
-    await passwordInput.setValue('password123')
+    vi.mocked(userStore.login).mockReturnValue(loginPromise)
+
+    // Fill in form
+    await wrapper.find('input[placeholder="用户名"]').setValue('admin')
+    await wrapper.find('input[type="password"]').setValue('password123')
 
     // Submit form
-    const form = wrapper.find('form')
-    await form.trigger('submit')
-    await nextTick()
-
-    // Check loading state
     const submitButton = wrapper.find('button[type="submit"]')
-    expect(submitButton.classes()).toContain('ant-btn-loading')
+    await wrapper.find('form').trigger('submit')
 
-    // Resolve login and check loading state is removed
-    resolveLogin(true)
-    await flushPromises()
-    
-    expect(submitButton.classes()).not.toContain('ant-btn-loading')
+    // Button should be in loading state
+    expect(submitButton.attributes('loading')).toBeDefined()
+
+    // Resolve login promise
+    resolveLogin({
+      token: 'mock-token',
+      refreshToken: 'mock-refresh-token',
+      userInfo: { id: 1, username: 'admin' }
+    })
+
+    // Wait for async operations
+    await wrapper.vm.$nextTick()
+
+    // Button should no longer be in loading state
+    expect(submitButton.attributes('loading')).toBeUndefined()
+  })
+
+  it('remembers login state when checkbox is checked', async () => {
+    const userStore = useUserStore()
+    const mockResponse = {
+      token: 'mock-token',
+      refreshToken: 'mock-refresh-token',
+      userInfo: { id: 1, username: 'admin' }
+    }
+
+    vi.mocked(userStore.login).mockResolvedValue(mockResponse)
+    vi.mocked(authApi.getUserPermissions).mockResolvedValue(['document:view'])
+
+    // Check remember me checkbox
+    await wrapper.find('input[type="checkbox"]').setValue(true)
+
+    // Fill in form
+    await wrapper.find('input[placeholder="用户名"]').setValue('admin')
+    await wrapper.find('input[type="password"]').setValue('password123')
+
+    // Submit form
+    await wrapper.find('form').trigger('submit')
+
+    // Wait for async operations
+    await wrapper.vm.$nextTick()
+
+    // Verify login was called with rememberMe = true
+    expect(userStore.login).toHaveBeenCalledWith('admin', 'password123', true)
+  })
+
+  it('redirects to specified route after login', async () => {
+    const userStore = useUserStore()
+    const mockResponse = {
+      token: 'mock-token',
+      refreshToken: 'mock-refresh-token',
+      userInfo: { id: 1, username: 'admin' }
+    }
+
+    vi.mocked(userStore.login).mockResolvedValue(mockResponse)
+    vi.mocked(authApi.getUserPermissions).mockResolvedValue(['document:view'])
+
+    // Set up route with redirect query
+    await wrapper.setData({
+      $route: { query: { redirect: '/projects' } }
+    })
+
+    // Fill in form
+    await wrapper.find('input[placeholder="用户名"]').setValue('admin')
+    await wrapper.find('input[type="password"]').setValue('password123')
+
+    // Submit form
+    await wrapper.find('form').trigger('submit')
+
+    // Wait for async operations
+    await wrapper.vm.$nextTick()
+
+    // Verify router push was called with redirect path
+    expect(router.currentRoute.value.path).toBe('/projects')
+  })
+
+  it('redirects to dashboard by default when no redirect specified', async () => {
+    const userStore = useUserStore()
+    const mockResponse = {
+      token: 'mock-token',
+      refreshToken: 'mock-refresh-token',
+      userInfo: { id: 1, username: 'admin' }
+    }
+
+    vi.mocked(userStore.login).mockResolvedValue(mockResponse)
+    vi.mocked(authApi.getUserPermissions).mockResolvedValue(['document:view'])
+
+    // Fill in form
+    await wrapper.find('input[placeholder="用户名"]').setValue('admin')
+    await wrapper.find('input[type="password"]').setValue('password123')
+
+    // Submit form
+    await wrapper.find('form').trigger('submit')
+
+    // Wait for async operations
+    await wrapper.vm.$nextTick()
+
+    // Verify router push was called with default path
+    expect(router.currentRoute.value.path).toBe('/dashboard')
   })
 })

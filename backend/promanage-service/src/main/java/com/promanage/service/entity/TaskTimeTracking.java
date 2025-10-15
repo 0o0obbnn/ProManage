@@ -1,10 +1,8 @@
 package com.promanage.service.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.promanage.common.domain.BaseEntity;
+import com.promanage.common.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -29,13 +27,6 @@ import java.time.LocalDateTime;
 public class TaskTimeTracking extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 主键ID
-     */
-    @TableId(value = "id", type = IdType.AUTO)
-    @Schema(description = "主键ID", example = "1")
-    private Long id;
 
     /**
      * 任务ID
