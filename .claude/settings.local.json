@@ -53,7 +53,9 @@
       "Bash(do sed -i 's/import org\\.springframework\\.boot\\.test\\.mock\\.mockito\\.MockBean;/import org.springframework.test.context.bean.override.mockito.MockitoBean;/g' \"$file\")",
       "Bash(echo:*)",
       "Bash(done)",
-      "Read(//g/nifa/**)"
+      "Read(//g/nifa/**)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []
