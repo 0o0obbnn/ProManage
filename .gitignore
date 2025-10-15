@@ -32,3 +32,4 @@ frontend/.vite/
 
 .gemini/
 gha-creds-*.json
+.claude/settings.local.json
