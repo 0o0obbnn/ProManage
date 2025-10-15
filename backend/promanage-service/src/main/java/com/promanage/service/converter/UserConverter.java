@@ -26,7 +26,7 @@ public interface UserConverter {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "password", ignore = true) // 密码不允许通过此方法更新
     void updateEntity(User source, @MappingTarget User target);
 }

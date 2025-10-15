@@ -3,7 +3,7 @@ package com.promanage.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.service.entity.Project;
 import com.promanage.service.entity.Task;

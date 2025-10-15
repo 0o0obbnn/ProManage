@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:analyze": "ANALYZE=true npm run build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{vue,js,jsx,ts,tsx,json,css,scss,md}\"",
@@ -13,7 +14,14 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "analyze": "node scripts/analyze.js",
+    "bundle-analyzer": "node scripts/bundle-analyzer.js",
+    "lighthouse": "node scripts/lighthouse.js",
+    "deploy": "node scripts/deploy.bat",
+    "deploy:linux": "bash scripts/deploy.sh",
+    "clean": "rimraf dist node_modules/.vite",
+    "reinstall": "npm run clean && npm install"
   },
   "dependencies": {
     "@tinymce/tinymce-vue": "^6.3.0",
@@ -22,6 +30,7 @@
     "@vueuse/integrations": "^13.9.0",
     "ant-design-vue": "^4.2.3",
     "axios": "^1.12.2",
+    "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.18",
     "dhtmlx-gantt": "^9.0.15",

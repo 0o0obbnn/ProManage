@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
  * - updateTime: Set on insert and update
  * - creatorId: Set on insert (from SecurityContext)
  * - updaterId: Set on update (from SecurityContext)
- * - deleted: Set on insert (default to false)
  * </p>
  *
  * @author ProManage Team
@@ -41,9 +40,6 @@ public class MyBatisMetaObjectHandler implements MetaObjectHandler {
         } catch (Exception e) {
             // Ignore if security context is not available
         }
-
-        // Set deleted flag to false (not deleted)
-        this.strictInsertFill(metaObject, "deleted", Boolean.class, false);
 
         // Set version to 0 for optimistic locking
         this.strictInsertFill(metaObject, "version", Long.class, 0L);

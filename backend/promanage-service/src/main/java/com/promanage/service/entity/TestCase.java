@@ -1,9 +1,7 @@
 package com.promanage.service.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.promanage.common.domain.BaseEntity;
+import com.promanage.common.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,12 +24,6 @@ public class TestCase extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 测试用例ID
-     */
-    @TableId(type = IdType.AUTO)
-    @Schema(description = "测试用例ID", example = "1")
-    private Long id;
 
     /**
      * 测试用例标题 (不能为空)
@@ -164,12 +156,6 @@ public class TestCase extends BaseEntity {
      */
     @Schema(description = "标签", example = "登录,用户认证,核心功能")
     private String tags;
-
-    /**
-     * 创建人ID (不能为空)
-     */
-    @Schema(description = "创建人ID", example = "1", required = true)
-    private Long creatorId;
 
     /**
      * 指派人ID

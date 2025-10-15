@@ -26,6 +26,6 @@ public interface ProjectConverter {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(Project source, @MappingTarget Project target);
 }

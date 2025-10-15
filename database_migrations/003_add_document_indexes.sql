@@ -11,7 +11,7 @@ BEGIN
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relname = 'idx_documents_project_status' AND n.nspname = 'public'
     ) THEN
-        CREATE INDEX idx_documents_project_status ON tb_document(project_id, status) WHERE deleted = false;
+        CREATE INDEX CONCURRENTLY idx_documents_project_status ON tb_document(project_id, status) WHERE deleted_at IS NULL;
         RAISE NOTICE 'Created index idx_documents_project_status';
     ELSE
         RAISE NOTICE 'Index idx_documents_project_status already exists';
@@ -23,7 +23,7 @@ BEGIN
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relname = 'idx_documents_creator' AND n.nspname = 'public'
     ) THEN
-        CREATE INDEX idx_documents_creator ON tb_document(creator_id) WHERE deleted = false;
+        CREATE INDEX CONCURRENTLY idx_documents_creator ON tb_document(creator_id) WHERE deleted_at IS NULL;
         RAISE NOTICE 'Created index idx_documents_creator';
     ELSE
         RAISE NOTICE 'Index idx_documents_creator already exists';
@@ -35,7 +35,7 @@ BEGIN
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relname = 'idx_documents_folder' AND n.nspname = 'public'
     ) THEN
-        CREATE INDEX idx_documents_folder ON tb_document(folder_id) WHERE deleted = false;
+        CREATE INDEX CONCURRENTLY idx_documents_folder ON tb_document(folder_id) WHERE deleted_at IS NULL;
         RAISE NOTICE 'Created index idx_documents_folder';
     ELSE
         RAISE NOTICE 'Index idx_documents_folder already exists';
@@ -47,7 +47,7 @@ BEGIN
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relname = 'idx_documents_create_time' AND n.nspname = 'public'
     ) THEN
-        CREATE INDEX idx_documents_create_time ON tb_document(create_time) WHERE deleted = false;
+        CREATE INDEX CONCURRENTLY idx_documents_create_time ON tb_document(create_time) WHERE deleted_at IS NULL;
         RAISE NOTICE 'Created index idx_documents_create_time';
     ELSE
         RAISE NOTICE 'Index idx_documents_create_time already exists';
@@ -59,7 +59,7 @@ BEGIN
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relname = 'idx_documents_update_time' AND n.nspname = 'public'
     ) THEN
-        CREATE INDEX idx_documents_update_time ON tb_document(update_time DESC) WHERE deleted = false;
+        CREATE INDEX CONCURRENTLY idx_documents_update_time ON tb_document(update_time DESC) WHERE deleted_at IS NULL;
         RAISE NOTICE 'Created index idx_documents_update_time';
     ELSE
         RAISE NOTICE 'Index idx_documents_update_time already exists';
@@ -71,7 +71,7 @@ BEGIN
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relname = 'idx_documents_type' AND n.nspname = 'public'
     ) THEN
-        CREATE INDEX idx_documents_type ON tb_document(type) WHERE deleted = false;
+        CREATE INDEX CONCURRENTLY idx_documents_type ON tb_document(type) WHERE deleted_at IS NULL;
         RAISE NOTICE 'Created index idx_documents_type';
     ELSE
         RAISE NOTICE 'Index idx_documents_type already exists';
@@ -83,7 +83,7 @@ BEGIN
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relname = 'idx_documents_title_gin' AND n.nspname = 'public'
     ) THEN
-        CREATE INDEX idx_documents_title_gin ON tb_document USING gin(to_tsvector('simple', title)) WHERE deleted = false;
+        CREATE INDEX CONCURRENTLY idx_documents_title_gin ON tb_document USING gin(to_tsvector('simple', title)) WHERE deleted_at IS NULL;
         RAISE NOTICE 'Created index idx_documents_title_gin';
     ELSE
         RAISE NOTICE 'Index idx_documents_title_gin already exists';
@@ -95,7 +95,7 @@ BEGIN
         JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relname = 'idx_documents_content_gin' AND n.nspname = 'public'
     ) THEN
-        CREATE INDEX idx_documents_content_gin ON tb_document USING gin(to_tsvector('simple', content)) WHERE deleted = false;
+        CREATE INDEX CONCURRENTLY idx_documents_content_gin ON tb_document USING gin(to_tsvector('simple', content)) WHERE deleted_at IS NULL;
         RAISE NOTICE 'Created index idx_documents_content_gin';
     ELSE
         RAISE NOTICE 'Index idx_documents_content_gin already exists';

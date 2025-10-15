@@ -1,129 +1,84 @@
 package com.promanage.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.promanage.common.domain.PageResult;
-import com.promanage.dto.ProjectStatsDTO;
-import com.promanage.service.entity.Project;
+import com.promanage.common.result.PageResult;
+import com.promanage.dto.CreateProjectRequestDTO;
+import com.promanage.dto.ProjectDTO;
 import com.promanage.dto.ProjectMemberDTO;
+import com.promanage.dto.ProjectStatsDTO;
+import com.promanage.dto.UpdateProjectRequestDTO;
+import com.promanage.service.entity.Project;
 
 import java.util.List;
 
 /**
  * <p>
- *  服务类
+ *  项目服务接口
  * </p>
  *
- * @author nifa
- * @since 2024-10-04
+ * 提供项目管理、成员协作、统计分析以及权限控制等能力。
  */
 public interface IProjectService extends IService<Project> {
 
-    /**
-     * 添加项目成员
-     *
-     * @param projectId 项目ID
-     * @param userId    用户ID
-     * @param roleId    角色ID
-     */
-    void addMember(Long projectId, Long userId, Long roleId);
+    PageResult<ProjectDTO> listProjects(Long requesterId, Integer page, Integer pageSize, String keyword, Integer status, Long organizationId);
+
+    Project getProjectById(Long projectId, Long requesterId);
+
+    Project createProject(CreateProjectRequestDTO request, Long creatorId);
+
+    Project updateProject(Long projectId, UpdateProjectRequestDTO request, Long updaterId);
+
+    void deleteProject(Long projectId, Long deleterId);
+
+    ProjectStatsDTO getProjectStats(Long projectId, Long requesterId);
+
+    PageResult<ProjectMemberDTO> listProjectMembers(Long projectId, Long requesterId, Integer page, Integer pageSize, Long roleId);
+
+    ProjectMemberDTO addProjectMember(Long projectId, Long userId, Long roleId, Long operatorId);
+
+    void removeProjectMember(Long projectId, Long userId, Long operatorId);
+
+    void archive(Long projectId, Long operatorId);
+
+    void unarchive(Long projectId, Long operatorId);
+
+    boolean isProjectAdmin(Long projectId, Long userId);
+
+    boolean isProjectMember(Long projectId, Long userId);
 
     /**
-     * 移除项目成员
+     * Check if user is a member of the project
+     * Alias for isProjectMember for convenience
      *
-     * @param projectId 项目ID
-     * @param userId    用户ID
+     * @param projectId Project ID
+     * @param userId User ID
+     * @return true if user is project member
      */
-    void removeMember(Long projectId, Long userId);
+    default boolean isMember(Long projectId, Long userId) {
+        return isProjectMember(projectId, userId);
+    }
 
-    /**
-     * 获取项目成员列表
-     * @param projectId 项目ID
-     * @param pageNum 页码
-     * @param pageSize 每页数量
-     * @param roleId 角色ID (可选)
-     * @return 成员列表
-     */
-    PageResult<ProjectMemberDTO> listMembers(Long projectId, Integer pageNum, Integer pageSize, Long roleId);
+    boolean isMemberOrAdmin(Long projectId, Long userId);
 
-    /**
-     * 获取项目成员列表（按角色过滤）
-     *
-     * @param projectId 项目ID
-     * @param userId    用户ID
-     * @param roleId    角色ID
-     * @return 成员列表
-     */
+    @Deprecated
+    default boolean isAdmin(Long projectId, Long userId) {
+        return isProjectAdmin(projectId, userId);
+    }
+
+    @Deprecated
     List<ProjectMemberDTO> listMembersByRole(Long projectId, Long userId, Long roleId);
 
-    /**
-     * 获取项目成员列表（按用户）
-     *
-     * @param userId    用户ID
-     * @param page      页码
-     * @param pageSize  每页数量
-     * @param status    项目状态
-     * @param keyword   搜索关键词 (可选, 对项目名称、编码、负责人进行模糊搜索)
-     * @return 项目分页结果
-     */
+    @Deprecated
     PageResult<Project> listUserProjects(Long userId, Integer page, Integer pageSize, Integer status, String keyword);
 
-    /**
-     * 获取项目成员列表（按用户）
-     *
-     * @param userId    用户ID
-     * @param page      页码
-     * @param pageSize  每页数量
-     * @param status    项目状态
-     * @return 项目分页结果
-     */
+    @Deprecated
     PageResult<Project> listUserProjects(Long userId, Integer page, Integer pageSize, Integer status);
 
     /**
-     * 获取项目统计数据
-     * @param projectId 项目ID
-     * @return 统计数据
-     */
-    ProjectStatsDTO getProjectStats(Long projectId);
-
-    /**
-     * 归档项目
-     * @param projectId 项目ID
-     */
-    void archive(Long projectId);
-
-    /**
-     * 取消归档项目
-     * @param projectId 项目ID
-     */
-    void unarchive(Long projectId);
-
-    // --- 权限检查 ---
-
-    /**
-     * 检查用户是否为项目管理员
+     * 根据项目ID列表批量查询项目
      *
-     * @param projectId 项目ID
-     * @param userId    用户ID
-     * @return 是否为管理员
+     * @param projectIds 项目ID列表
+     * @return 项目列表
      */
-    boolean isAdmin(Long projectId, Long userId);
-
-    /**
-     * 检查用户是否为项目成员或管理员
-     *
-     * @param projectId 项目ID
-     * @param userId    用户ID
-     * @return 是否为成员或管理员
-     */
-    boolean isMemberOrAdmin(Long projectId, Long userId);
-
-    /**
-     * 检查用户是否为项目成员
-     *
-     * @param projectId 项目ID
-     * @param userId    用户ID
-     * @return 是否为成员
-     */
-    boolean isMember(Long projectId, Long userId);
-
+    List<Project> listByIds(List<Long> projectIds);
 }

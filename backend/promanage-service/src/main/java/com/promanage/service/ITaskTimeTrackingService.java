@@ -1,7 +1,7 @@
 package com.promanage.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.dto.TaskTimeTrackingDTO;
 import com.promanage.service.entity.TaskTimeTracking;
 

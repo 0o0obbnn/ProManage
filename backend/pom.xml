@@ -71,7 +71,6 @@
         <commons-io.version>2.16.1</commons-io.version>
 
         <!-- Testing -->
-        <junit.version>5.10.2</junit.version>
         <mockito.version>5.11.0</mockito.version>
 
         <!-- Build Plugins -->
@@ -101,6 +100,15 @@
                 <groupId>com.promanage</groupId>
                 <artifactId>promanage-dto</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <!-- Testcontainers BOM -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>1.19.3</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <!-- Database -->

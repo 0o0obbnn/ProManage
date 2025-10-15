@@ -4,7 +4,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
-import { WebSocketClient, WebSocketMessageType, createWebSocketClient } from '@/utils/websocket'
+import { WebSocketClient, WebSocketMessageType, createWebSocketClient } from '@/utils/websocket-client'
 import { notificationApi } from '@/api/modules/notification'
 import type { Notification } from '@/types/notification'
 

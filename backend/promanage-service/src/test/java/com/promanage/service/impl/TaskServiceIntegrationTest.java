@@ -1,7 +1,7 @@
 package com.promanage.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.service.entity.*;
 import com.promanage.service.mapper.TaskActivityMapper;
 import com.promanage.service.mapper.TaskAttachmentMapper;
@@ -155,3 +155,4 @@ class TaskServiceIntegrationTest {
         assertNull(deletedCheckItem);
     }
 }
+

@@ -1,5 +1,6 @@
 package com.promanage.infrastructure.utils;
 
+import com.promanage.infrastructure.security.CustomUserDetails;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -30,21 +31,13 @@ public class SecurityUtils {
             return Optional.empty();
         }
 
-        // 从authentication的details或principal中获取用户ID
-        // 这里需要根据实际的JWT token结构来调整
-        try {
-            // 假设用户名格式为 "userId:username" 或者从自定义的principal中获取
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof String) {
-                return Optional.empty(); // Anonymous user
-            }
-
-            // 如果使用了自定义的UserDetails，可以直接从中获取
-            // 这里提供一个简单的实现
-            return Optional.empty();
-        } catch (Exception e) {
-            return Optional.empty();
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof CustomUserDetails) {
+            return Optional.of(((CustomUserDetails) principal).getId());
         }
+
+        // Fallback for other principal types if any, though unlikely with our setup
+        return Optional.empty();
     }
 
     /**

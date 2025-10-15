@@ -1,21 +1,15 @@
 package com.promanage.api.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.promanage.service.entity.Document;
-import com.promanage.service.entity.DocumentVersion;
-import com.promanage.service.service.IDocumentService;
-import com.promanage.service.service.IUserService;
-import com.promanage.service.service.IDocumentCommentService;
-import com.promanage.service.service.IDocumentRelationService;
-import com.promanage.service.mapper.DocumentVersionMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Collections;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 文档详情响应DTO
@@ -38,14 +32,29 @@ public class DocumentDetailResponse extends DocumentResponse {
     @Schema(description = "文档内容（Markdown格式）")
     private String content;
 
+    @JsonProperty("content_type")
+    @Schema(description = "内容类型", example = "markdown")
+    private String contentType;
+
     @Schema(description = "版本历史列表")
     private List<DocumentVersionResponse> versions;
 
+    @Schema(description = "附件列表")
+    private List<DocumentAttachmentResponse> attachments;
+
     @Schema(description = "关联文档列表")
-    private List<DocumentResponse> relatedDocuments;
+    private List<DocumentRelationResponse> relations;
 
     @Schema(description = "文档统计信息")
     private DocumentStatistics statistics;
+
+    @JsonProperty("versions_count")
+    @Schema(description = "版本数量", example = "4")
+    private Integer versionsCount;
+
+    @JsonProperty("comments_count")
+    @Schema(description = "评论数量", example = "12")
+    private Integer commentsCount;
 
     /**
      * 从Document实体创建DocumentDetailResponse
@@ -63,6 +72,7 @@ public class DocumentDetailResponse extends DocumentResponse {
         return DocumentDetailResponse.builder()
                 .id(baseResponse.getId())
                 .title(baseResponse.getTitle())
+                .slug(baseResponse.getSlug())
                 .summary(baseResponse.getSummary())
                 .type(baseResponse.getType())
                 .status(baseResponse.getStatus())
@@ -74,107 +84,30 @@ public class DocumentDetailResponse extends DocumentResponse {
                 .fileSize(baseResponse.getFileSize())
                 .currentVersion(baseResponse.getCurrentVersion())
                 .viewCount(baseResponse.getViewCount())
+                .likeCount(baseResponse.getLikeCount())
                 .tags(baseResponse.getTags())
+                .template(baseResponse.getTemplate())
                 .priority(baseResponse.getPriority())
+                .author(baseResponse.getAuthor())
+                .reviewer(baseResponse.getReviewer())
+                .category(baseResponse.getCategory())
                 .creatorId(baseResponse.getCreatorId())
+                .reviewerId(baseResponse.getReviewerId())
                 .creatorName(baseResponse.getCreatorName())
                 .creatorAvatar(baseResponse.getCreatorAvatar())
                 .createTime(baseResponse.getCreateTime())
                 .updateTime(baseResponse.getUpdateTime())
+                .publishedAt(baseResponse.getPublishedAt())
                 .updaterName(baseResponse.getUpdaterName())
+                .updaterId(baseResponse.getUpdaterId())
                 .content(document.getContent())
-                .versions(null) // 使用 fromEntityWithDetails 获取完整版本历史
-                .relatedDocuments(null) // 使用 fromEntityWithDetails 获取关联文档
-                .statistics(null) // 使用 fromEntityWithDetails 获取统计信息
+                .contentType(document.getContentType())
+                .attachments(Collections.emptyList())
+                .relations(Collections.emptyList())
+                .versions(Collections.emptyList())
+                .statistics(null)
+                .versionsCount(null)
+                .commentsCount(null)
                 .build();
-    }
-
-    /**
-     * 从Document实体创建DocumentDetailResponse，包含完整的版本历史和统计信息
-     *
-     * @param document              Document实体
-     * @param documentService       文档服务（用于获取版本历史和统计）
-     * @param userService           用户服务（用于获取创建者信息）
-     * @param documentVersionMapper 文档版本Mapper（用于统计版本数）
-     * @return DocumentDetailResponse对象
-     */
-    public static DocumentDetailResponse fromEntityWithDetails(Document document, IDocumentService documentService,
-                                                               IUserService userService, DocumentVersionMapper documentVersionMapper) {
-        if (document == null) {
-            return null;
-        }
-
-        DocumentDetailResponse response = fromEntity(document);
-
-        // 获取版本历史（包含创建者信息）
-        try {
-            List<DocumentVersion> documentVersions = documentService.listVersions(document.getId());
-            response.setVersions(documentVersions.stream()
-                    .map(version -> DocumentVersionResponse.fromEntityWithUser(version, userService))
-                    .collect(Collectors.toList()));
-        } catch (Exception e) {
-            // 如果获取版本历史失败，保持为null
-            response.setVersions(null);
-        }
-
-        // 获取统计信息
-        try {
-            DocumentStatistics stats = new DocumentStatistics();
-            stats.setTotalViews(document.getViewCount());
-            stats.setFavoriteCount(documentService.getFavoriteCount(document.getId()));
-            stats.setWeekViews(documentService.getWeekViewCount(document.getId()));
-
-            // 统计版本总数
-            stats.setTotalVersions(documentVersionMapper.countByDocumentId(document.getId()));
-
-            // 评论数
-            // 需要调用重载方法设置 commentCount
-            stats.setCommentCount(0);
-
-            response.setStatistics(stats);
-        } catch (Exception e) {
-            // 如果获取统计信息失败，保持为null
-            response.setStatistics(null);
-        }
-
-        response.setRelatedDocuments(null);
-
-        return response;
-    }
-
-    /**
-     * 重载：包含评论统计和关联文档
-     */
-    public static DocumentDetailResponse fromEntityWithDetails(Document document,
-                                                               IDocumentService documentService,
-                                                               IUserService userService,
-                                                               DocumentVersionMapper documentVersionMapper,
-                                                               IDocumentCommentService documentCommentService,
-                                                               IDocumentRelationService documentRelationService) {
-        DocumentDetailResponse response = fromEntityWithDetails(document, documentService, userService, documentVersionMapper);
-        if (response == null) return null;
-
-        // 设置评论数
-        try {
-            if (response.getStatistics() == null) {
-                response.setStatistics(new DocumentStatistics());
-            }
-            int commentCount = documentCommentService.countByDocumentId(document.getId());
-            response.getStatistics().setCommentCount(commentCount);
-        } catch (Exception e) {
-            // ignore
-        }
-
-        // 关联文档
-        try {
-            List<Document> related = documentRelationService.findRelatedByTags(document.getId(), 10);
-            if (related != null && !related.isEmpty()) {
-                response.setRelatedDocuments(related.stream().map(DocumentResponse::fromEntity).collect(Collectors.toList()));
-            }
-        } catch (Exception e) {
-            // ignore
-        }
-
-        return response;
     }
 }

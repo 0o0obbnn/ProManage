@@ -3,7 +3,7 @@
 spring:
   datasource:
     druid:
-      url: jdbc:postgresql://192.168.18.7:5432/promanage
+      url: jdbc:postgresql://192.168.2.144:5432/promanage
       username: postgres
       password: postgres
       driver-class-name: org.postgresql.Driver
@@ -42,19 +42,20 @@ spring:
         exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
 
   # Redis Configuration
-  redis:
-    host: 192.168.2.144
-    port: 6379
-    password: 
-    database: 0
-    timeout: 3000ms
-    lettuce:
-      pool:
-        max-active: 8
-        max-idle: 8
-        min-idle: 0
-        max-wait: -1ms
-      shutdown-timeout: 100ms
+  data:
+    redis:
+      host: 192.168.2.144
+      port: 6379
+      password: 
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-total: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+        shutdown-timeout: 100ms
 
   # Flyway Database Migration Configuration
   flyway:

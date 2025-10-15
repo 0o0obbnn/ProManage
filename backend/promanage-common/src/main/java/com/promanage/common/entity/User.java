@@ -1,9 +1,6 @@
 package com.promanage.common.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.promanage.common.domain.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,13 +20,6 @@ import lombok.EqualsAndHashCode;
 @TableName("tb_user")
 @Schema(description = "用户信息")
 public class User extends BaseEntity {
-
-    /**
-     * 用户ID
-     */
-    @TableId(type = IdType.AUTO)
-    @Schema(description = "用户ID", example = "1")
-    private Long id;
 
     /**
      * 用户名

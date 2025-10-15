@@ -101,7 +101,7 @@ export function isSafeUrl(url: string): boolean {
   }
 
   try {
-    const urlObj = new URL(url)
+    const urlObj = new URL(url, window.location.origin)
     
     // 只允许http和https协议
     if (!['http:', 'https:'].includes(urlObj.protocol)) {
@@ -118,6 +118,40 @@ export function isSafeUrl(url: string): boolean {
     return true
   } catch {
     return false
+  }
+}
+
+/**
+ * 检查是否为内部URL
+ */
+export function isInternalUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url, window.location.origin)
+    return urlObj.origin === window.location.origin
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 安全跳转
+ */
+export function safeRedirect(url: string, newWindow: boolean = false): void {
+  if (!isSafeUrl(url)) {
+    console.warn('Unsafe redirect blocked:', url)
+    return
+  }
+
+  // 外部链接警告
+  if (!isInternalUrl(url)) {
+    const confirmed = confirm('您将跳转到外部网站，是否继续？')
+    if (!confirmed) return
+  }
+
+  if (newWindow) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  } else {
+    window.location.href = url
   }
 }
 
@@ -204,6 +238,25 @@ export function isSafeFileType(fileName: string, allowedTypes: string[] = []): b
   }
 
   return true
+}
+
+/**
+ * 安全链接组件辅助函数
+ */
+export function sanitizeHref(href: string): string {
+  if (!href) return '#'
+  
+  // 移除危险协议
+  const dangerousProtocols = ['javascript:', 'data:', 'vbscript:', 'file:']
+  const lowerHref = href.toLowerCase().trim()
+  
+  for (const protocol of dangerousProtocols) {
+    if (lowerHref.startsWith(protocol)) {
+      return '#'
+    }
+  }
+  
+  return href
 }
 
 /**

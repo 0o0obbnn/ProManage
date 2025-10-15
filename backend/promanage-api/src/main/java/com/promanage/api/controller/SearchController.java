@@ -1,7 +1,7 @@
 package com.promanage.api.controller;
 
 import com.promanage.api.dto.response.SearchResponse;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.domain.Result;
 import com.promanage.service.entity.Document;
 import com.promanage.service.entity.Project;

@@ -3,7 +3,7 @@ package com.promanage.api;
 import com.promanage.api.dto.request.LoginRequest;
 import com.promanage.dto.ProjectRequest;
 import com.promanage.common.domain.Result;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.service.entity.Project;
 import com.promanage.dto.ProjectStatsDTO;
 import com.promanage.service.entity.ProjectActivity;

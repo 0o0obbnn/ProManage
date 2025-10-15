@@ -9,7 +9,7 @@ import com.promanage.api.dto.request.BatchAssignTasksRequest;
 import com.promanage.api.dto.response.TaskCommentResponse;
 import com.promanage.api.dto.response.TaskDetailResponse;
 import com.promanage.api.dto.response.TaskResponse;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.domain.Result;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.infrastructure.utils.SecurityUtils;

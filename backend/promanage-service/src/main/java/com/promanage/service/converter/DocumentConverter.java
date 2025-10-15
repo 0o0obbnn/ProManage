@@ -44,7 +44,7 @@ public interface DocumentConverter {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "viewCount", ignore = true)
     @Mapping(target = "currentVersion", ignore = true)
     void updateEntity(Document source, @MappingTarget Document target);

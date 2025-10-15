@@ -47,8 +47,23 @@ import {
   FilePdfOutlined,
   FileImageOutlined
 } from '@ant-design/icons-vue'
-import gantt from 'dhtmlx-gantt'
-import 'dhtmlx-gantt/codebase/dhtmlxgantt.css'
+// 动态导入 dhtmlx-gantt
+const gantt = ref(null)
+const ganttLoaded = ref(false)
+
+const loadGantt = async () => {
+  if (ganttLoaded.value) return
+  
+  try {
+    const ganttModule = await import('dhtmlx-gantt')
+    gantt.value = ganttModule.default
+    await import('dhtmlx-gantt/codebase/dhtmlxgantt.css')
+    ganttLoaded.value = true
+  } catch (error) {
+    console.error('Failed to load dhtmlx-gantt:', error)
+    message.error('甘特图加载失败')
+  }
+}
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
@@ -70,22 +85,22 @@ const showDependencies = ref(true)
 
 // 初始化甘特图
 const initGantt = () => {
-  if (!ganttContainer.value) return
+  gantt.value.init(ganttContainer.value!)
 
   // 基础配置
-  gantt.config.date_format = '%Y-%m-%d %H:%i'
-  gantt.config.scale_unit = 'day'
-  gantt.config.date_scale = '%m月%d日'
-  gantt.config.subscales = [
+  gantt.value.config.date_format = '%Y-%m-%d %H:%i'
+  gantt.value.config.scale_unit = 'day'
+  gantt.value.config.date_scale = '%m月%d日'
+  gantt.value.config.subscales = [
     { unit: 'week', step: 1, date: '第%W周' }
   ]
-  gantt.config.duration_unit = 'day'
-  gantt.config.work_time = true
-  gantt.config.correct_work_time = true
-  gantt.config.skip_off_time = true
+  gantt.value.config.duration_unit = 'day'
+  gantt.value.config.work_time = true
+  gantt.value.config.correct_work_time = true
+  gantt.value.config.skip_off_time = true
 
   // 列配置
-  gantt.config.columns = [
+  gantt.value.config.columns = [
     {
       name: 'text',
       label: '任务名称',
@@ -125,13 +140,13 @@ const initGantt = () => {
   ]
 
   // 启用拖拽
-  gantt.config.drag_links = true
-  gantt.config.drag_progress = true
-  gantt.config.drag_resize = true
-  gantt.config.drag_move = true
+  gantt.value.config.drag_links = true
+  gantt.value.config.drag_progress = true
+  gantt.value.config.drag_resize = true
+  gantt.value.config.drag_move = true
 
   // 关键路径配置
-  gantt.config.highlight_critical_path = showCriticalPath.value
+  gantt.value.config.highlight_critical_path = showCriticalPath.value
 
   // 工具提示
   gantt.templates.tooltip_text = (start: Date, end: Date, task: any) => {
@@ -314,8 +329,11 @@ watch(() => props.tasks, () => {
   loadData()
 }, { deep: true })
 
-onMounted(() => {
-  initGantt()
+onMounted(async () => {
+  await loadGantt()
+  if (ganttLoaded.value) {
+    initGantt()
+  }
 })
 
 onUnmounted(() => {

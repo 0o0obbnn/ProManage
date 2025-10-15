@@ -44,22 +44,29 @@
         <!-- 编辑器区域 -->
         <div class="editor-content">
           <!-- 富文本编辑器 -->
-          <Editor
-            v-if="editorMode === 'richtext'"
+          <component
+            v-if="editorMode === 'richtext' && Editor"
+            :is="Editor"
             v-model="content"
             :init="tinymceConfig"
             @input="handleContentChange"
           />
 
           <!-- Markdown编辑器 -->
-          <MdEditor
-            v-else
+          <component
+            v-else-if="editorMode === 'markdown' && MdEditor"
+            :is="MdEditor"
             v-model="content"
             :toolbars="markdownToolbars"
             @on-save="handleSave"
             @on-upload-img="handleImageUpload"
             @onChange="handleContentChange"
           />
+          
+          <!-- 加载中状态 -->
+          <div v-else class="editor-loading">
+            <a-spin size="large" tip="编辑器加载中..." />
+          </div>
         </div>
       </div>
     </a-spin>
@@ -105,9 +112,29 @@ import {
   SaveOutlined,
   SendOutlined
 } from '@ant-design/icons-vue'
-import Editor from '@tinymce/tinymce-vue'
-import { MdEditor } from 'md-editor-v3'
-import 'md-editor-v3/lib/style.css'
+// 动态导入编辑器
+const Editor = ref<any>(null)
+const MdEditor = ref<any>(null)
+const editorLoaded = ref(false)
+
+const loadEditor = async (type: 'richtext' | 'markdown') => {
+  if (editorLoaded.value) return
+  
+  try {
+    if (type === 'richtext' && !Editor.value) {
+      const editorModule = await import('@tinymce/tinymce-vue')
+      Editor.value = editorModule.default
+    } else if (type === 'markdown' && !MdEditor.value) {
+      const editorModule = await import('md-editor-v3')
+      MdEditor.value = editorModule.default
+      await import('md-editor-v3/lib/style.css')
+    }
+    editorLoaded.value = true
+  } catch (error) {
+    console.error(`Failed to load ${type} editor:`, error)
+    message.error(`${type === 'richtext' ? '富文本' : 'Markdown'}编辑器加载失败`)
+  }
+}
 import { debounce } from 'lodash-es'
 import { useDocumentStore } from '@/stores/modules/document'
 
@@ -178,6 +205,13 @@ const handleImageUpload = async (file: File): Promise<string> => {
     message.error('图片上传失败')
     throw error
   }
+}
+
+// 编辑器模式切换处理
+const handleEditorModeChange = async (e: any) => {
+  const mode = e.target.value
+  editorMode.value = mode
+  await loadEditor(mode)
 }
 
 // 内容变化处理
@@ -334,30 +368,9 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
 
 // 初始化
 onMounted(async () => {
-  documentId.value = Number(route.params.id)
-  
-  if (documentId.value) {
-    loading.value = true
-    try {
-      // TODO: 加载文档内容
-      // const res = await documentApi.getDocument(documentId.value)
-      // documentTitle.value = res.data.title
-      // content.value = res.data.content
-      // editorMode.value = res.data.contentType === 'markdown' ? 'markdown' : 'richtext'
-      // localVersion.value = res.data.version
-      
-      // 临时数据
-      documentTitle.value = '示例文档'
-      content.value = '# 欢迎使用文档编辑器\n\n这是一个示例文档。'
-      editorMode.value = 'markdown'
-    } catch (error) {
-      message.error('加载文档失败')
-    } finally {
-      loading.value = false
-    }
-  }
-
-  window.addEventListener('beforeunload', handleBeforeUnload)
+  await fetchDocument()
+  await loadEditor(editorMode.value)
+  initAutoSave()
 })
 
 onUnmounted(() => {
@@ -397,6 +410,13 @@ onUnmounted(() => {
       flex: 1;
       overflow: hidden;
       padding: 24px;
+      
+      .editor-loading {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
     }
   }
 }

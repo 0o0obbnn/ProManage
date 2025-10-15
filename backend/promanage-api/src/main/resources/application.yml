@@ -1,72 +1,148 @@
 # ProManage Application Configuration
-# Base configuration file for all environments
+# Version: 1.1.0 (Organization Module Refactor)
 
 spring:
   application:
-    name: promanage
-
+    name: promanage-api
+  
   profiles:
-    active: dev
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  
+  # 数据源配置
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/promanage}
+    username: ${DB_USERNAME:promanage}
+    password: ${DB_PASSWORD:promanage}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # Flyway配置
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    out-of-order: false
 
-  servlet:
-    multipart:
+# MyBatis-Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      # 逻辑删除配置
+      logic-delete-field: deletedAt
+      logic-delete-value: now()
+      logic-not-delete-value: null
+      # 主键策略
+      id-type: auto
+  # Mapper扫描路径
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# ProManage业务配置
+promanage:
+  # 多租户配置
+  tenant:
+    isolation-enabled: true
+    default-tenant-id: 1
+    strict-mode: true  # 严格模式:强制所有查询包含tenant_id
+  
+  # 组织模块配置
+  organization:
+    default-subscription-plan: FREE
+    max-members-per-org: 50
+    max-projects-per-org: 100
+    storage-limit-mb: 10240
+    # 默认设置
+    default-settings:
+      notification:
+        email-enabled: true
+        in-app-enabled: true
+        websocket-enabled: true
+        digest-frequency-days: 1
+      security:
+        password-min-length: 8
+        password-require-special-char: true
+        session-timeout-minutes: 60
+        two-factor-auth-enabled: false
+      project:
+        default-visibility: PRIVATE
+        allow-public-projects: true
+  
+  # 审计日志配置
+  audit:
+    enabled: true
+    retention-days: 90
+    async: true
+    include-request-body: false
+    include-response-body: false
+    # 需要审计的操作
+    tracked-actions:
+      - CREATE_ORGANIZATION
+      - UPDATE_ORGANIZATION
+      - DELETE_ORGANIZATION
+      - UPDATE_SUBSCRIPTION
+      - UPDATE_SETTINGS
+  
+  # 安全配置
+  security:
+    jwt:
+      secret: ${JWT_SECRET:your-secret-key-change-in-production}
+      expiration: 86400000  # 24小时
+    cors:
+      allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: "*"
+      allow-credentials: true
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      module: organization
+    export:
+      prometheus:
+        enabled: true
+  health:
+    db:
       enabled: true
-      max-file-size: 500MB
-      max-request-size: 500MB
-      file-size-threshold: 10MB
 
-  jackson:
-    time-zone: Asia/Shanghai
-    date-format: yyyy-MM-dd HH:mm:ss
-    default-property-inclusion: non_null
-    serialization:
-      write-dates-as-timestamps: false
-      fail-on-empty-beans: false
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.promanage: DEBUG
+    com.promanage.service.impl.OrganizationServiceImpl: DEBUG
+    com.promanage.service.mapper: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/promanage.log
+    max-size: 10MB
+    max-history: 30
 
-  elasticsearch:
-    uris: http://localhost:9200
-
-# SpringDoc OpenAPI Configuration
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-    enabled: true
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-    tags-sorter: alpha
-    operations-sorter: alpha
-    disable-swagger-default-url: true
-    display-request-duration: true
-  group-configs:
-    - group: auth
-      paths-to-match: /api/auth/**
-      display-name: Authentication APIs
-    - group: user
-      paths-to-match: /api/users/**
-      display-name: User Management APIs
-    - group: project
-      paths-to-match: /api/projects/**
-      display-name: Project Management APIs
-    - group: document
-      paths-to-match: /api/documents/**
-      display-name: Document Management APIs
-    - group: system
-      paths-to-match: /api/roles/**, /api/permissions/**
-      display-name: System Management APIs
-
-# Server Configuration
+# Server配置
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
   servlet:
     context-path: /
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
   compression:
     enabled: true
-    mime-types: application/json,application/xml,text/html,text/xml,text/plain
   error:
     include-message: always
     include-binding-errors: always

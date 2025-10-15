@@ -1,9 +1,7 @@
 package com.promanage.service.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.promanage.common.domain.BaseEntity;
+import com.promanage.common.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,13 +21,6 @@ import lombok.EqualsAndHashCode;
 @TableName("tb_task_activity")
 @Schema(description = "任务活动信息")
 public class TaskActivity extends BaseEntity {
-
-    /**
-     * 活动ID
-     */
-    @TableId(type = IdType.AUTO)
-    @Schema(description = "活动ID", example = "1")
-    private Long id;
 
     /**
      * 任务ID

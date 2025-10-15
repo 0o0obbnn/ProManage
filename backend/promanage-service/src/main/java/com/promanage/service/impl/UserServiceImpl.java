@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.promanage.common.config.UserProperties;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.domain.ResultCode;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.service.entity.Permission;
@@ -17,6 +17,8 @@ import com.promanage.service.mapper.UserMapper;
 import com.promanage.service.mapper.UserRoleMapper;
 import com.promanage.service.service.IPasswordService;
 import com.promanage.service.service.IUserService;
+import com.promanage.service.service.IPermissionService;
+import com.promanage.infrastructure.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +37,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.promanage.infrastructure.security.CustomUserDetails;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
 /**
  * 用户服务实现类
  * <p>
@@ -48,7 +55,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements IUserService {
+public class UserServiceImpl implements IUserService, UserDetailsService {
 
     private final UserMapper userMapper;
     private final UserRoleMapper userRoleMapper;
@@ -58,6 +65,22 @@ public class UserServiceImpl implements IUserService {
     private final UserProperties userProperties;
     private final CacheManager cacheManager;
     private final IPasswordService passwordService;
+    private final IPermissionService permissionService;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.debug("Authenticating user with username: {}", username);
+        User user = this.getByUsername(username);
+        if (user == null) {
+            log.warn("User not found with username: {}", username);
+            throw new UsernameNotFoundException("User not found with username: " + username);
+        }
+
+        // [FIX] Load user's authorities (roles and permissions)
+        this.getUserPermissions(user.getId());
+
+        return CustomUserDetails.create(user);
+    }
 
     @Override
     @Cacheable(value = "users:id", key = "#id", unless = "#result == null")
@@ -66,6 +89,15 @@ public class UserServiceImpl implements IUserService {
 
         if (id == null) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "用户ID不能为空");
+        }
+
+        // Get current user
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
+
+        // Users can view their own profile, or SuperAdmin can view anyone
+        if (!currentUserId.equals(id) && !permissionService.isSuperAdmin(currentUserId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "您只能查看自己的详细信息");
         }
 
         User user = userMapper.selectById(id);
@@ -172,6 +204,19 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    public List<User> listByOrganizationId(Long organizationId) {
+        log.debug("查询组织成员列表, organizationId={}", organizationId);
+
+        if (organizationId == null) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "组织ID不能为空");
+        }
+
+        return userMapper.selectList(new LambdaQueryWrapper<User>()
+            .eq(User::getOrganizationId, organizationId)
+            .isNull(User::getDeletedAt));
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Long create(User user) {
         log.info("创建用户, username={}", user.getUsername());
@@ -227,8 +272,17 @@ public class UserServiceImpl implements IUserService {
     public void update(Long id, User user) {
         log.info("更新用户信息, id={}", id);
 
+        // Get current user
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
+
+        // Permission check: Users can only update their own profile or SuperAdmin can update anyone
+        if (!permissionService.canModifyUser(currentUserId, id)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "您无权修改此用户信息");
+        }
+
         // 检查用户是否存在
-        User existingUser = getById(id);
+        User existingUser = getByIdWithoutPermissionCheck(id);
 
         // 记录旧的用户名和邮箱，用于清除缓存
         String oldUsername = existingUser.getUsername();
@@ -258,12 +312,33 @@ public class UserServiceImpl implements IUserService {
 
         // 手动清除缓存
         evictUserCache(id, oldUsername, oldEmail);
+
         // 如果邮箱或用户名发生变化，也清除新的缓存键
         if (user.getEmail() != null && !user.getEmail().equals(oldEmail)) {
             evictCacheByKey("users:email", user.getEmail());
         }
+        if (user.getUsername() != null && !user.getUsername().equals(oldUsername)) {
+            evictCacheByKey("users:username", user.getUsername());
+        }
 
         log.info("更新用户信息成功, id={}", id);
+    }
+
+    /**
+     * 内部方法：不进行权限检查的getById，用于内部调用
+     */
+    private User getByIdWithoutPermissionCheck(Long id) {
+        if (id == null) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "用户ID不能为空");
+        }
+
+        User user = userMapper.selectById(id);
+        if (user == null || user.getDeleted()) {
+            log.warn("用户不存在, id={}", id);
+            throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        }
+
+        return user;
     }
 
     /**
@@ -302,13 +377,22 @@ public class UserServiceImpl implements IUserService {
     public void updatePassword(Long id, String oldPassword, String newPassword) {
         log.info("修改密码, userId={}", id);
 
+        // Get current user
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
+
+        // Users can only change their own password
+        if (!currentUserId.equals(id)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "您只能修改自己的密码");
+        }
+
         // 参数验证
         if (StringUtils.isBlank(oldPassword) || StringUtils.isBlank(newPassword)) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "密码不能为空");
         }
 
         // 检查用户是否存在
-        User user = getById(id);
+        User user = getByIdWithoutPermissionCheck(id);
 
         // 验证旧密码
         if (!verifyPassword(id, oldPassword)) {
@@ -329,13 +413,22 @@ public class UserServiceImpl implements IUserService {
     public void resetPassword(Long id, String newPassword) {
         log.info("重置密码, userId={}", id);
 
+        // Get current user
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
+
+        // Only SuperAdmin can reset other users' passwords
+        if (!permissionService.isSuperAdmin(currentUserId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "只有系统管理员才能重置用户密码");
+        }
+
         // 参数验证
         if (StringUtils.isBlank(newPassword)) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "密码不能为空");
         }
 
         // 检查用户是否存在
-        User user = getById(id);
+        User user = getByIdWithoutPermissionCheck(id);
 
         // 加密新密码并保存
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -350,13 +443,22 @@ public class UserServiceImpl implements IUserService {
     public void updateStatus(Long id, Integer status) {
         log.info("更新用户状态, userId={}, status={}", id, status);
 
+        // Get current user
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
+
+        // Only SuperAdmin can update user status
+        if (!permissionService.isSuperAdmin(currentUserId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "只有系统管理员才能修改用户状态");
+        }
+
         // 参数验证
         if (status == null || status < 0 || status > 2) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "状态值无效");
         }
 
         // 检查用户是否存在
-        User user = getById(id);
+        User user = getByIdWithoutPermissionCheck(id);
 
         // 更新状态
         user.setStatus(status);
@@ -390,8 +492,17 @@ public class UserServiceImpl implements IUserService {
     public void delete(Long id) {
         log.info("删除用户, id={}", id);
 
+        // Get current user
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
+
+        // Only SuperAdmin can delete users
+        if (!permissionService.isSuperAdmin(currentUserId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "只有系统管理员才能删除用户");
+        }
+
         // 检查用户是否存在
-        User user = getById(id);
+        User user = getByIdWithoutPermissionCheck(id);
 
         // 逻辑删除
         userMapper.deleteById(id);
@@ -406,6 +517,15 @@ public class UserServiceImpl implements IUserService {
     @Transactional(rollbackFor = Exception.class)
     public int batchDelete(List<Long> ids) {
         log.info("批量删除用户, ids={}", ids);
+
+        // Get current user
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
+
+        // Only SuperAdmin can batch delete users
+        if (!permissionService.isSuperAdmin(currentUserId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "只有系统管理员才能批量删除用户");
+        }
 
         if (ids == null || ids.isEmpty()) {
             return 0;
@@ -430,8 +550,17 @@ public class UserServiceImpl implements IUserService {
     public void assignRoles(Long userId, List<Long> roleIds) {
         log.info("为用户分配角色, userId={}, roleIds={}", userId, roleIds);
 
+        // Get current user
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录"));
+
+        // Only SuperAdmin can assign roles
+        if (!permissionService.isSuperAdmin(currentUserId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "只有系统管理员才能分配用户角色");
+        }
+
         // 检查用户是否存在
-        getById(userId);
+        getByIdWithoutPermissionCheck(userId);
 
         // 验证角色是否存在
         if (roleIds != null && !roleIds.isEmpty()) {

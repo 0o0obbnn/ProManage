@@ -23,23 +23,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * JWT Authentication Filter
- * <p>
- * Intercepts HTTP requests to extract and validate JWT tokens from the Authorization header.
- * If a valid token is found, it sets the authentication in the SecurityContext.
- * Extends OncePerRequestFilter to ensure single execution per request.
- * </p>
- *
- * @author ProManage Team
- * @since 2025-09-30
- */
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserDetailsService userDetailsService; // Injected UserDetailsService
     private final TokenBlacklistService tokenBlacklistService;
 
     /**
@@ -121,60 +114,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * @param request HTTP request
      */
     private void setAuthenticationFromToken(String token, HttpServletRequest request) {
-        try {
-            // Extract username from token
-            String username = jwtTokenProvider.getUsernameFromToken(token);
+        // Extract username from token
+        String username = jwtTokenProvider.getUsernameFromToken(token);
 
-            if (StringUtils.isNotBlank(username)) {
-                // Extract authorities from token
-                String authoritiesString = jwtTokenProvider.getAuthoritiesFromToken(token);
-                List<SimpleGrantedAuthority> authorities = parseAuthorities(authoritiesString);
+        if (StringUtils.isNotBlank(username) && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Load user details from the database
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-                // Create UserDetails object
-                UserDetails userDetails = User.builder()
-                        .username(username)
-                        .password("") // Password is not needed for JWT authentication
-                        .authorities(authorities)
-                        .build();
+            // Create authentication token
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
 
-                // Create authentication token
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                authorities
-                        );
+            // Set additional details
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // Set additional details
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            // Set authentication in SecurityContext
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                // Set authentication in SecurityContext
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                log.debug("Successfully authenticated user: {} from token", username);
-            }
-        } catch (Exception e) {
-            log.error("Failed to set authentication from token", e);
-            throw e;
+            log.debug("Successfully authenticated user: {} from token", username);
         }
-    }
-
-    /**
-     * Parse authorities string to list of SimpleGrantedAuthority
-     *
-     * @param authoritiesString Comma-separated authorities string
-     * @return List of SimpleGrantedAuthority
-     */
-    private List<SimpleGrantedAuthority> parseAuthorities(String authoritiesString) {
-        if (StringUtils.isBlank(authoritiesString)) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.stream(authoritiesString.split(","))
-                .filter(StringUtils::isNotBlank)
-                .map(String::trim)
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
     }
 
     /**

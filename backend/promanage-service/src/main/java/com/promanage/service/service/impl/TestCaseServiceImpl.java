@@ -4,13 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.promanage.common.domain.PageResult;
+import com.promanage.common.result.PageResult;
 import com.promanage.common.exception.BusinessException;
 import com.promanage.service.entity.TestCase;
 import com.promanage.service.entity.TestExecution;
 import com.promanage.service.mapper.TestCaseMapper;
 import com.promanage.service.mapper.TestExecutionMapper;
-import com.promanage.service.service.IProjectService;
+import com.promanage.service.IProjectService;
 import com.promanage.service.service.ITestCaseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,7 +84,7 @@ public class TestCaseServiceImpl implements ITestCaseService {
     @Override
     public PageResult<TestCase> listTestCases(Long projectId, Integer page, Integer pageSize,
                                               Integer status, Integer priority, String type,
-                                              Long assigneeId, Long creatorId, String module,
+                                              Long assigneeId, Long creatorId, String moduleId,
                                               String keyword, String tags) {
         log.info("Listing test cases for project: {}", projectId);
 
@@ -109,8 +109,8 @@ public class TestCaseServiceImpl implements ITestCaseService {
         if (creatorId != null) {
             wrapper.eq(TestCase::getCreatorId, creatorId);
         }
-        if (module != null && !module.isEmpty()) {
-            wrapper.eq(TestCase::getModule, module);
+        if (moduleId != null && !moduleId.isEmpty()) {
+            wrapper.eq(TestCase::getModule, moduleId);
         }
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.and(w -> w.like(TestCase::getTitle, keyword)
@@ -359,7 +359,7 @@ public class TestCaseServiceImpl implements ITestCaseService {
     }
 
     @Override
-    public PageResult<TestCaseExecutionHistory> listTestCaseExecutionHistory(Long testCaseId, Integer page, Integer pageSize) {
+    public PageResult<ITestCaseService.TestCaseExecutionHistory> listTestCaseExecutionHistory(Long testCaseId, Integer page, Integer pageSize) {
         log.info("Listing execution history for test case: {}", testCaseId);
 
         Page<TestExecution> pageParam = new Page<>(page, pageSize);
@@ -371,9 +371,9 @@ public class TestCaseServiceImpl implements ITestCaseService {
         IPage<TestExecution> result = testExecutionMapper.selectPage(pageParam, wrapper);
 
         // Convert TestExecution entities to TestCaseExecutionHistory
-        List<TestCaseExecutionHistory> historyList = new ArrayList<>();
+        List<ITestCaseService.TestCaseExecutionHistory> historyList = new ArrayList<>();
         for (TestExecution execution : result.getRecords()) {
-            TestCaseExecutionHistory history = new TestCaseExecutionHistory();
+            ITestCaseService.TestCaseExecutionHistory history = new ITestCaseService.TestCaseExecutionHistory();
             history.setId(execution.getId());
             history.setTestCaseId(execution.getTestCaseId());
             history.setResult(mapResultCodeToString(execution.getResult()));
@@ -388,7 +388,7 @@ public class TestCaseServiceImpl implements ITestCaseService {
             historyList.add(history);
         }
 
-        return PageResult.<TestCaseExecutionHistory>builder()
+        return PageResult.<ITestCaseService.TestCaseExecutionHistory>builder()
                 .list(historyList)
                 .total(result.getTotal())
                 .page(page)
@@ -411,12 +411,12 @@ public class TestCaseServiceImpl implements ITestCaseService {
     }
 
     @Override
-    public TestCaseStatistics getTestCaseStatistics(Long projectId) {
+    public ITestCaseService.TestCaseStatistics getTestCaseStatistics(Long projectId) {
         log.info("Getting test case statistics for project: {}", projectId);
 
         Map<String, Object> statsMap = testExecutionMapper.getProjectStatistics(projectId);
 
-        TestCaseStatistics stats = new TestCaseStatistics();
+        ITestCaseService.TestCaseStatistics stats = new ITestCaseService.TestCaseStatistics();
         stats.setTotalCount(getIntValue(statsMap, "totalcount"));
         stats.setDraftCount(getIntValue(statsMap, "draftcount"));
         stats.setPendingCount(getIntValue(statsMap, "pendingcount"));
@@ -445,12 +445,12 @@ public class TestCaseServiceImpl implements ITestCaseService {
     }
 
     @Override
-    public TestCaseExecutionStatistics getTestCaseExecutionStatistics(Long testCaseId) {
+    public ITestCaseService.TestCaseExecutionStatistics getTestCaseExecutionStatistics(Long testCaseId) {
         log.info("Getting execution statistics for test case: {}", testCaseId);
 
         Map<String, Object> statsMap = testExecutionMapper.getExecutionStatistics(testCaseId);
 
-        TestCaseExecutionStatistics stats = new TestCaseExecutionStatistics();
+        ITestCaseService.TestCaseExecutionStatistics stats = new ITestCaseService.TestCaseExecutionStatistics();
         stats.setTotalExecutions(getIntValue(statsMap, "total"));
         stats.setPassCount(getIntValue(statsMap, "pass"));
         stats.setFailCount(getIntValue(statsMap, "fail"));
@@ -760,10 +760,10 @@ public class TestCaseServiceImpl implements ITestCaseService {
     }
 
     @Override
-    public TestCaseImportResult importTestCases(Long projectId, String fileUrl, Long userId) {
+    public ITestCaseService.TestCaseImportResult importTestCases(Long projectId, String fileUrl, Long userId) {
         log.info("Importing test cases for project: {} from file: {}", projectId, fileUrl);
 
-        TestCaseImportResult result = new TestCaseImportResult();
+        ITestCaseService.TestCaseImportResult result = new ITestCaseService.TestCaseImportResult();
         result.setTotalCount(0);
         result.setSuccessCount(0);
         result.setFailureCount(0);
@@ -842,7 +842,7 @@ public class TestCaseServiceImpl implements ITestCaseService {
         return result;
     }
 
-    private void importRow(Long projectId, Long userId, TestCaseImportResult result, String[] cols) {
+    private void importRow(Long projectId, Long userId, ITestCaseService.TestCaseImportResult result, String[] cols) {
         try {
             TestCase tc = new TestCase();
             tc.setProjectId(projectId);

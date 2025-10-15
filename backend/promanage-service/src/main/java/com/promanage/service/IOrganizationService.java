@@ -1,21 +1,32 @@
 package com.promanage.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.promanage.common.domain.PageResult;
-import com.promanage.service.entity.Organization;
+import com.promanage.common.entity.Organization;
+import com.promanage.common.result.PageResult;
+import com.promanage.dto.OrganizationMemberDTO;
+import com.promanage.dto.OrganizationSettingsDTO;
 
 import java.util.List;
 
 /**
  * 组织服务接口
  * <p>
- * 提供组织管理相关的业务逻辑接口
+ * 提供组织管理的核心业务功能
  * </p>
  *
  * @author ProManage Team
+ * @version 1.0
  * @since 2025-10-06
  */
-public interface IOrganizationService extends IService<Organization> {
+public interface IOrganizationService {
+
+    /**
+     * 根据ID获取组织
+     *
+     * @param id 组织ID
+     * @param userId 用户ID
+     * @return 组织信息
+     */
+    Organization getOrganizationById(Long id, Long userId);
 
     /**
      * 创建组织
@@ -68,7 +79,7 @@ public interface IOrganizationService extends IService<Organization> {
      * @param isActive 是否激活状态
      * @return 组织分页结果
      */
-    PageResult<Organization> listOrganizations(Integer page, Integer pageSize, String keyword, Boolean isActive);
+    PageResult<Organization> listOrganizations(Long requesterId, Integer page, Integer pageSize, String keyword, Boolean isActive);
 
     /**
      * 获取用户所属的组织列表
@@ -77,6 +88,15 @@ public interface IOrganizationService extends IService<Organization> {
      * @return 组织列表
      */
     List<Organization> listUserOrganizations(Long userId);
+
+    /**
+     * 获取组织成员列表
+     *
+     * @param organizationId 组织ID
+     * @param requesterId    请求用户ID
+     * @return 成员列表
+     */
+    PageResult<OrganizationMemberDTO> listOrganizationMembers(Long organizationId, Long requesterId, Integer page, Integer pageSize);
 
     /**
      * 激活组织
@@ -128,4 +148,23 @@ public interface IOrganizationService extends IService<Organization> {
      * @return 项目数量
      */
     long getProjectCount(Long organizationId);
+
+    /**
+     * 获取组织设置
+     *
+     * @param organizationId 组织ID
+     * @param userId 用户ID
+     * @return 组织设置
+     */
+    OrganizationSettingsDTO getOrganizationSettings(Long organizationId, Long userId);
+
+    /**
+     * 更新组织设置
+     *
+     * @param organizationId 组织ID
+     * @param settings       组织设置
+     * @param updaterId      更新者ID
+     * @return 更新后的设置
+     */
+    OrganizationSettingsDTO updateOrganizationSettings(Long organizationId, OrganizationSettingsDTO settings, Long updaterId);
 }

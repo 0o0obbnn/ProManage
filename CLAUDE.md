@@ -9,8 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ProManage is an intelligent project management system that provides unified knowledge base, intelligent change management, and test case management. The system aims to improve team collaboration efficiency by 50%, reduce rework by 30%, and achieve 70%+ test case reuse rate.
 
 **Tech Stack:**
-- **Backend**: Java 17 + Spring Boot 3.2.5 + PostgreSQL 15+ + MyBatis Plus
-- **Frontend**: Vue 3 + TypeScript + Vite + Ant Design Vue (planned)
+- **Backend**: Java 21 + Spring Boot 3.5.6 + PostgreSQL 15+ + MyBatis Plus 3.5.9
+- **Frontend**: Vue 3.5+ + TypeScript 5.8+ + Vite 7+ + Ant Design Vue 4.2+
 - **Infrastructure**: Redis (cache), Elasticsearch (search), RabbitMQ (messaging), MinIO (storage)
 
 ---
@@ -35,6 +35,57 @@ ProManage/
 ---
 
 ## Development Commands
+
+### Frontend (npm)
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+# Access at: http://localhost:5173
+
+# Build for production
+npm run build
+
+# Build with bundle analysis
+npm run build:analyze
+
+# Preview production build
+npm run preview
+
+# Run tests
+npm test
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests once (CI mode)
+npm run test:run
+
+# Generate test coverage report
+npm run test:coverage
+# View report at: frontend/coverage/index.html
+
+# Lint and fix code
+npm run lint
+
+# Format code with Prettier
+npm run format
+
+# Type check without compilation
+npm run type-check
+
+# Clean build artifacts
+npm run clean
+
+# Reinstall dependencies
+npm run reinstall
+```
 
 ### Backend (Maven)
 
@@ -456,6 +507,69 @@ docker run -d \
 
 ---
 
+## Key Design Decisions
+
+### Backend Architecture Decisions
+
+Based on `.cursor/rules/promanagearchitecture.mdc`:
+
+1. **Microservices Architecture**: 8 core services with clear boundaries
+   - User Service, Project Service, Document Service, Change Service
+   - Task Service, Test Service, Notification Service, Search Service
+
+2. **Multi-Tenant Data Isolation**:
+   - Organization-based tenancy with `organization_id` for data isolation
+   - Strict mode enforcement in configuration
+
+3. **Authentication & Authorization**:
+   - JWT-based stateless authentication with refresh tokens
+   - RBAC model with 7 user roles
+   - Permission scope: GLOBAL, PROJECT, SELF
+
+4. **Performance Targets**:
+   - API Response Time P95 ≤ 300ms
+   - Support 500+ concurrent users
+   - System availability ≥ 99.9%
+
+### Frontend Architecture Decisions
+
+Based on `.cursor/rules/engineering.mdc`:
+
+1. **Composition API First**: Use Vue 3 `<script setup>` with TypeScript
+2. **State Management**: Pinia stores with modular structure
+3. **Component Structure**: Base components in `components/common/`, business logic in `components/business/`
+4. **API Layer**: Axios with interceptors, modular API definitions in `api/modules/`
+5. **Testing**: Vitest + Vue Test Utils, ≥80% coverage requirement
+
+---
+
+## Important Configuration Notes
+
+### Backend Configuration Hierarchy
+
+The backend uses Spring profiles with the following hierarchy:
+- `application.yml` - Base configuration
+- `application-dev.yml` - Development overrides
+- `application-prod.yml` - Production overrides
+- Environment variables override all
+
+Key configuration in `backend/promanage-api/src/main/resources/application.yml`:
+- Multi-tenant isolation enabled by default
+- Flyway migrations enabled with baseline-on-migrate
+- MyBatis Plus logical delete configured
+- Audit logging enabled (90-day retention)
+
+### Frontend Build Configuration
+
+- **Vite Config**: `frontend/vite.config.ts`
+- **TypeScript**: `frontend/tsconfig.json`
+- **Testing**: `frontend/vitest.config.ts`
+- **Environment Variables**:
+  - `.env.development` for dev mode
+  - `.env.production` for production builds
+
+---
+
 ## Related Resources
 
 - **Swagger API Docs**: http://localhost:8080/swagger-ui.html (when running)
@@ -463,3 +577,23 @@ docker run -d \
 - **PRD Document**: `ProManage_prd.md`
 - **Architecture Doc**: `ProManage_System_Architecture.md`
 - **Engineering Standards**: `ProManage_engineering_spec.md`
+- **Cursor Rules**: `.cursor/rules/` (engineering, architecture, design guidelines)
+
+---
+
+## UI/UX Design Workflow
+
+When designing UI/UX for this project:
+
+1. **Follow Ant Design Vue Patterns**: The project uses Ant Design Vue 4.2+ for consistency
+2. **Responsive Design Required**: All UI must support mobile, tablet, and desktop
+3. **Role-Based UI Variations**: Consider 7 user roles with differentiated interfaces
+4. **Design Iterations**: Save design iterations in `.superdesign/design_iterations/` folder
+5. **Component-First Approach**: Create reusable Vue components in `frontend/src/components/`
+
+For quick design prototyping:
+- Output design files as `.superdesign/design_iterations/{design_name}_{n}.html`
+- Use Flowbite library as base unless specified otherwise
+- Avoid default blue/indigo colors; use modern color palettes
+- Include Google Fonts: Inter, Roboto, Poppins, DM Sans, etc.
+- Always use tool calls (Write/Edit) for file operations, never just text output

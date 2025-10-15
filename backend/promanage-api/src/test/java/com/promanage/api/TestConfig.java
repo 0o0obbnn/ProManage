@@ -1,15 +1,15 @@
 package com.promanage.api;
 
-import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.boot.test.context.TestConfiguration;
 
 /**
  * 测试配置类
  * 用于隔离测试环境，避免加载不必要的组件
  */
-@SpringBootConfiguration
+@TestConfiguration
 @EnableAutoConfiguration
 @ComponentScan(
     basePackages = "com.promanage",
