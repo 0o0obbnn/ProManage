@@ -1,7 +1,9 @@
 package com.promanage.service.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import com.promanage.common.entity.BaseEntity;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -10,11 +12,11 @@ import lombok.EqualsAndHashCode;
 @TableName("project_activity")
 public class ProjectActivity extends BaseEntity {
 
-    private Long projectId;
+  private Long projectId;
 
-    private Long userId;
+  private Long userId;
 
-    private String activityType;
+  private String activityType;
 
-    private String content;
+  private String content;
 }

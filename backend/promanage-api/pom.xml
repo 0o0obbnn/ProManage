@@ -27,17 +27,22 @@
         </dependency>
         <dependency>
             <groupId>com.promanage</groupId>
+            <artifactId>promanage-dto</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.promanage</groupId>
+            <artifactId>promanage-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.promanage</groupId>
             <artifactId>promanage-infrastructure</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.promanage</groupId>
             <artifactId>promanage-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.promanage</groupId>
-            <artifactId>promanage-dto</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -78,11 +83,6 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-            <scope>runtime</scope>
         </dependency>
 
         <!-- Lombok -->

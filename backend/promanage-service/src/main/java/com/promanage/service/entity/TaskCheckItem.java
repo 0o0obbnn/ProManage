@@ -1,16 +1,17 @@
 package com.promanage.service.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import com.promanage.common.entity.BaseEntity;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
  * 任务检查项实体类
- * <p>
- * 任务的检查清单项，用于分解任务完成标准
- * </p>
+ *
+ * <p>任务的检查清单项，用于分解任务完成标准
  *
  * @author ProManage Team
  * @version 1.0
@@ -22,45 +23,31 @@ import lombok.EqualsAndHashCode;
 @Schema(description = "任务检查项信息")
 public class TaskCheckItem extends BaseEntity {
 
-    /**
-     * 任务ID
-     */
-    @Schema(description = "任务ID", example = "1")
-    private Long taskId;
+  /** 任务ID */
+  @Schema(description = "任务ID", example = "1")
+  private Long taskId;
 
-    /**
-     * 项目ID
-     */
-    @Schema(description = "项目ID", example = "1")
-    private Long projectId;
+  /** 项目ID */
+  @Schema(description = "项目ID", example = "1")
+  private Long projectId;
 
-    /**
-     * 检查项内容
-     */
-    @Schema(description = "检查项内容", example = "完成前端界面设计")
-    private String content;
+  /** 检查项内容 */
+  @Schema(description = "检查项内容", example = "完成前端界面设计")
+  private String content;
 
-    /**
-     * 是否完成
-     */
-    @Schema(description = "是否完成", example = "false")
-    private Boolean isCompleted;
+  /** 是否完成 */
+  @Schema(description = "是否完成", example = "false")
+  private Boolean isCompleted;
 
-    /**
-     * 完成者ID
-     */
-    @Schema(description = "完成者ID", example = "1")
-    private Long completedById;
+  /** 完成者ID */
+  @Schema(description = "完成者ID", example = "1")
+  private Long completedById;
 
-    /**
-     * 完成时间
-     */
-    @Schema(description = "完成时间")
-    private java.time.LocalDateTime completedTime;
+  /** 完成时间 */
+  @Schema(description = "完成时间")
+  private java.time.LocalDateTime completedTime;
 
-    /**
-     * 排序序号
-     */
-    @Schema(description = "排序序号", example = "1")
-    private Integer sortOrder;
+  /** 排序序号 */
+  @Schema(description = "排序序号", example = "1")
+  private Integer sortOrder;
 }

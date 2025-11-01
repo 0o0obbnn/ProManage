@@ -1,8 +1,10 @@
 package com.promanage.service.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.promanage.service.entity.TaskCheckItem;
 import org.apache.ibatis.annotations.Mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+import com.promanage.service.entity.TaskCheckItem;
 
 /**
  * 任务检查项Mapper接口
@@ -12,6 +14,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2025-10-07
  */
 @Mapper
-public interface TaskCheckItemMapper extends BaseMapper<TaskCheckItem> {
-    
-}
+public interface TaskCheckItemMapper extends BaseMapper<TaskCheckItem> {}

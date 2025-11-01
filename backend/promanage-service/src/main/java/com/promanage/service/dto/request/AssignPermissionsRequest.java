@@ -1,10 +1,10 @@
 package com.promanage.service.dto.request;
 
+import java.util.List;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-
-import java.util.List;
 
 /**
  * 分配权限请求DTO
@@ -17,10 +17,10 @@ import java.util.List;
 @Schema(description = "分配权限请求")
 public class AssignPermissionsRequest {
 
-    @NotNull(message = "角色ID不能为空")
-    @Schema(description = "角色ID", example = "1", required = true)
-    private Long roleId;
+  @NotNull(message = "角色ID不能为空")
+  @Schema(description = "角色ID", example = "1", required = true)
+  private Long roleId;
 
-    @Schema(description = "权限ID列表", example = "[1, 2, 3]")
-    private List<Long> permissionIds;
+  @Schema(description = "权限ID列表", example = "[1, 2, 3]")
+  private List<Long> permissionIds;
 }

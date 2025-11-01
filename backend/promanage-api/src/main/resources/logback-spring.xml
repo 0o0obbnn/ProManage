@@ -4,13 +4,13 @@
     <property name="LOG_HOME" value="logs"/>
     <property name="APP_NAME" value="promanage"/>
 
-    <!-- Console output pattern (Spring Boot compatible) -->
+    <!-- ✅ P2-004: Console output pattern with Correlation ID support -->
     <property name="CONSOLE_LOG_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } --- [%t] %-40.40logger{39} : %m%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } [%X{correlationId:-NO_CORRELATION_ID}] --- [%t] %-40.40logger{39} : %m%n"/>
 
-    <!-- File output pattern -->
+    <!-- ✅ P2-004: File output pattern with Correlation ID support -->
     <property name="FILE_LOG_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } --- [%t] %-40.40logger{39} : %m%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } [%X{correlationId:-NO_CORRELATION_ID}] --- [%t] %-40.40logger{39} : %m%n"/>
 
     <!-- Console Appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">

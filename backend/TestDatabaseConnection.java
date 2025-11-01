@@ -4,9 +4,16 @@ public class TestDatabaseConnection {
     public static void main(String[] args) {
         String url = "jdbc:postgresql://192.168.2.144:5432/promanage";
         String user = "postgres";
-        String password = "postgres";
+        String password = System.getenv("PGPASSWORD");
 
         System.out.println("=== Testing Database Connection ===");
+
+        if (password == null || password.isBlank()) {
+            System.err.println("Error: PGPASSWORD environment variable not set.");
+            System.err.println("Please set the database password, e.g.: export PGPASSWORD=your_password");
+            System.exit(1);
+        }
+
         System.out.println("URL: " + url);
         System.out.println("User: " + user);
         System.out.println();
@@ -62,7 +69,8 @@ public class TestDatabaseConnection {
         } catch (SQLException e) {
             System.err.println("❌ Database connection failed!");
             System.err.println("Error: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("SQLState: " + e.getSQLState());
+            System.err.println("ErrorCode: " + e.getErrorCode());
             System.exit(1);
         }
     }

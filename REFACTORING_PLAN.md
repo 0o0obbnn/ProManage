@@ -1,95 +1,118 @@
-# Backend Refactoring: Root Cause Analysis and Optimal Solution
+# ProManage 后端重构与修复计划
 
-## 1. Problem Summary
+**核心原则**:
+1.  **原子性**: 每个步骤都是一个最小的、可独立验证的改动。
+2.  **安全性**: 优先修复安全漏洞。
+3.  **测试驱动**: 每个修复步骤都必须有对应的测试（单元测试或集成测试）来验证。
+4.  **回归验证**: 每个步骤完成后，都将运行完整的后端测试套件，确保没有破坏现有功能。
 
-Following the initial audit and critical bug fixes, the backend codebase still suffers from several significant architectural issues:
+---
 
-1.  **Poor API Performance**: The API endpoint for fetching document details is slow due to N+1 query problems.
-2.  **Low Cohesion & High Coupling**: The `DocumentServiceImpl` class is excessively large and responsible for too many distinct business concerns (CRUD, versioning, view counts, favorites, tags).
-3.  **Leaky Abstractions**: The `DocumentController` contains complex data aggregation logic and directly accesses the data layer, violating the principles of a layered architecture.
-4.  **Inefficient Caching**: The caching strategy is difficult to manage, leading to inefficient mass evictions (`allEntries=true`) and a high risk of stale data.
+### **阶段零：P0 - 紧急安全修复**
 
-## 2. Root Cause Analysis
+此阶段的目标是立即消除已发现的高危安全漏洞。
 
-The symptoms listed above all point to two fundamental root causes:
+#### **任务 1：修复不安全的 `isProjectMember` 存根方法 (中危)**
+*   **问题**: `PermissionCheckService.isProjectMember` 方法是存根，总是返回 `true`，可导致权限绕过。
+*   **目标**: 实现该方法的正确逻辑。
+*   **原子化步骤**:
+    1.  在 `IProjectService` 接口中定义 `isMember(Long projectId, Long userId)` 方法。
+    2.  在 `ProjectServiceImpl` 中实现 `isMember` 方法，通过查询数据库来验证用户是否是项目成员。
+    3.  在 `PermissionCheckService` 中注入 `IProjectService`。
+    4.  修改 `PermissionCheckService.isProjectMember` 的实现，调用 `projectService.isMember()`。
+*   **验证**:
+    1.  为 `ProjectServiceImpl.isMember` 编写单元测试。
+    2.  为 `PermissionCheckService.isProjectMember` 编写单元测试，Mock `IProjectService` 的行为。
+    3.  运行 `mvn verify` 确保所有测试通过。
 
-### Cause A: Violation of the Single Responsibility Principle (SRP)
+#### **任务 2：修复权限缓存刷新机制缺陷 (高危)**
+*   **问题**: 修改角色权限后，用户的权限缓存不会刷新，导致权限变更无法实时生效。
+*   **目标**: 确保角色权限变更后，相关用户的缓存立即失效。
+*   **原子化步骤**:
+    1.  创建一个 `RolePermissionsChangedEvent` 事件类，它将携带被修改的 `roleId`。
+    2.  在管理角色-权限关系的服务方法中（例如 `RoleServiceImpl.updatePermissions`），当一个角色的权限被修改后，通过 `ApplicationEventPublisher` 发布 `RolePermissionsChangedEvent` 事件。
+    3.  创建一个 `PermissionCacheEvictionListener` 类，监听 `RolePermissionsChangedEvent` 事件。
+    4.  在该监听器中，根据 `roleId` 查询所有关联的 `userId`。
+    5.  遍历这些 `userId`，并使用 `CacheManager` 手动清除每个用户的 `"userPermissions"` 缓存。
+*   **验证**:
+    1.  编写一个集成测试，模拟以下场景：
+        a. 用户A拥有角色R，角色R拥有权限P。断言用户A拥有权限P。
+        b. 从角色R中移除权限P。
+        c. **立即** 再次检查，断言用户A **不再拥有** 权限P。
+    2.  运行 `mvn verify` 确保所有测试通过。
 
-The `DocumentServiceImpl` has become a "God Object" for anything related to documents. It handles not only the core lifecycle of a document but also tangential concerns like:
-- How many times a document has been viewed.
-- Who has favorited a document.
-- What tags are applied to a document.
+---
 
-This makes the class incredibly difficult to reason about. A change to the "Favorites" logic requires modifying and re-testing this massive class, increasing risk. It is also the source of the flawed caching, as a single method may affect multiple, unrelated data points, tempting developers to use broad cache evictions.
+### **阶段一：P1 - 核心架构重构**
 
-### Cause B: Lack of a Use-Case-Specific Application Layer
+此阶段的目标是纠正模块职责混乱的问题，恢复清晰的架构分层。
 
-The `DocumentController` needs to return a complex DTO (`DocumentDetailResponse`) that includes the core document, its versions, user information, view counts, and more. However, the `DocumentServiceImpl` only provides a method to get the core `Document` entity.
+#### **任务 3：迁移核心实体类 (`Role`, `Permission`)**
+*   **问题**: `Role` 和 `Permission` 实体位于 `promanage-service` 模块，而 `User` 在 `promanage-common`。
+*   **目标**: 将所有核心实体统一到 `promanage-common` 模块。
+*   **原子化步骤**:
+    1.  将 `Role.java` 和 `Permission.java` 文件从 `promanage-service` 移动到 `promanage-common` 的 `entity` 包下。
+    2.  修改这两个文件的 `package` 声明。
+    3.  在整个项目中搜索并替换对旧包的引用。
+*   **验证**:
+    1.  执行 `mvn clean install`，确保项目可以成功编译和打包。
 
-This forces the controller to fill in the gaps. It takes on the role of an orchestrator, making multiple subsequent calls to the service layer to fetch the missing data (`getVersions`, `getWeekViewCount`, etc.). This direct orchestration in the controller is the **direct cause of the N+1 query problem** and the primary architectural violation.
+#### **任务 4：迁移并整合 DTO**
+*   **问题**: `promanage-service` 模块中存在一个 `dto` 包。
+*   **目标**: 将所有 DTO 统一到 `promanage-dto` 模块。
+*   **原子化步骤**:
+    1.  将 `promanage-service` 下 `dto` 包内的所有 Java 文件移动到 `promanage-dto` 模块的相应包下。
+    2.  修改这些文件的 `package` 声明。
+    3.  在整个项目中搜索并替换对旧包的引用。
+    4.  删除 `promanage-service` 下的空 `dto` 目录。
+*   **验证**:
+    1.  执行 `mvn clean install`。
 
-## 3. Optimal Refactoring Solution
+#### **任务 5：迁移基础设施相关代码**
+*   **问题**: `security`, `mapper`, `config` 等包位于 `promanage-service` 模块。
+*   **目标**: 将所有基础设施相关的代码统一到 `promanage-infrastructure` 模块。
+*   **原子化步骤**:
+    1.  **迁移 `PermissionCheckService`**: 将该文件移动到 `infrastructure` 模块的 `security` 包下，并更新引用。
+    2.  **迁移 `mapper`**: 将整个 `mapper` 包移动到 `infrastructure` 模块下，并更新 Mybatis 的 Mapper 扫描路径配置。
+    3.  **迁移 `config`**: 将 `service` 模块下的 `config` 包移动到 `infrastructure` 模块下。
+*   **验证**:
+    1.  针对每个子步骤，执行 `mvn clean install` 确保编译通过。
+    2.  全部迁移完成后，执行 `mvn verify` 确保所有测试通过。
 
-The optimal solution is a strategic refactoring aimed at creating clean, single-responsibility services and introducing a proper application service layer to handle use-case-specific data aggregation. This will solve all the identified issues systematically.
+#### **任务 6：统一授权逻辑 (试点)**
+*   **问题**: 权限检查散落在业务代码的 `if` 判断中。
+*   **目标**: 将一个方法的权限检查逻辑迁移到 Controller 层的 `@PreAuthorize` 注解。
+*   **原子化步骤**:
+    1.  选择一个目标：`UserController` 中的 `delete` 方法。
+    2.  在 `UserController` 的对应方法上添加注解：`@PreAuthorize("@permissionCheck.isSuperAdmin(authentication)")`。
+    3.  移除 `UserServiceImpl.delete` 方法内部的 `if (!permissionService.isSuperAdmin(...))` 检查。
+*   **验证**:
+    1.  为 `UserController.delete` 编写集成测试，分别使用管理员和非管理员 Token 调用该接口，断言前者成功，后者返回 403 Forbidden。
+    2.  运行 `mvn verify`。
 
-### Step 1: Decompose the "God" Service (`DocumentServiceImpl`)
+---
 
-The first step is to break down the monolithic service into smaller, more focused, and domain-aligned services.
+### **阶段二：P2 - 代码质量与技术债务清理**
 
-**Actions:**
-1.  **Create `DocumentViewCountService`**: Extract all logic related to incrementing and fetching view counts (including the Redis operations) into this new service.
-2.  **Create `DocumentFavoriteService`**: Extract the `toggleFavorite`, `isFavorited`, and `getFavoriteCount` logic into this new service.
-3.  **Create `DocumentTagService`**: Properly implement the tagging feature here. This will likely require a new `Tag` entity and a `document_tags` join table. The broken comma-separated string logic will be discarded.
-4.  **Shrink `DocumentServiceImpl`**: The original service will now be responsible **only** for the core CRUD and versioning of the `Document` entity itself. It will become much smaller and easier to manage.
+此阶段处理剩余的非紧急问题。
 
-**Outcome**: Each service now has a single responsibility, is easier to test, and can manage its own specific caching and transactional logic without broad side effects.
+#### **任务 7：拆分 `UserServiceImpl`**
+*   **目标**: 将 `UserDetailsService` 的实现从 `UserServiceImpl` 中分离。
+*   **原子化步骤**:
+    1.  创建一个新的类 `UserDetailsServiceImpl`，实现 `UserDetailsService` 接口。
+    2.  将 `loadUserByUsername` 方法从 `UserServiceImpl` 移动到 `UserDetailsServiceImpl`。
+    3.  让 `UserServiceImpl` 不再实现 `UserDetailsService` 接口。
+*   **验证**:
+    1.  修改 Spring Security 配置，使用新的 `UserDetailsServiceImpl` 作为 `UserDetailsService`。
+    2.  运行所有与登录和认证相关的集成测试。
+    3.  运行 `mvn verify`。
 
-### Step 2: Introduce a Use-Case-Specific Application Service
-
-This new service will act as the orchestrator, hiding the complexity of data aggregation from the controller.
-
-**Actions:**
-1.  **Create `DocumentApplicationService`**: This new service will be responsible for handling specific API use cases.
-2.  **Implement `getDocumentDetails(documentId)`**: Create a new public method in this service. This method will be responsible for building the complete `DocumentDetailResponse`.
-    - It will call `documentService.getById()` to get the core document.
-    - It will call `documentVersionService.findAllByDocumentId()` to get the versions.
-    - It will call `documentViewCountService.getCounts()` to get the view counts.
-    - It will call `commentService.getCountForDocument()` to get the comment count.
-    - It will perform the batch fetching of user information.
-    - It will assemble all this data into the final `DocumentDetailResponse` DTO.
-
-**Outcome**: The N+1 problem is now contained within a single service method where it can be properly optimized (e.g., using `CompletableFuture` for parallel fetching of independent data). The controller is no longer aware of this complexity.
-
-### Step 3: Refactor the Controller (`DocumentController`)
-
-With the new application service in place, the controller becomes simple and clean.
-
-**Actions:**
-1.  **Remove Enrichment Logic**: Delete the private `enrichDetailResponse` and `enrichWithUserInfo` methods from `DocumentController`.
-2.  **Simplify Controller Methods**: The `getDocument` endpoint method is reduced to a single line of code:
-
-    ```java
-    @GetMapping("/{documentId}")
-    @RequirePermission("document:view")
-    public Result<DocumentDetailResponse> getDocument(@PathVariable Long documentId) {
-        log.info("获取文档详情请求, documentId={}", documentId);
-        DocumentDetailResponse response = documentApplicationService.getDocumentDetails(documentId);
-        return Result.success(response);
-    }
-    ```
-
-**Outcome**: The controller is now a thin, clean layer responsible only for HTTP request handling, validation, and security, fully adhering to the layered architecture design.
-
-### Step 4: Correct Caching and Transactions
-
-With smaller, focused services, applying these cross-cutting concerns becomes straightforward.
-
-**Actions:**
-1.  **Targeted Cache Eviction**: When `DocumentServiceImpl.update()` is called, it now only needs to evict the cache for that single document (`@CacheEvict(key = "#id")`). When `DocumentFavoriteService.addFavorite()` is called, it only needs to invalidate the favorite count cache, without touching the document cache.
-2.  **Clear Transaction Boundaries**: Each method in the new services will have a clear, single purpose, making it trivial to identify which ones require `@Transactional` and which can be `readOnly`.
-
-**Outcome**: The caching strategy becomes efficient and correct, eliminating stale data. Transactions are applied precisely, ensuring data integrity without unnecessary overhead.
-
---- 
-
-This refactoring plan directly addresses the root causes of the identified issues, leading to a more performant, maintainable, secure, and scalable system that is fully aligned with modern architectural best practices. I am ready to begin implementing this plan, starting with the decomposition of `DocumentServiceImpl`.
+#### **任务 8：收紧 PMD 静态检查规则**
+*   **目标**: 逐步恢复被禁用的 PMD 规则，并修复因此产生的问题。
+*   **原子化步骤**:
+    1.  在 `pmd-ruleset.xml` 中，首先恢复 `AvoidDuplicateLiterals` 规则。
+    2.  运行 `mvn pmd:check`，找到所有违反该规则的地方。
+    3.  将重复的“魔法值”提取为常量。
+*   **验证**:
+    1.  `mvn pmd:check` 不再报告 `AvoidDuplicateLiterals` 错误。
+    2.  `mvn verify` 通过。

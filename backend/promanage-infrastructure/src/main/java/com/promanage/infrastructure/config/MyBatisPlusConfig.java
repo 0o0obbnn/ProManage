@@ -1,33 +1,39 @@
 package com.promanage.infrastructure.config;
 
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
- * MyBatis Plus 配置类 (基本配置)
+ * MyBatis Plus Configuration
  *
  * @author ProManage Team
- * @version 1.0
- * @since 2025-09-30
+ * @version 1.1
+ * @since 2025-10-30
  */
 @Slf4j
 @Configuration
 @EnableTransactionManagement
 public class MyBatisPlusConfig {
 
-    /**
-     * MyBatis Plus 拦截器配置 (基本配置)
-     *
-     * @return MybatisPlusInterceptor 拦截器实例
-     */
-    @Bean
-    public MybatisPlusInterceptor mybatisPlusInterceptor() {
-        log.info("Initializing MyBatis Plus interceptor (basic configuration)");
-        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        log.info("MyBatis Plus interceptor initialized successfully");
-        return interceptor;
-    }
+  /**
+   * Configures the MyBatis Plus interceptor, including the pagination plugin.
+   *
+   * @return MybatisPlusInterceptor instance
+   */
+  @Bean
+  public MybatisPlusInterceptor mybatisPlusInterceptor() {
+    log.info("Initializing MyBatis Plus interceptor");
+    MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+
+    // Add the pagination interceptor
+    interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
+    log.info("PaginationInnerInterceptor added to MyBatis Plus");
+
+    log.info("MyBatis Plus interceptor initialized successfully");
+    return interceptor;
+  }
 }

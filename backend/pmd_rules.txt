@@ -1,0 +1,368 @@
+[INFO] PMD Failure: com.promanage.common.util.IpUtils:177 Rule:AvoidDuplicateLiterals Priority:3 The String literal "Invalid IP format: {}" appears 4 times in this file; the first occurrence is on line 177.
+[INFO] PMD Failure: com.promanage.dto.NotificationSettings:56 Rule:AvoidDuplicateLiterals Priority:3 The String literal "true" appears 5 times in this file; the first occurrence is on line 56.
+[INFO] PMD Failure: com.promanage.domain.mapper.UserRoleMapper:41 Rule:AvoidDuplicateLiterals Priority:3 The String literal "userId" appears 5 times in this file; the first occurrence is on line 41.
+[INFO] PMD Failure: com.promanage.infrastructure.cache.CacheService:19 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.infrastructure.cache.CacheService:57 Rule:LinguisticNaming Priority:3 Linguistics Antipattern - The setter 'setIfAbsent' should not return any type except void linguistically.
+[INFO] PMD Failure: com.promanage.infrastructure.cache.CacheService:67 Rule:LinguisticNaming Priority:3 Linguistics Antipattern - The setter 'setIfAbsent' should not return any type except void linguistically.
+[INFO] PMD Failure: com.promanage.infrastructure.cache.PermissionCacheInvalidationListener:63 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.cache.PermissionCacheInvalidationListener:82 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.cache.PermissionCacheInvalidationListener:102 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.cache.PermissionCacheInvalidationListener:132 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.cache.RedisCacheService:27 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.infrastructure.config.AsyncConfig:99 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.infrastructure.config.CustomAsyncExceptionHandler:176 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.config.CustomAsyncExceptionHandler:201 Rule:UnusedFormalParameter Priority:3 Avoid unused method parameters such as 'params'..
+[INFO] PMD Failure: com.promanage.infrastructure.config.CustomAsyncExceptionHandler:211 Rule:UnusedFormalParameter Priority:3 Avoid unused method parameters such as 'throwable'..
+[INFO] PMD Failure: com.promanage.infrastructure.config.CustomAsyncExceptionHandler:211 Rule:UnusedFormalParameter Priority:3 Avoid unused method parameters such as 'params'..
+[INFO] PMD Failure: com.promanage.infrastructure.config.AsyncConfig:240 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.infrastructure.config.AsyncConfig:271 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.infrastructure.config.CustomKeyGenerator:106 Rule:ConsecutiveAppendsShouldReuse Priority:3 StringBuffer (or StringBuilder).append is called consecutively without reusing the target variable..
+[INFO] PMD Failure: com.promanage.infrastructure.config.CustomKeyGenerator:107 Rule:ConsecutiveAppendsShouldReuse Priority:3 StringBuffer (or StringBuilder).append is called consecutively without reusing the target variable..
+[INFO] PMD Failure: com.promanage.infrastructure.config.CustomKeyGenerator:114 Rule:ConsecutiveAppendsShouldReuse Priority:3 StringBuffer (or StringBuilder).append is called consecutively without reusing the target variable..
+[INFO] PMD Failure: com.promanage.infrastructure.config.MyBatisMetaObjectHandler:37 Rule:EmptyCatchBlock Priority:3 Avoid empty catch blocks.
+[INFO] PMD Failure: com.promanage.infrastructure.config.MyBatisMetaObjectHandler:37 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.config.MyBatisMetaObjectHandler:54 Rule:EmptyCatchBlock Priority:3 Avoid empty catch blocks.
+[INFO] PMD Failure: com.promanage.infrastructure.config.MyBatisMetaObjectHandler:54 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.interceptor.ApiLoggingInterceptor:165 Rule:UseLocaleWithCaseConversions Priority:3 When doing a String.toLowerCase()/toUpperCase() call, use a Locale.
+[INFO] PMD Failure: com.promanage.infrastructure.security.JwtAuthenticationFilter:72 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.JwtTokenProvider:228 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.JwtTokenProvider:248 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.JwtTokenProvider:264 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.JwtTokenProvider:280 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.JwtTokenProvider:316 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.JwtTokenProvider:332 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.SecurityConfig:98 Rule:SignatureDeclareThrowsException Priority:3 A method/constructor should not explicitly throw java.lang.Exception.
+[INFO] PMD Failure: com.promanage.infrastructure.security.SecurityConfig:250 Rule:SignatureDeclareThrowsException Priority:3 A method/constructor should not explicitly throw java.lang.Exception.
+[INFO] PMD Failure: com.promanage.infrastructure.security.SecurityUtils:26 Rule:GodClass Priority:3 Possible God Class (WMC=47, ATFD=8, TCC=0.395%).
+[INFO] PMD Failure: com.promanage.infrastructure.security.SecurityUtils:47 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.SecurityUtils:144 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return !{condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:72 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:74 Rule:AvoidThrowingRawExceptionTypes Priority:1 Avoid throwing raw exception types..
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:102 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:125 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:143 Rule:UseExplicitTypes Priority:3 Use Explicit Types.
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:157 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:195 Rule:UseExplicitTypes Priority:3 Use Explicit Types.
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:199 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:211 Rule:UseExplicitTypes Priority:3 Use Explicit Types.
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:212 Rule:UseExplicitTypes Priority:3 Use Explicit Types.
+[INFO] PMD Failure: com.promanage.infrastructure.security.TokenBlacklistService:219 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.tracing.TracingUtil:41 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.infrastructure.tracing.TracingUtil:43 Rule:AvoidThrowingRawExceptionTypes Priority:1 Avoid throwing raw exception types..
+[INFO] PMD Failure: com.promanage.service.INotificationService:17 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.INotificationService:30 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.NotificationSendService:60 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.aspect.PermissionAspect:64 Rule:UseExplicitTypes Priority:3 Use Explicit Types.
+[INFO] PMD Failure: com.promanage.service.enums.DocumentStatus:25 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.impl.AuthServiceImpl:106 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.impl.AuthServiceImpl:187 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.impl.AuthServiceImpl:216 Rule:UseUnderscoresInNumericLiterals Priority:3 Number 1000000 should separate every third digit with an underscore.
+[INFO] PMD Failure: com.promanage.service.impl.AuthServiceImpl:230 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.impl.AuthServiceImpl:279 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:1 Rule:ExcessiveImports Priority:3 A high number of imports can indicate a high degree of coupling within an object..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:50 Rule:CyclomaticComplexity Priority:3 The class 'ChangeRequestServiceImpl' has a total cyclomatic complexity of 187 (highest 18)..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:50 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:61 Rule:CyclomaticComplexity Priority:3 The method 'createChangeRequest(ChangeRequest)' has a cyclomatic complexity of 16..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:71 Rule:InefficientEmptyStringCheck Priority:3 String.trim().length() == 0 / String.trim().isEmpty() is an inefficient way to validate a blank String..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:231 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:231 Rule:CognitiveComplexity Priority:3 The method 'listChangeRequests(Long, Integer, Integer, String, Integer, String, Long, Long, Long, String, String)' has a cognitive complexity of 17, current threshold is 15.
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:231 Rule:CyclomaticComplexity Priority:3 The method 'listChangeRequests(Long, Integer, Integer, String, Integer, String, Long, Long, Long, String, String)' has a cyclomatic complexity of 18..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:231 Rule:ExcessiveParameterList Priority:3 Avoid long parameter lists..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:259 Rule:AvoidReassigningParameters Priority:2 Avoid reassigning parameters such as 'page'.
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:262 Rule:AvoidReassigningParameters Priority:2 Avoid reassigning parameters such as 'pageSize'.
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:272 Rule:InefficientEmptyStringCheck Priority:3 String.trim().length() == 0 / String.trim().isEmpty() is an inefficient way to validate a blank String..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:278 Rule:InefficientEmptyStringCheck Priority:3 String.trim().length() == 0 / String.trim().isEmpty() is an inefficient way to validate a blank String..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:290 Rule:InefficientEmptyStringCheck Priority:3 String.trim().length() == 0 / String.trim().isEmpty() is an inefficient way to validate a blank String..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:299 Rule:InefficientEmptyStringCheck Priority:3 String.trim().length() == 0 / String.trim().isEmpty() is an inefficient way to validate a blank String..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:320 Rule:CyclomaticComplexity Priority:3 The method 'approveChangeRequest(Long, String, String, Long)' has a cyclomatic complexity of 16..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:507 Rule:InefficientEmptyStringCheck Priority:3 String.trim().length() == 0 / String.trim().isEmpty() is an inefficient way to validate a blank String..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:538 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return {condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImpl:852 Rule:UnusedFormalParameter Priority:3 Avoid unused method parameters such as 'changeRequest'..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImplRefactored:128 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImplRefactored:128 Rule:ExcessiveParameterList Priority:3 Avoid long parameter lists..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImplRefactored:171 Rule:CompareObjectsWithEquals Priority:3 Use equals() to compare object references..
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImplRefactored:171 Rule:UseEqualsToCompareStrings Priority:3 Use equals() to compare strings instead of '==' or '!='.
+[INFO] PMD Failure: com.promanage.service.impl.ChangeRequestServiceImplRefactored:213 Rule:UseDiamondOperator Priority:3 Raw type use may be avoided by using a diamond: `new BatchOperationResult<>()`.
+[INFO] PMD Failure: com.promanage.service.impl.DocumentFileServiceImpl:41 Rule:GodClass Priority:3 Possible God Class (WMC=62, ATFD=74, TCC=8.333%).
+[INFO] PMD Failure: com.promanage.service.impl.DocumentFileServiceImpl:114 Rule:CyclomaticComplexity Priority:3 The method 'upload(DocumentUploadRequest, Long)' has a cyclomatic complexity of 15..
+[INFO] PMD Failure: com.promanage.service.impl.DocumentFileServiceImpl:383 Rule:UseLocaleWithCaseConversions Priority:3 When doing a String.toLowerCase()/toUpperCase() call, use a Locale.
+[INFO] PMD Failure: com.promanage.service.impl.DocumentFolderServiceImpl:282 Rule:CognitiveComplexity Priority:3 The method 'buildFolderTree(List<DocumentFolder>)' has a cognitive complexity of 15, current threshold is 15.
+[INFO] PMD Failure: com.promanage.service.impl.DocumentFolderServiceImpl:293 Rule:UseConcurrentHashMap Priority:3 If you run in Java5 or newer and have concurrent access, you should use the ConcurrentHashMap implementation.
+[INFO] PMD Failure: com.promanage.service.impl.DocumentFolderServiceImpl:312 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.impl.DocumentServiceImpl:1 Rule:ExcessiveImports Priority:3 A high number of imports can indicate a high degree of coupling within an object..
+[INFO] PMD Failure: com.promanage.service.impl.DocumentServiceImpl:40 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.impl.DocumentServiceImpl:77 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.impl.DocumentServiceImpl:98 Rule:UseLocaleWithCaseConversions Priority:3 When doing a String.toLowerCase()/toUpperCase() call, use a Locale.
+[INFO] PMD Failure: com.promanage.service.impl.DocumentVersionServiceImpl:207 Rule:CollapsibleIfStatements Priority:3 This if statement could be combined with its parent.
+[INFO] PMD Failure: com.promanage.service.impl.EmailServiceImpl:51 Rule:AvoidThrowingRawExceptionTypes Priority:1 Avoid throwing raw exception types..
+[INFO] PMD Failure: com.promanage.service.impl.EmailServiceImpl:71 Rule:AvoidThrowingRawExceptionTypes Priority:1 Avoid throwing raw exception types..
+[INFO] PMD Failure: com.promanage.service.impl.NotificationServiceImpl:42 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.impl.NotificationServiceImpl:89 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.impl.NotificationServiceImpl:196 Rule:AvoidRethrowingException Priority:3 A catch statement that catches an exception only to rethrow it should be avoided..
+[INFO] PMD Failure: com.promanage.service.impl.NotificationServiceImpl:224 Rule:AvoidRethrowingException Priority:3 A catch statement that catches an exception only to rethrow it should be avoided..
+[INFO] PMD Failure: com.promanage.service.impl.NotificationServiceImpl:249 Rule:AvoidRethrowingException Priority:3 A catch statement that catches an exception only to rethrow it should be avoided..
+[INFO] PMD Failure: com.promanage.service.impl.NotificationServiceImpl:286 Rule:AvoidRethrowingException Priority:3 A catch statement that catches an exception only to rethrow it should be avoided..
+[INFO] PMD Failure: com.promanage.service.impl.NotificationServiceImpl:314 Rule:AvoidRethrowingException Priority:3 A catch statement that catches an exception only to rethrow it should be avoided..
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationPermissionServiceImpl:45 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return {condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationPermissionServiceImpl:58 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return {condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationPermissionServiceImpl:74 Rule:UnusedLocalVariable Priority:3 Avoid unused local variables such as 'organization'..
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationServiceImpl:1 Rule:ExcessiveImports Priority:3 A high number of imports can indicate a high degree of coupling within an object..
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationServiceImpl:1 Rule:CouplingBetweenObjects Priority:3 High amount of different objects as members denotes a high coupling.
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationServiceImpl:55 Rule:CyclomaticComplexity Priority:3 The class 'OrganizationServiceImpl' has a total cyclomatic complexity of 80 (highest 20)..
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationServiceImpl:56 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationServiceImpl:350 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return !{condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationServiceImpl:413 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationServiceImpl:454 Rule:CognitiveComplexity Priority:3 The method 'normalizeSettings(OrganizationSettingsDTO)' has a cognitive complexity of 19, current threshold is 15.
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationServiceImpl:454 Rule:CyclomaticComplexity Priority:3 The method 'normalizeSettings(OrganizationSettingsDTO)' has a cyclomatic complexity of 20..
+[INFO] PMD Failure: com.promanage.service.impl.OrganizationServiceImpl:538 Rule:LooseCoupling Priority:3 Avoid using implementation types like 'HashMap'; use the interface instead.
+[INFO] PMD Failure: com.promanage.service.impl.PasswordServiceImpl:38 Rule:CognitiveComplexity Priority:3 The method 'checkPasswordStrength(String)' has a cognitive complexity of 18, current threshold is 15.
+[INFO] PMD Failure: com.promanage.service.impl.PasswordServiceImpl:124 Rule:CyclomaticComplexity Priority:3 The method 'validatePasswordStrength(String, int, int)' has a cyclomatic complexity of 19..
+[INFO] PMD Failure: com.promanage.service.impl.PasswordServiceImpl:170 Rule:UseLocaleWithCaseConversions Priority:3 When doing a String.toLowerCase()/toUpperCase() call, use a Locale.
+[INFO] PMD Failure: com.promanage.service.impl.PasswordServiceImpl:172 Rule:UnnecessaryCaseChange Priority:3 Using equalsIgnoreCase() is cleaner than using toUpperCase/toLowerCase().equals()..
+[INFO] PMD Failure: com.promanage.service.impl.PasswordServiceImpl:172 Rule:UseLocaleWithCaseConversions Priority:3 When doing a String.toLowerCase()/toUpperCase() call, use a Locale.
+[INFO] PMD Failure: com.promanage.service.impl.PermissionManagementServiceImpl:232 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.impl.PermissionServiceImpl:71 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return !{condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.service.impl.PermissionServiceImpl:187 Rule:UselessParentheses Priority:4 Useless parentheses..
+[INFO] PMD Failure: com.promanage.service.impl.PermissionServiceImpl:213 Rule:CollapsibleIfStatements Priority:3 This if statement could be combined with its parent.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectPermissionServiceImpl:62 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return {condition};`.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:1 Rule:ExcessiveImports Priority:3 A high number of imports can indicate a high degree of coupling within an object..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:1 Rule:CouplingBetweenObjects Priority:3 High amount of different objects as members denotes a high coupling.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:54 Rule:GodClass Priority:3 Possible God Class (WMC=129, ATFD=197, TCC=19.570%).
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:54 Rule:CyclomaticComplexity Priority:3 The class 'ProjectServiceImpl' has a total cyclomatic complexity of 129 (highest 10)..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:56 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:129 Rule:AvoidDuplicateLiterals Priority:3 The String literal "projectId" appears 5 times in this file; the first occurrence is on line 129.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:129 Rule:AvoidDuplicateLiterals Priority:3 The String literal "requesterId" appears 4 times in this file; the first occurrence is on line 129.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:132 Rule:AvoidDuplicateLiterals Priority:3 The String literal "#projectId" appears 4 times in this file; the first occurrence is on line 132.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:358 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u7528\u6237\u672a\u767b\u5f55" appears 7 times in this file; the first occurrence is on line 358.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:543 Rule:UselessParentheses Priority:4 Useless parentheses..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectServiceImpl:835 Rule:UselessParentheses Priority:4 Useless parentheses..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:40 Rule:AvoidDuplicateLiterals Priority:3 The String literal "projectId" appears 7 times in this file; the first occurrence is on line 40.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:46 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:52 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:58 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:59 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:98 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:116 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:127 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:157 Rule:ExceptionAsFlowControl Priority:3 Exception thrown at line 148 is caught in this block..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:167 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:247 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:253 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.service.impl.ProjectTracingService:254 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.impl.RolePermissionServiceImpl:65 Rule:UnusedFormalParameter Priority:3 Avoid unused method parameters such as 'organizationId'..
+[INFO] PMD Failure: com.promanage.service.impl.RolePermissionServiceImpl:172 Rule:UnusedLocalVariable Priority:3 Avoid unused local variables such as 'permissionIds'..
+[INFO] PMD Failure: com.promanage.service.impl.RoleServiceImpl:94 Rule:AvoidDuplicateLiterals Priority:3 The String literal "roles" appears 8 times in this file; the first occurrence is on line 94.
+[INFO] PMD Failure: com.promanage.service.impl.RoleServiceImpl:99 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u89d2\u8272ID\u4e0d\u80fd\u4e3a\u7a7a" appears 5 times in this file; the first occurrence is on line 99.
+[INFO] PMD Failure: com.promanage.service.impl.RoleServiceImpl:204 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u672a\u767b\u5f55" appears 4 times in this file; the first occurrence is on line 204.
+[INFO] PMD Failure: com.promanage.service.impl.RoleServiceImpl:240 Rule:AvoidDuplicateLiterals Priority:3 The String literal "users" appears 4 times in this file; the first occurrence is on line 240.
+[INFO] PMD Failure: com.promanage.service.impl.RoleServiceImpl:260 Rule:CollapsibleIfStatements Priority:3 This if statement could be combined with its parent.
+[INFO] PMD Failure: com.promanage.service.impl.RoleServiceImpl:335 Rule:CognitiveComplexity Priority:3 The method 'batchDelete(List<Long>)' has a cognitive complexity of 15, current threshold is 15.
+[INFO] PMD Failure: com.promanage.service.impl.RoleServiceImpl:403 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.impl.RoleServiceImpl:422 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.impl.RoleServiceImpl:437 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:1 Rule:ExcessiveImports Priority:3 A high number of imports can indicate a high degree of coupling within an object..
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:1 Rule:CouplingBetweenObjects Priority:3 High amount of different objects as members denotes a high coupling.
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:48 Rule:GodClass Priority:3 Possible God Class (WMC=146, ATFD=130, TCC=22.880%).
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:48 Rule:CyclomaticComplexity Priority:3 The class 'TaskServiceImpl' has a total cyclomatic complexity of 146 (highest 16)..
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:48 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:95 Rule:AvoidDuplicateLiterals Priority:3 The String literal "tasks" appears 6 times in this file; the first occurrence is on line 95.
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:95 Rule:AvoidDuplicateLiterals Priority:3 The String literal "#taskId" appears 5 times in this file; the first occurrence is on line 95.
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:640 Rule:CognitiveComplexity Priority:3 The method 'batchUpdateTasks(List<Long>, Integer, Integer, Long, String, Long)' has a cognitive complexity of 24, current threshold is 15.
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:640 Rule:CyclomaticComplexity Priority:3 The method 'batchUpdateTasks(List<Long>, Integer, Integer, Long, String, Long)' has a cyclomatic complexity of 16..
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:682 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:760 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.impl.TaskServiceImpl:805 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.impl.TaskTimeTrackingServiceImpl:39 Rule:GodClass Priority:3 Possible God Class (WMC=56, ATFD=49, TCC=2.857%).
+[INFO] PMD Failure: com.promanage.service.impl.TaskTimeTrackingServiceImpl:144 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u65f6\u95f4\u8ffd\u8e2a\u8bb0\u5f55\u4e0d\u5b58\u5728" appears 6 times in this file; the first occurrence is on line 144.
+[INFO] PMD Failure: com.promanage.service.impl.UserPermissionServiceImpl:58 Rule:AvoidDuplicateLiterals Priority:3 The String literal "users" appears 4 times in this file; the first occurrence is on line 58.
+[INFO] PMD Failure: com.promanage.service.impl.UserPermissionServiceImpl:76 Rule:UnusedLocalVariable Priority:3 Avoid unused local variables such as 'role'..
+[INFO] PMD Failure: com.promanage.service.impl.UserPermissionServiceImpl:128 Rule:UnusedLocalVariable Priority:3 Avoid unused local variables such as 'roleIds'..
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:1 Rule:ExcessiveImports Priority:3 A high number of imports can indicate a high degree of coupling within an object..
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:1 Rule:CouplingBetweenObjects Priority:3 High amount of different objects as members denotes a high coupling.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:61 Rule:CyclomaticComplexity Priority:3 The class 'UserServiceImpl' has a total cyclomatic complexity of 150 (highest 19)..
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:61 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:75 Rule:AvoidUncheckedExceptionsInSignatures Priority:3 A method or constructor should not explicitly declare unchecked exceptions in its 'throws' clause.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:87 Rule:AvoidDuplicateLiterals Priority:3 The String literal "users:id" appears 6 times in this file; the first occurrence is on line 87.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:87 Rule:AvoidDuplicateLiterals Priority:3 The String literal "#id" appears 5 times in this file; the first occurrence is on line 87.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:98 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u7528\u6237\u672a\u767b\u5f55" appears 8 times in this file; the first occurrence is on line 98.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:375 Rule:AvoidDuplicateLiterals Priority:3 The String literal "userRoles" appears 5 times in this file; the first occurrence is on line 375.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:376 Rule:AvoidDuplicateLiterals Priority:3 The String literal "userPermissions" appears 5 times in this file; the first occurrence is on line 376.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:581 Rule:CognitiveComplexity Priority:3 The method 'assignRoles(Long, List<Long>)' has a cognitive complexity of 22, current threshold is 15.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:581 Rule:CyclomaticComplexity Priority:3 The method 'assignRoles(Long, List<Long>)' has a cyclomatic complexity of 19..
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:620 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:636 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:767 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return !{condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.service.impl.UserServiceImpl:775 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return !{condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.service.mapper.DocumentFavoriteMapper:6 Rule:UnnecessaryImport Priority:4 Unused import 'com.promanage.service.constant.CommonConstants'.
+[INFO] PMD Failure: com.promanage.service.mapper.DocumentFavoriteMapper:30 Rule:AvoidDuplicateLiterals Priority:3 The String literal "userId" appears 5 times in this file; the first occurrence is on line 30.
+[INFO] PMD Failure: com.promanage.service.mapper.DocumentFavoriteMapper:38 Rule:AvoidDuplicateLiterals Priority:3 The String literal "documentId" appears 6 times in this file; the first occurrence is on line 38.
+[INFO] PMD Failure: com.promanage.service.mapper.DocumentMapper:35 Rule:AvoidDuplicateLiterals Priority:3 The String literal "projectId" appears 5 times in this file; the first occurrence is on line 35.
+[INFO] PMD Failure: com.promanage.service.mapper.DocumentMapper:45 Rule:AvoidDuplicateLiterals Priority:3 The String literal "keyword" appears 6 times in this file; the first occurrence is on line 45.
+[INFO] PMD Failure: com.promanage.service.mapper.DocumentVersionMapper:31 Rule:AvoidDuplicateLiterals Priority:3 The String literal "documentId" appears 5 times in this file; the first occurrence is on line 31.
+[INFO] PMD Failure: com.promanage.service.mapper.NotificationMapper:17 Rule:AvoidDuplicateLiterals Priority:3 The String literal "userId" appears 8 times in this file; the first occurrence is on line 17.
+[INFO] PMD Failure: com.promanage.service.mapper.ProjectMapper:142 Rule:AvoidDuplicateLiterals Priority:3 The String literal "keyword" appears 4 times in this file; the first occurrence is on line 142.
+[INFO] PMD Failure: com.promanage.service.mapper.ProjectMemberMapper:31 Rule:AvoidDuplicateLiterals Priority:3 The String literal "projectId" appears 6 times in this file; the first occurrence is on line 31.
+[INFO] PMD Failure: com.promanage.service.mapper.ProjectMemberMapper:53 Rule:AvoidDuplicateLiterals Priority:3 The String literal "userId" appears 4 times in this file; the first occurrence is on line 53.
+[INFO] PMD Failure: com.promanage.service.mapper.TaskMapper:48 Rule:AvoidDuplicateLiterals Priority:3 The String literal "keyword" appears 4 times in this file; the first occurrence is on line 48.
+[INFO] PMD Failure: com.promanage.service.mapper.TaskTimeTrackingMapper:29 Rule:AvoidDuplicateLiterals Priority:3 The String literal "taskId" appears 4 times in this file; the first occurrence is on line 29.
+[INFO] PMD Failure: com.promanage.service.mapper.UserRoleMapper:67 Rule:AvoidDuplicateLiterals Priority:3 The String literal "userId" appears 4 times in this file; the first occurrence is on line 67.
+[INFO] PMD Failure: com.promanage.service.security.PermissionCheckService:31 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return !{condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.service.service.IAuthService:49 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.service.IAuthService:64 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.service.IAuthService:113 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.service.IChangeRequestService:66 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.service.IChangeRequestService:66 Rule:ExcessiveParameterList Priority:3 Avoid long parameter lists..
+[INFO] PMD Failure: com.promanage.service.service.IDocumentService:31 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.service.SearchResult:23 Rule:UncommentedEmptyConstructor Priority:3 Document empty constructor.
+[INFO] PMD Failure: com.promanage.service.service.ITaskService:19 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.service.ITestCaseService:16 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.service.ITestCaseService:65 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.service.ITestCaseService:65 Rule:ExcessiveParameterList Priority:3 Avoid long parameter lists..
+[INFO] PMD Failure: com.promanage.service.service.ITestCaseService:115 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.service.IUserService:18 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.service.impl.DocumentRelationServiceImpl:29 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.DocumentRelationServiceImpl:35 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.DocumentRelationServiceImpl:38 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.DocumentTagServiceImpl:26 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.DocumentTagServiceImpl:29 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.DocumentTagServiceImpl:31 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.service.impl.DocumentTagServiceImpl:41 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:65 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:86 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u6587\u6863ID\u4e0d\u80fd\u4e3a\u7a7a" appears 4 times in this file; the first occurrence is on line 86.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:103 Rule:AvoidReassigningParameters Priority:2 Avoid reassigning parameters such as 'limit'.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:118 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:120 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:121 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:139 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:148 Rule:CognitiveComplexity Priority:3 The method 'updateDocumentTags(Long, List<Long>)' has a cognitive complexity of 17, current threshold is 15.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:157 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:162 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:165 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:166 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:176 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:194 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TagServiceImpl:199 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:1 Rule:CouplingBetweenObjects Priority:3 High amount of different objects as members denotes a high coupling.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:41 Rule:GodClass Priority:3 Possible God Class (WMC=184, ATFD=210, TCC=19.103%).
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:41 Rule:CyclomaticComplexity Priority:3 The class 'TestCaseServiceImpl' has a total cyclomatic complexity of 184 (highest 28)..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:41 Rule:TooManyMethods Priority:3 This class has too many methods, consider refactoring it..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:88 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:88 Rule:ExcessiveParameterList Priority:3 Avoid long parameter lists..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:199 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:251 Rule:SwitchStmtsShouldHaveDefault Priority:3 Switch statements should be exhaustive, add a default case (or missing enum branches).
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:278 Rule:UseLocaleWithCaseConversions Priority:3 When doing a String.toLowerCase()/toUpperCase() call, use a Locale.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:392 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:555 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return {condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:592 Rule:SimplifyBooleanReturns Priority:3 This if statement can be replaced by `return {condition} || {elseBranch};`.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:626 Rule:CyclomaticComplexity Priority:3 The method 'exportTestCases(Long, List<Long>, String)' has a cyclomatic complexity of 15..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:658 Rule:UseLocaleWithCaseConversions Priority:3 When doing a String.toLowerCase()/toUpperCase() call, use a Locale.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:673 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:686 Rule:InsufficientStringBufferDeclaration Priority:3 StringBuilder has been initialized with size 16, but has at least 49 characters appended..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:721 Rule:AvoidDuplicateLiterals Priority:3 The String literal "/exports/" appears 4 times in this file; the first occurrence is on line 721.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:726 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:733 Rule:InsufficientStringBufferDeclaration Priority:3 StringBuilder has been initialized with size 16, but has at least 49 characters appended..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:741 Rule:AppendCharacterWithChar Priority:3 Avoid appending characters as strings in StringBuffer.append..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:743 Rule:AppendCharacterWithChar Priority:3 Avoid appending characters as strings in StringBuffer.append..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:745 Rule:AppendCharacterWithChar Priority:3 Avoid appending characters as strings in StringBuffer.append..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:747 Rule:AppendCharacterWithChar Priority:3 Avoid appending characters as strings in StringBuffer.append..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:749 Rule:AppendCharacterWithChar Priority:3 Avoid appending characters as strings in StringBuffer.append..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:751 Rule:AppendCharacterWithChar Priority:3 Avoid appending characters as strings in StringBuffer.append..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:753 Rule:AppendCharacterWithChar Priority:3 Avoid appending characters as strings in StringBuffer.append..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:755 Rule:AppendCharacterWithChar Priority:3 Avoid appending characters as strings in StringBuffer.append..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:757 Rule:AppendCharacterWithChar Priority:3 Avoid appending characters as strings in StringBuffer.append..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:759 Rule:AppendCharacterWithChar Priority:3 Avoid appending characters as strings in StringBuffer.append..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:776 Rule:PreserveStackTrace Priority:3 Thrown exception does not preserve the stack trace of exception 'e' on all code paths.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:781 Rule:UnusedFormalParameter Priority:3 Avoid unused method parameters such as 'testCases'..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:799 Rule:NcssCount Priority:3 The method 'importTestCases(Long, String, Long)' has a NCSS line count of 69..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:799 Rule:CognitiveComplexity Priority:3 The method 'importTestCases(Long, String, Long)' has a cognitive complexity of 46, current threshold is 15.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:799 Rule:CyclomaticComplexity Priority:3 The method 'importTestCases(Long, String, Long)' has a cyclomatic complexity of 28..
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:823 Rule:UseLocaleWithCaseConversions Priority:3 When doing a String.toLowerCase()/toUpperCase() call, use a Locale.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:827 Rule:UseUnderscoresInNumericLiterals Priority:3 Number 10001 should separate every third digit with an underscore.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:830 Rule:UseCollectionIsEmpty Priority:3 Substitute calls to size() == 0 (or size() != 0, size() > 0, size() < 1) with calls to isEmpty().
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:837 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:844 Rule:UseUnderscoresInNumericLiterals Priority:3 Number 10001 should separate every third digit with an underscore.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:847 Rule:UseCollectionIsEmpty Priority:3 Substitute calls to size() == 0 (or size() != 0, size() > 0, size() < 1) with calls to isEmpty().
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:854 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:871 Rule:AvoidInstantiatingObjectsInLoops Priority:3 Avoid instantiating new objects inside loops.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:915 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:921 Rule:SimpleDateFormatNeedsLocale Priority:3 When instantiating a SimpleDateFormat object, specify a Locale.
+[INFO] PMD Failure: com.promanage.service.service.impl.TestCaseServiceImpl:933 Rule:ControlStatementBraces Priority:3 This statement should have braces.
+[INFO] PMD Failure: com.promanage.service.strategy.ChangeRequestApprovalStrategy:113 Rule:UnusedFormalParameter Priority:3 Avoid unused method parameters such as 'userId'..
+[INFO] PMD Failure: com.promanage.service.strategy.ChangeRequestApprovalStrategy:113 Rule:UnusedFormalParameter Priority:3 Avoid unused method parameters such as 'projectId'..
+[INFO] PMD Failure: com.promanage.service.strategy.ChangeRequestQueryStrategy:6 Rule:UnnecessaryImport Priority:4 Unused import 'com.promanage.common.enums.ChangeRequestStatus'.
+[INFO] PMD Failure: com.promanage.service.strategy.ChangeRequestQueryStrategy:32 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.service.strategy.ChangeRequestQueryStrategy:32 Rule:ExcessiveParameterList Priority:3 Avoid long parameter lists..
+[INFO] PMD Failure: com.promanage.service.strategy.ChangeRequestQueryStrategy:37 Rule:AvoidReassigningParameters Priority:2 Avoid reassigning parameters such as 'page'.
+[INFO] PMD Failure: com.promanage.service.strategy.ChangeRequestQueryStrategy:38 Rule:AvoidReassigningParameters Priority:2 Avoid reassigning parameters such as 'pageSize'.
+[INFO] PMD Failure: com.promanage.service.strategy.ChangeRequestValidationStrategy:53 Rule:InefficientEmptyStringCheck Priority:3 String.trim().length() == 0 / String.trim().isEmpty() is an inefficient way to validate a blank String..
+[INFO] PMD Failure: com.promanage.api.ProManageApplication:70 Rule:UseUtilityClass Priority:3 This utility class has a non-private constructor.
+[INFO] PMD Failure: com.promanage.api.ProManageApplication:96 Rule:SystemPrintln Priority:2 Usage of System.out/err.
+[INFO] PMD Failure: com.promanage.api.ProManageApplication:98 Rule:AvoidDuplicateLiterals Priority:3 The String literal "================================================\n" appears 4 times in this file; the first occurrence is on line 98.
+[INFO] PMD Failure: com.promanage.api.ProManageApplication:119 Rule:SystemPrintln Priority:2 Usage of System.out/err.
+[INFO] PMD Failure: com.promanage.api.controller.AuthController:1 Rule:ExcessiveImports Priority:3 A high number of imports can indicate a high degree of coupling within an object..
+[INFO] PMD Failure: com.promanage.api.controller.AuthController:1 Rule:CouplingBetweenObjects Priority:3 High amount of different objects as members denotes a high coupling.
+[INFO] PMD Failure: com.promanage.api.controller.AuthController:30 Rule:UnnecessaryImport Priority:4 Unused import 'com.promanage.domain.entity.Permission'.
+[INFO] PMD Failure: com.promanage.api.controller.AuthController:249 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u5237\u65b0\u4ee4\u724c\u65e0\u6548" appears 4 times in this file; the first occurrence is on line 249.
+[INFO] PMD Failure: com.promanage.api.controller.AuthController:322 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u7528\u6237\u672a\u8ba4\u8bc1" appears 4 times in this file; the first occurrence is on line 322.
+[INFO] PMD Failure: com.promanage.api.controller.ChangeRequestController:1 Rule:CouplingBetweenObjects Priority:3 High amount of different objects as members denotes a high coupling.
+[INFO] PMD Failure: com.promanage.api.controller.ChangeRequestController:68 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.api.controller.ChangeRequestController:68 Rule:ExcessiveParameterList Priority:3 Avoid long parameter lists..
+[INFO] PMD Failure: com.promanage.api.controller.ChangeRequestController:80 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u8bf7\u5148\u767b\u5f55" appears 9 times in this file; the first occurrence is on line 80.
+[INFO] PMD Failure: com.promanage.api.controller.ChangeRequestController:214 Rule:CyclomaticComplexity Priority:3 The method 'updateChangeRequest(Long, UpdateChangeRequestRequest)' has a cyclomatic complexity of 18..
+[INFO] PMD Failure: com.promanage.api.controller.NotificationController:76 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u7528\u6237\u672a\u767b\u5f55" appears 7 times in this file; the first occurrence is on line 76.
+[INFO] PMD Failure: com.promanage.api.controller.OrganizationController:60 Rule:AvoidDuplicateLiterals Priority:3 The String literal "hasAuthority(\'ORGANIZATION_VIEW\')" appears 4 times in this file; the first occurrence is on line 60.
+[INFO] PMD Failure: com.promanage.api.controller.OrganizationController:104 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u7ec4\u7ec7ID" appears 8 times in this file; the first occurrence is on line 104.
+[INFO] PMD Failure: com.promanage.api.controller.OrganizationController:149 Rule:AvoidDuplicateLiterals Priority:3 The String literal "hasAuthority(\'ORGANIZATION_UPDATE\')" appears 4 times in this file; the first occurrence is on line 149.
+[INFO] PMD Failure: com.promanage.api.controller.PermissionController:48 Rule:AvoidDuplicateLiterals Priority:3 The String literal "@permissionCheck.hasPermission(\'permission:view\')" appears 4 times in this file; the first occurrence is on line 48.
+[INFO] PMD Failure: com.promanage.api.controller.ProjectController:1 Rule:ExcessiveImports Priority:3 A high number of imports can indicate a high degree of coupling within an object..
+[INFO] PMD Failure: com.promanage.api.controller.ProjectController:64 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u8bf7\u5148\u767b\u5f55" appears 9 times in this file; the first occurrence is on line 64.
+[INFO] PMD Failure: com.promanage.api.controller.SearchController:53 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u641c\u7d22\u5173\u952e\u8bcd" appears 5 times in this file; the first occurrence is on line 53.
+[INFO] PMD Failure: com.promanage.api.controller.SearchController:57 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u6bcf\u9875\u5927\u5c0f" appears 4 times in this file; the first occurrence is on line 57.
+[INFO] PMD Failure: com.promanage.api.controller.TagController:68 Rule:AvoidReassigningParameters Priority:2 Avoid reassigning parameters such as 'limit'.
+[INFO] PMD Failure: com.promanage.api.controller.TaskController:1 Rule:ExcessiveImports Priority:3 A high number of imports can indicate a high degree of coupling within an object..
+[INFO] PMD Failure: com.promanage.api.controller.TaskController:1 Rule:CouplingBetweenObjects Priority:3 High amount of different objects as members denotes a high coupling.
+[INFO] PMD Failure: com.promanage.api.controller.TaskController:83 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u8bf7\u5148\u767b\u5f55" appears 16 times in this file; the first occurrence is on line 83.
+[INFO] PMD Failure: com.promanage.api.controller.TaskController:197 Rule:CyclomaticComplexity Priority:3 The method 'updateTask(Long, UpdateTaskRequest)' has a cyclomatic complexity of 17..
+[INFO] PMD Failure: com.promanage.api.controller.TaskController:735 Rule:CognitiveComplexity Priority:3 The method 'convertToTaskCommentResponse(TaskComment)' has a cognitive complexity of 15, current threshold is 15.
+[INFO] PMD Failure: com.promanage.api.controller.TaskTimeTrackingController:59 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u4efb\u52a1ID" appears 4 times in this file; the first occurrence is on line 59.
+[INFO] PMD Failure: com.promanage.api.controller.TaskTimeTrackingController:65 Rule:AvoidDuplicateLiterals Priority:3 The String literal "yyyy-MM-dd" appears 6 times in this file; the first occurrence is on line 65.
+[INFO] PMD Failure: com.promanage.api.controller.TaskTimeTrackingController:74 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u8bf7\u5148\u767b\u5f55" appears 13 times in this file; the first occurrence is on line 74.
+[INFO] PMD Failure: com.promanage.api.controller.TaskTimeTrackingController:90 Rule:AvoidReassigningParameters Priority:2 Avoid reassigning parameters such as 'userId'.
+[INFO] PMD Failure: com.promanage.api.controller.TaskTimeTrackingController:204 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u8bb0\u5f55ID" appears 5 times in this file; the first occurrence is on line 204.
+[INFO] PMD Failure: com.promanage.api.controller.TaskTimeTrackingController:214 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u65f6\u95f4\u8ffd\u8e2a\u8bb0\u5f55\u4e0d\u5b58\u5728" appears 5 times in this file; the first occurrence is on line 214.
+[INFO] PMD Failure: com.promanage.api.controller.TestCaseController:1 Rule:CouplingBetweenObjects Priority:3 High amount of different objects as members denotes a high coupling.
+[INFO] PMD Failure: com.promanage.api.controller.TestCaseController:65 Rule:UseObjectForClearerAPI Priority:3 Rather than using a lot of String arguments, consider using a container object for those values..
+[INFO] PMD Failure: com.promanage.api.controller.TestCaseController:65 Rule:ExcessiveParameterList Priority:3 Avoid long parameter lists..
+[INFO] PMD Failure: com.promanage.api.controller.TestCaseController:77 Rule:AvoidDuplicateLiterals Priority:3 The String literal "\u8bf7\u5148\u767b\u5f55" appears 10 times in this file; the first occurrence is on line 77.
+[INFO] PMD Failure: com.promanage.api.controller.TestCaseController:218 Rule:CognitiveComplexity Priority:3 The method 'updateTestCase(Long, UpdateTestCaseRequest)' has a cognitive complexity of 24, current threshold is 15.
+[INFO] PMD Failure: com.promanage.api.controller.TestCaseController:218 Rule:CyclomaticComplexity Priority:3 The method 'updateTestCase(Long, UpdateTestCaseRequest)' has a cyclomatic complexity of 27..
+[INFO] PMD Failure: com.promanage.api.controller.UserController:1 Rule:CouplingBetweenObjects Priority:3 High amount of different objects as members denotes a high coupling.
+[INFO] PMD Failure: com.promanage.api.dto.request.CreateTestCaseRequest:19 Rule:TooManyFields Priority:3 Too many fields.
+[INFO] PMD Failure: com.promanage.api.dto.request.UpdateTestCaseRequest:18 Rule:TooManyFields Priority:3 Too many fields.
+[INFO] PMD Failure: com.promanage.api.dto.response.ActivityResponse:23 Rule:TooManyFields Priority:3 Too many fields.
+[INFO] PMD Failure: com.promanage.api.dto.response.AttachmentResponse:23 Rule:TooManyFields Priority:3 Too many fields.
+[INFO] PMD Failure: com.promanage.api.dto.response.ChangeRequestResponse:24 Rule:TooManyFields Priority:3 Too many fields.
+[INFO] PMD Failure: com.promanage.api.dto.response.DocumentResponse:31 Rule:TooManyFields Priority:3 Too many fields.
+[INFO] PMD Failure: com.promanage.api.dto.response.DocumentVersionResponse:142 Rule:EmptyCatchBlock Priority:3 Avoid empty catch blocks.
+[INFO] PMD Failure: com.promanage.api.dto.response.DocumentVersionResponse:142 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.api.dto.response.ProjectResponse:26 Rule:TooManyFields Priority:3 Too many fields.
+[INFO] PMD Failure: com.promanage.api.dto.response.TaskResponse:24 Rule:TooManyFields Priority:3 Too many fields.
+[INFO] PMD Failure: com.promanage.api.dto.response.TestCaseResponse:25 Rule:TooManyFields Priority:3 Too many fields.
+[INFO] PMD Failure: com.promanage.api.dto.response.UserResponse:26 Rule:TooManyFields Priority:3 Too many fields.
+[INFO] PMD Failure: com.promanage.api.dto.response.UserResponse:67 Rule:AvoidUsingHardCodedIP Priority:3 Do not hard code the IP address ${variableName}.
+[INFO] PMD Failure: com.promanage.api.exception.GlobalExceptionHandler:39 Rule:AvoidDuplicateLiterals Priority:3 The String literal "unknown" appears 4 times in this file; the first occurrence is on line 39.
+[INFO] PMD Failure: com.promanage.api.exception.GlobalExceptionHandler:93 Rule:UseConcurrentHashMap Priority:3 If you run in Java5 or newer and have concurrent access, you should use the ConcurrentHashMap implementation.
+[INFO] PMD Failure: com.promanage.api.exception.GlobalExceptionHandler:134 Rule:UseConcurrentHashMap Priority:3 If you run in Java5 or newer and have concurrent access, you should use the ConcurrentHashMap implementation.
+[INFO] PMD Failure: com.promanage.api.util.DatabaseMigrationUtil:33 Rule:AvoidDuplicateLiterals Priority:3 The String literal "BIGINT" appears 4 times in this file; the first occurrence is on line 33.
+[INFO] PMD Failure: com.promanage.api.util.DatabaseMigrationUtil:33 Rule:AvoidDuplicateLiterals Priority:3 The String literal "NULL" appears 8 times in this file; the first occurrence is on line 33.
+[INFO] PMD Failure: com.promanage.api.util.DatabaseMigrationUtil:72 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.api.util.DatabaseMigrationUtil:119 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.api.websocket.DefaultWebSocketSessionHandler:52 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.api.websocket.NotificationWebSocketHandler:78 Rule:UnnecessaryReturn Priority:3 Unnecessary return statement.
+[INFO] PMD Failure: com.promanage.api.websocket.NotificationWebSocketHandler:83 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.api.websocket.NotificationWebSocketHandler:148 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.api.websocket.WebSocketSessionInfo:102 Rule:UncommentedEmptyConstructor Priority:3 Document empty constructor.
+[INFO] PMD Failure: com.promanage.api.websocket.WebSocketSessionManager:31 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.api.websocket.WebSocketSessionManager:35 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..
+[INFO] PMD Failure: com.promanage.api.websocket.WebSocketSessionManager:185 Rule:AvoidCatchingGenericException Priority:3 Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.
+[INFO] PMD Failure: com.promanage.api.websocket.WebSocketSessionManager:191 Rule:DoNotUseThreads Priority:3 To be compliant to J2EE, a webapp should not use any thread..

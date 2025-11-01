@@ -15,7 +15,7 @@ import lombok.Data;
 @Schema(description = "检查密码强度请求")
 public class CheckPasswordStrengthRequest {
 
-    @NotBlank(message = "密码不能为空")
-    @Schema(description = "待检查的密码", required = true, example = "MyPassword123!")
-    private String password;
+  @NotBlank(message = "密码不能为空")
+  @Schema(description = "待检查的密码", required = true, example = "MyPassword123!")
+  private String password;
 }

@@ -1,0 +1,100 @@
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/impl/ProjectNotificationStrategy.java:[41,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/impl/ProjectNotificationStrategy.java:[62,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/impl/ProjectNotificationStrategy.java:[84,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/impl/TaskNotificationStrategy.java:[76,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/impl/TaskNotificationStrategy.java:[98,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/impl/TaskNotificationStrategy.java:[125,14] 找不到符号
+  找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/ChangeRequestApprovalStrategy.java:[69,45] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/ChangeRequestApprovalStrategy.java:[78,61] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/ChangeRequestApprovalStrategy.java:[90,17] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/ChangeRequestApprovalStrategy.java:[91,17] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/ChangeRequestApprovalStrategy.java:[92,17] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/ChangeRequestApprovalStrategy.java:[122,43] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentApplicationServiceImpl.java:[97,15] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentApplicationServiceImpl.java:[133,13] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentApplicationServiceImpl.java:[151,13] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentApplicationServiceImpl.java:[155,37] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentApplicationServiceImpl.java:[158,48] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentApplicationServiceImpl.java:[160,15] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentApplicationServiceImpl.java:[162,15] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentFavoriteServiceImpl.java:[48,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentFavoriteServiceImpl.java:[61,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentServiceImpl.java:[65,40] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentServiceImpl.java:[91,20] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentServiceImpl.java:[92,44] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentServiceImpl.java:[139,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentServiceImpl.java:[155,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentServiceImpl.java:[285,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentServiceImpl.java:[305,20] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentServiceImpl.java:[343,51] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentQueryStrategy.java:[176,48] 不兼容的类型: java.lang.Long无法转换为int
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentQueryStrategy.java:[185,48] 不兼容的类型: java.lang.Long无法转换为int
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentVersionStrategy.java:[66,81] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentVersionStrategy.java:[67,61] 不兼容的类型: java.lang.String无法转换为java.lang.Long
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentVersionStrategy.java:[93,56] 不兼容的类型: java.lang.String无法转换为java.lang.Long
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentVersionStrategy.java:[104,60] 不兼容的类型: java.lang.Long无法转换为java.lang.String
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentVersionStrategy.java:[118,55] 不兼容的类型: java.lang.Long无法转换为int
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentFavoriteStrategy.java:[53,28] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentFavoriteStrategy.java:[70,56] 不兼容的类型: java.lang.Long无法转换为int
+  找不到符号
+  找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentUploadStrategy.java:[46,17] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentUploadStrategy.java:[49,17] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentUploadStrategy.java:[51,17] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentUploadStrategy.java:[53,28] 不兼容的类型: java.lang.String无法转换为java.lang.Integer
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentUploadStrategy.java:[73,21] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentUploadStrategy.java:[74,42] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/DocumentUploadStrategy.java:[77,21] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentStatisticsServiceImpl.java:[118,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentViewCountServiceImpl.java:[58,16] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/DocumentViewCountServiceImpl.java:[123,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/EmailServiceImpl.java:[49,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[73,21] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[82,51] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[107,51] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[128,51] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[144,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[173,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[182,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[188,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[194,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[214,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/OrganizationServiceImpl.java:[227,5] 方法不会覆盖或实现超类型的方法
+  找不到符号
+  找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationMemberStrategy.java:[80,15] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationMemberStrategy.java:[81,15] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[152,17] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[153,17] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[154,17] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[164,12] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[165,44] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[166,36] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[167,35] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[175,16] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[176,48] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[178,16] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[179,40] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[181,16] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[182,39] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[193,24] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[193,64] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[196,24] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[196,63] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/OrganizationSettingsStrategy.java:[228,21] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/PermissionManagementServiceImpl.java:[237,11] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[65,27] 不兼容的类型: java.lang.String无法转换为java.lang.Integer
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[74,64] 不兼容的类型: java.lang.String无法转换为java.lang.Long
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[80,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[85,63] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[111,64] 不兼容的类型: java.lang.String无法转换为java.lang.Long
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[133,58] 不兼容的类型: java.lang.String无法转换为java.lang.Long
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[160,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[166,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[184,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[190,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/impl/ProjectServiceImpl.java:[202,5] 方法不会覆盖或实现超类型的方法
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/impl/ProjectNotificationStrategy.java:[41,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/impl/ProjectNotificationStrategy.java:[62,14] 找不到符号
+[ERROR] /F:/projects/ProManage/backend/promanage-service/src/main/java/com/promanage/service/strategy/impl/ProjectNotificationStrategy.java:[84,14] 找不到符号

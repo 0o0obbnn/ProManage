@@ -1,14 +1,10 @@
 package com.promanage.service.service;
 
-import com.promanage.service.entity.Document;
-
 import java.util.List;
 
+import com.promanage.service.entity.Document;
+
 public interface IDocumentRelationService {
-    /**
-     * 根据共享标签获取相关文档（简单策略）
-     */
-    List<Document> findRelatedByTags(Long documentId, int limit);
+  /** 根据共享标签获取相关文档（简单策略） */
+  List<Document> findRelatedByTags(Long documentId, int limit);
 }
-
-

@@ -16,11 +16,14 @@ import lombok.Data;
 @Schema(description = "审批变更请求请求")
 public class ApproveChangeRequestRequest {
 
-    @NotBlank(message = "审批决定不能为空")
-    @Schema(description = "审批决定 (APPROVED-批准, REJECTED-拒绝)", example = "APPROVED", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String decision;
+  @NotBlank(message = "审批决定不能为空")
+  @Schema(
+      description = "审批决定 (APPROVED-批准, REJECTED-拒绝)",
+      example = "APPROVED",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private String decision;
 
-    @Size(max = 1000, message = "审批意见长度不能超过1000个字符")
-    @Schema(description = "审批意见", example = "界面设计合理，建议按照此方案实施")
-    private String comments;
+  @Size(max = 1000, message = "审批意见长度不能超过1000个字符")
+  @Schema(description = "审批意见", example = "界面设计合理，建议按照此方案实施")
+  private String comments;
 }

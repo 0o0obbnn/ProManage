@@ -1,8 +1,10 @@
 package com.promanage.service.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.promanage.service.entity.TaskActivity;
 import org.apache.ibatis.annotations.Mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+import com.promanage.service.entity.TaskActivity;
 
 /**
  * 任务活动Mapper接口
@@ -12,6 +14,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2025-10-07
  */
 @Mapper
-public interface TaskActivityMapper extends BaseMapper<TaskActivity> {
-    
-}
+public interface TaskActivityMapper extends BaseMapper<TaskActivity> {}

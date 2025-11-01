@@ -1,9 +1,11 @@
 package com.promanage.service.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.promanage.service.entity.TaskComment;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+import com.promanage.service.entity.TaskComment;
 
 /**
  * 任务评论Mapper接口
@@ -15,11 +17,11 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface TaskCommentMapper extends BaseMapper<TaskComment> {
 
-    /**
-     * 统计评论的回复数量
-     *
-     * @param parentCommentId 父评论ID
-     * @return 回复数量
-     */
-    int countReplies(@Param("parentCommentId") Long parentCommentId);
+  /**
+   * 统计评论的回复数量
+   *
+   * @param parentCommentId 父评论ID
+   * @return 回复数量
+   */
+  int countReplies(@Param("parentCommentId") Long parentCommentId);
 }

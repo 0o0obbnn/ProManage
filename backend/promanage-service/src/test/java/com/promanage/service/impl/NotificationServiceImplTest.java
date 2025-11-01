@@ -1,27 +1,30 @@
 package com.promanage.service.impl;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.promanage.infrastructure.utils.SecurityUtils;
 import com.promanage.service.entity.Notification;
 import com.promanage.service.mapper.NotificationMapper;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-/**
- * 通知服务测试类
- */
+/** 通知服务测试类 */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class NotificationServiceImplTest {
 
     @Mock
@@ -56,7 +59,12 @@ class NotificationServiceImplTest {
         when(notificationMapper.insert(any(Notification.class))).thenReturn(1);
 
         // When
-        boolean result = notificationService.sendNotification(userId, type, title, content);
+        boolean result = notificationService.sendNotification(
+            userId,
+            type,
+            title,
+            content
+        );
 
         // Then
         assertTrue(result);
@@ -77,8 +85,15 @@ class NotificationServiceImplTest {
         when(notificationMapper.insert(any(Notification.class))).thenReturn(1);
 
         // When
-        boolean result = notificationService.sendNotification(userId, type, title, content, 
-            relatedId, relatedType, creatorId);
+        boolean result = notificationService.sendNotification(
+            userId,
+            type,
+            title,
+            content,
+            relatedId,
+            relatedType,
+            creatorId
+        );
 
         // Then
         assertTrue(result);
@@ -95,15 +110,41 @@ class NotificationServiceImplTest {
         Page<Notification> expectedPage = new Page<>(page, size);
         expectedPage.setRecords(Arrays.asList(testNotification));
 
-        when(notificationMapper.selectPage(any(Page.class), org.mockito.ArgumentMatchers.<com.baomidou.mybatisplus.core.conditions.Wrapper<Notification>>any())).thenReturn(expectedPage);
+        try (
+            MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(
+                SecurityUtils.class
+            )
+        ) {
+            mockedSecurityUtils
+                .when(SecurityUtils::getCurrentUserId)
+                .thenReturn(Optional.of(userId));
+            when(
+                notificationMapper.selectPage(
+                    any(Page.class),
+                    org.mockito.ArgumentMatchers.<
+                            com.baomidou.mybatisplus.core.conditions.Wrapper<
+                                Notification
+                            >
+                        >any()
+                )
+            ).thenReturn(expectedPage);
 
-        // When
-        Page<Notification> result = notificationService.getUserNotifications(userId, page, size);
+            // When
+            Page<Notification> result =
+                notificationService.getUserNotifications(userId, page, size);
 
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.getRecords().size());
-        verify(notificationMapper).selectPage(any(Page.class), org.mockito.ArgumentMatchers.<com.baomidou.mybatisplus.core.conditions.Wrapper<Notification>>any());
+            // Then
+            assertNotNull(result);
+            assertEquals(1, result.getRecords().size());
+            verify(notificationMapper).selectPage(
+                any(Page.class),
+                org.mockito.ArgumentMatchers.<
+                        com.baomidou.mybatisplus.core.conditions.Wrapper<
+                            Notification
+                        >
+                    >any()
+            );
+        }
     }
 
     @Test
@@ -112,14 +153,25 @@ class NotificationServiceImplTest {
         Long userId = 100L;
         int expectedCount = 5;
 
-        when(notificationMapper.countUnreadByUserId(userId)).thenReturn(expectedCount);
+        try (
+            MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(
+                SecurityUtils.class
+            )
+        ) {
+            mockedSecurityUtils
+                .when(SecurityUtils::getCurrentUserId)
+                .thenReturn(Optional.of(userId));
+            when(notificationMapper.countUnreadByUserId(userId)).thenReturn(
+                expectedCount
+            );
 
-        // When
-        int result = notificationService.getUnreadCount(userId);
+            // When
+            int result = notificationService.getUnreadCount(userId);
 
-        // Then
-        assertEquals(expectedCount, result);
-        verify(notificationMapper).countUnreadByUserId(userId);
+            // Then
+            assertEquals(expectedCount, result);
+            verify(notificationMapper).countUnreadByUserId(userId);
+        }
     }
 
     @Test
@@ -127,15 +179,32 @@ class NotificationServiceImplTest {
         // Given
         Long notificationId = 1L;
         Long userId = 100L;
+        when(notificationMapper.selectById(notificationId)).thenReturn(
+            testNotification
+        );
 
-        when(notificationMapper.markAsRead(notificationId, userId)).thenReturn(1);
+        try (
+            MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(
+                SecurityUtils.class
+            )
+        ) {
+            mockedSecurityUtils
+                .when(SecurityUtils::getCurrentUserId)
+                .thenReturn(Optional.of(userId));
+            when(
+                notificationMapper.markAsRead(notificationId, userId)
+            ).thenReturn(1);
 
-        // When
-        boolean result = notificationService.markAsRead(notificationId, userId);
+            // When
+            boolean result = notificationService.markAsRead(
+                notificationId,
+                userId
+            );
 
-        // Then
-        assertTrue(result);
-        verify(notificationMapper).markAsRead(notificationId, userId);
+            // Then
+            assertTrue(result);
+            verify(notificationMapper).markAsRead(notificationId, userId);
+        }
     }
 
     @Test
@@ -144,14 +213,28 @@ class NotificationServiceImplTest {
         List<Long> notificationIds = Arrays.asList(1L, 2L);
         Long userId = 100L;
 
-        when(notificationMapper.markAsReadBatch(notificationIds, userId)).thenReturn(2);
+        try (
+            MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(
+                SecurityUtils.class
+            )
+        ) {
+            mockedSecurityUtils
+                .when(SecurityUtils::getCurrentUserId)
+                .thenReturn(Optional.of(userId));
+            when(
+                notificationMapper.markAsReadBatch(notificationIds, userId)
+            ).thenReturn(2);
 
-        // When
-        boolean result = notificationService.markAsReadBatch(notificationIds, userId);
+            // When
+            boolean result = notificationService.markAsReadBatch(
+                notificationIds,
+                userId
+            );
 
-        // Then
-        assertTrue(result);
-        verify(notificationMapper).markAsReadBatch(notificationIds, userId);
+            // Then
+            assertTrue(result);
+            verify(notificationMapper).markAsReadBatch(notificationIds, userId);
+        }
     }
 
     @Test
@@ -159,14 +242,23 @@ class NotificationServiceImplTest {
         // Given
         Long userId = 100L;
 
-        when(notificationMapper.markAllAsRead(userId)).thenReturn(5);
+        try (
+            MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(
+                SecurityUtils.class
+            )
+        ) {
+            mockedSecurityUtils
+                .when(SecurityUtils::getCurrentUserId)
+                .thenReturn(Optional.of(userId));
+            when(notificationMapper.markAllAsRead(userId)).thenReturn(5);
 
-        // When
-        boolean result = notificationService.markAllAsRead(userId);
+            // When
+            boolean result = notificationService.markAllAsRead(userId);
 
-        // Then
-        assertTrue(result);
-        verify(notificationMapper).markAllAsRead(userId);
+            // Then
+            assertTrue(result);
+            verify(notificationMapper).markAllAsRead(userId);
+        }
     }
 
     @Test
@@ -174,15 +266,35 @@ class NotificationServiceImplTest {
         // Given
         Long notificationId = 1L;
         Long userId = 100L;
+        when(notificationMapper.selectById(notificationId)).thenReturn(
+            testNotification
+        );
 
-        when(notificationMapper.deleteNotification(notificationId, userId)).thenReturn(1);
+        try (
+            MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(
+                SecurityUtils.class
+            )
+        ) {
+            mockedSecurityUtils
+                .when(SecurityUtils::getCurrentUserId)
+                .thenReturn(Optional.of(userId));
+            when(
+                notificationMapper.deleteNotification(notificationId, userId)
+            ).thenReturn(1);
 
-        // When
-        boolean result = notificationService.deleteNotification(notificationId, userId);
+            // When
+            boolean result = notificationService.deleteNotification(
+                notificationId,
+                userId
+            );
 
-        // Then
-        assertTrue(result);
-        verify(notificationMapper).deleteNotification(notificationId, userId);
+            // Then
+            assertTrue(result);
+            verify(notificationMapper).deleteNotification(
+                notificationId,
+                userId
+            );
+        }
     }
 
     @Test
@@ -191,14 +303,34 @@ class NotificationServiceImplTest {
         List<Long> notificationIds = Arrays.asList(1L, 2L);
         Long userId = 100L;
 
-        when(notificationMapper.deleteNotificationBatch(notificationIds, userId)).thenReturn(2);
+        try (
+            MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(
+                SecurityUtils.class
+            )
+        ) {
+            mockedSecurityUtils
+                .when(SecurityUtils::getCurrentUserId)
+                .thenReturn(Optional.of(userId));
+            when(
+                notificationMapper.deleteNotificationBatch(
+                    notificationIds,
+                    userId
+                )
+            ).thenReturn(2);
 
-        // When
-        boolean result = notificationService.deleteNotificationBatch(notificationIds, userId);
+            // When
+            boolean result = notificationService.deleteNotificationBatch(
+                notificationIds,
+                userId
+            );
 
-        // Then
-        assertTrue(result);
-        verify(notificationMapper).deleteNotificationBatch(notificationIds, userId);
+            // Then
+            assertTrue(result);
+            verify(notificationMapper).deleteNotificationBatch(
+                notificationIds,
+                userId
+            );
+        }
     }
 
     @Test
@@ -212,15 +344,39 @@ class NotificationServiceImplTest {
         Page<Notification> expectedPage = new Page<>(page, size);
         expectedPage.setRecords(Arrays.asList(testNotification));
 
-        when(notificationMapper.selectPage(any(Page.class), org.mockito.ArgumentMatchers.<com.baomidou.mybatisplus.core.conditions.Wrapper<Notification>>any())).thenReturn(expectedPage);
+        try (
+            MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(
+                SecurityUtils.class
+            )
+        ) {
+            mockedSecurityUtils
+                .when(SecurityUtils::getCurrentUserId)
+                .thenReturn(Optional.of(userId));
+            when(
+                notificationMapper.selectPage(
+                    any(Page.class),
+                    org.mockito.ArgumentMatchers.<
+                            com.baomidou.mybatisplus.core.conditions.Wrapper<
+                                Notification
+                            >
+                        >any()
+                )
+            ).thenReturn(expectedPage);
 
-        // When
-        Page<Notification> result = notificationService.getNotificationsByType(userId, type, page, size);
+            // When
+            Page<Notification> result =
+                notificationService.getNotificationsByType(
+                    userId,
+                    type,
+                    page,
+                    size
+                );
 
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.getRecords().size());
-        verify(notificationMapper).selectPage(any(Page.class), any());
+            // Then
+            assertNotNull(result);
+            assertEquals(1, result.getRecords().size());
+            verify(notificationMapper).selectPage(any(Page.class), any());
+        }
     }
 
     @Test
@@ -228,12 +384,20 @@ class NotificationServiceImplTest {
         // Given
         Long relatedId = 1L;
         String relatedType = "TASK";
-        List<Notification> expectedNotifications = Arrays.asList(testNotification);
+        List<Notification> expectedNotifications = Arrays.asList(
+            testNotification
+        );
 
-        when(notificationMapper.findByRelatedData(relatedId, relatedType)).thenReturn(expectedNotifications);
+        when(
+            notificationMapper.findByRelatedData(relatedId, relatedType)
+        ).thenReturn(expectedNotifications);
 
         // When
-        List<Notification> result = notificationService.getNotificationsByRelatedData(relatedId, relatedType);
+        List<Notification> result =
+            notificationService.getNotificationsByRelatedData(
+                relatedId,
+                relatedType
+            );
 
         // Then
         assertNotNull(result);

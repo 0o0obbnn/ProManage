@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- 安全相关检查 -->
+    <Match>
+        <Bug category="SECURITY"/>
+    </Match>
+    
+    <!-- SQL注入检查 -->
+    <Match>
+        <Bug pattern="SQL_INJECTION_JDBC"/>
+    </Match>
+    
+    <!-- XSS检查 -->
+    <Match>
+        <Bug pattern="XSS_SERVLET"/>
+    </Match>
+    
+    <!-- 命令注入检查 -->
+    <Match>
+        <Bug pattern="COMMAND_INJECTION"/>
+    </Match>
+    
+    <!-- 路径遍历检查 -->
+    <Match>
+        <Bug pattern="PATH_TRAVERSAL_IN"/>
+    </Match>
+    
+    <!-- 弱随机数检查 -->
+    <Match>
+        <Bug pattern="PREDICTABLE_RANDOM"/>
+    </Match>
+    
+    <!-- 弱哈希算法检查 -->
+    <Match>
+        <Bug pattern="WEAK_MESSAGE_DIGEST"/>
+    </Match>
+    
+    <!-- 硬编码密码检查 -->
+    <Match>
+        <Bug pattern="HARD_CODE_PASSWORD"/>
+    </Match>
+</FindBugsFilter>

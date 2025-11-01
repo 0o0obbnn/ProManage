@@ -1,0 +1,261 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'test', 'prod'],
+            description: 'Select deployment environment'
+        )
+        string(
+            name: 'VERSION',
+            defaultValue: '1.1.0',
+            description: 'Application version to deploy'
+        )
+        booleanParam(
+            name: 'SKIP_TESTS',
+            defaultValue: false,
+            description: 'Skip unit and integration tests'
+        )
+        booleanParam(
+            name: 'SKIP_MIGRATION',
+            defaultValue: false,
+            description: 'Skip database migration'
+        )
+    }
+
+    environment {
+        APP_NAME = 'promanage-api'
+        REGISTRY = 'localhost:5000'
+        NAMESPACE = 'promanage'
+        DOCKERFILE_PATH = './Dockerfile'
+        TEST_REPORTS_DIR = 'target/surefire-reports'
+        COVERAGE_REPORTS_DIR = 'target/site/jacoco'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+                }
+            }
+            post {
+                success {
+                    echo "Checked out commit ${env.GIT_COMMIT_SHORT}"
+                }
+            }
+        }
+
+        stage('Validate') {
+            steps {
+                script {
+                    sh 'mvn clean validate'
+                    echo "Project validation completed"
+                }
+            }
+        }
+
+        stage('Unit Tests') {
+            when {
+                not { params.SKIP_TESTS }
+            }
+            steps {
+                script {
+                    sh 'mvn test'
+                    echo "Unit tests completed"
+                }
+            }
+            post {
+                always {
+                    publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
+                    publishCoverageResults coverageResults: 'target/site/jacoco/jacoco.xml'
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    sh 'mvn clean package -DskipTests=${params.SKIP_TESTS}'
+                    echo "Build completed with version ${params.VERSION}"
+                }
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                script {
+                    sh 'mvn dependency-check:check'
+                    echo "Security scan completed"
+                }
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'target/dependency-check-report',
+                        reportFiles: 'dependency-check-report.html',
+                        reportName: 'Dependency Check Report'
+                    ])
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def imageName = "${REGISTRY}/${APP_NAME}:${params.VERSION}"
+                    sh "docker build -t ${imageName} ."
+                    echo "Docker image built: ${imageName}"
+                }
+            }
+        }
+
+        stage('Run Container Tests') {
+            when {
+                not { params.SKIP_TESTS }
+            }
+            steps {
+                script {
+                    sh '''
+                        # 启动容器进行集成测试
+                        docker run -d --name test-container -p 8081:8080 \
+                          ${REGISTRY}/${APP_NAME}:${params.VERSION}
+                        
+                        # 等待应用启动
+                        sleep 60
+                        
+                        # 执行健康检查
+                        curl -f http://localhost:8081/actuator/health
+                        
+                        # 停止测试容器
+                        docker stop test-container
+                        docker rm test-container
+                    '''
+                    echo "Container tests completed"
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    def imageName = "${REGISTRY}/${APP_NAME}:${params.VERSION}"
+                    sh "docker push ${imageName}"
+                    echo "Docker image pushed: ${imageName}"
+                }
+            }
+        }
+
+        stage('Database Migration') {
+            when {
+                allOf {
+                    not { params.SKIP_MIGRATION }
+                    anyOf {
+                        expression { params.ENVIRONMENT == 'test' }
+                        expression { params.ENVIRONMENT == 'prod' }
+                    }
+                }
+            }
+            steps {
+                script {
+                    sh 'mvn flyway:migrate'
+                    echo "Database migration completed for ${params.ENVIRONMENT} environment"
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    def deployScript = getDeployScript()
+                    sh "${deployScript} -e ${params.ENVIRONMENT} -v ${params.VERSION} -d"
+                    echo "Deployment completed to ${params.ENVIRONMENT} environment"
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                script {
+                    sh '''
+                        # 等待应用启动
+                        sleep 60
+                        
+                        # 检查应用健康
+                        for i in {1..30}; do
+                            if curl -f http://localhost:8080/actuator/health > /dev/null 2>&1; then
+                                echo "Application is healthy"
+                                exit 0
+                            fi
+                            echo "Waiting for application to be healthy... ($i/30)"
+                            sleep 10
+                        done
+                        
+                        echo "Application failed to become healthy"
+                        exit 1
+                    '''
+                    echo "Health check completed"
+                }
+            }
+        }
+
+        stage('Notify') {
+            steps {
+                script {
+                    def message = "ProManage ${params.ENVIRONMENT} deployment successful"
+                    def status = "success"
+                    
+                    // 发送通知到Slack或其他渠道
+                    echo "Notification: ${message}"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // 清理构建产物
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+            script {
+                def message = "ProManage ${params.ENVIRONMENT} deployment failed"
+                def status = "failure"
+                
+                // 发送失败通知
+                echo "Notification: ${message}"
+            }
+        }
+    }
+}
+
+// 获取部署脚本路径
+def getDeployScript() {
+    if (isUnix()) {
+        return './deploy.sh'
+    } else {
+        return 'powershell -File deploy.ps1'
+    }
+}
+
+// 发布测试结果
+def publishTestResults(testResultsPattern) {
+    publishTestResults testResultsPattern: testResultsPattern
+}
+
+// 发布覆盖率结果
+def publishCoverageResults(coverageResults) {
+    publishCoverageResults coverageResults: coverageResults
+}

@@ -1,8 +1,10 @@
 package com.promanage.service.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.promanage.service.entity.TestCase;
 import org.apache.ibatis.annotations.Mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+import com.promanage.service.entity.TestCase;
 
 /**
  * 测试用例Mapper接口
@@ -12,5 +14,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2025-10-09
  */
 @Mapper
-public interface TestCaseMapper extends BaseMapper<TestCase> {
-}
+public interface TestCaseMapper extends BaseMapper<TestCase> {}

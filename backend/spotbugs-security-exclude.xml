@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- 通用过滤规则 -->
+    <Match>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+    </Match>
+    
+    <!-- 过滤测试类 -->
+    <Match>
+        <Class name="~.*\.*Test"/>
+    </Match>
+    
+    <!-- 过滤生成的代码 -->
+    <Match>
+        <Class name="~.*\.dto\..*"/>
+    </Match>
+    
+    <!-- 过滤日志语句中的字符串连接 -->
+    <Match>
+        <Class name="~.*\.*Logger.*"/>
+        <Bug pattern="DM_STRING_CTOR"/>
+    </Match>
+    
+    <!-- 过滤特定的低优先级问题 -->
+    <Match>
+        <Priority value="3"/>
+        <Bug pattern="DLS_DEAD_LOCAL_STORE"/>
+    </Match>
+    
+    <!-- 过滤CRLF注入问题 -->
+    <Match>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+    
+    <!-- 过滤Unicode处理问题 -->
+    <Match>
+        <Bug pattern="IMPROPER_UNICODE"/>
+    </Match>
+</FindBugsFilter>

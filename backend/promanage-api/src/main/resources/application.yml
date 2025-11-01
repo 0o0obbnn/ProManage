@@ -4,10 +4,10 @@
 spring:
   application:
     name: promanage-api
-  
+
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
-  
+
   # 数据源配置
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/promanage}
@@ -20,7 +20,7 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-  
+
   # Flyway配置
   flyway:
     enabled: true
@@ -44,6 +44,8 @@ mybatis-plus:
       id-type: auto
   # Mapper扫描路径
   mapper-locations: classpath*:mapper/**/*.xml
+  # 实体类扫描路径
+  type-aliases-package: com.promanage.domain.entity
 
 # ProManage业务配置
 promanage:
@@ -51,8 +53,8 @@ promanage:
   tenant:
     isolation-enabled: true
     default-tenant-id: 1
-    strict-mode: true  # 严格模式:强制所有查询包含tenant_id
-  
+    strict-mode: true # 严格模式:强制所有查询包含tenant_id
+
   # 组织模块配置
   organization:
     default-subscription-plan: FREE
@@ -74,7 +76,7 @@ promanage:
       project:
         default-visibility: PRIVATE
         allow-public-projects: true
-  
+
   # 审计日志配置
   audit:
     enabled: true
@@ -89,19 +91,19 @@ promanage:
       - DELETE_ORGANIZATION
       - UPDATE_SUBSCRIPTION
       - UPDATE_SETTINGS
-  
+
   # 安全配置
   security:
     jwt:
       secret: ${JWT_SECRET:your-secret-key-change-in-production}
-      expiration: 86400000  # 24小时
+      expiration: 86400000 # 24小时
     cors:
       allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
       allowed-methods: GET,POST,PUT,DELETE,OPTIONS
       allowed-headers: "*"
       allow-credentials: true
 
-# 监控配置
+# 监控配置 (General configurations, specific tracing will be in dev/prod profiles)
 management:
   endpoints:
     web:

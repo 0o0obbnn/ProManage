@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -18,13 +19,10 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import java.time.Duration;
-
 /**
  * Redis Configuration
- * <p>
- * Configures Redis connection, serialization, and cache manager.
- * </p>
+ *
+ * <p>Configures Redis connection, serialization, and cache manager.
  *
  * @author ProManage Team
  * @since 2025-10-02
@@ -34,89 +32,95 @@ import java.time.Duration;
 @EnableCaching
 public class RedisConfig {
 
-    /**
-     * Configure RedisTemplate with Jackson2 JSON serialization
-     *
-     * @param connectionFactory Redis connection factory
-     * @return RedisTemplate instance
-     */
-    @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
-        log.info("Initializing RedisTemplate with JSON serialization");
+  /**
+   * Creates a safe ObjectMapper instance for Redis serialization. This method avoids the RCE
+   * vulnerability associated with `activateDefaultTyping`.
+   *
+   * @return A safely configured ObjectMapper.
+   */
+  private ObjectMapper createSafeObjectMapper() {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+    objectMapper.registerModule(new JavaTimeModule());
+    // The following line is intentionally removed to prevent RCE vulnerability
+    // objectMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance,
+    // ObjectMapper.DefaultTyping.NON_FINAL);
+    return objectMapper;
+  }
 
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
+  /**
+   * Configure RedisTemplate with Jackson2 JSON serialization
+   *
+   * @param connectionFactory Redis connection factory
+   * @return RedisTemplate instance
+   */
+  @Bean
+  public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+    log.info("Initializing RedisTemplate with JSON serialization");
 
-        // Create ObjectMapper with JavaTimeModule
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.activateDefaultTyping(
-            LaissezFaireSubTypeValidator.instance,
-            ObjectMapper.DefaultTyping.NON_FINAL
-        );
+    RedisTemplate<String, Object> template = new RedisTemplate<>();
+    template.setConnectionFactory(connectionFactory);
 
-        // Use GenericJackson2JsonRedisSerializer with custom ObjectMapper
-        GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer =
-            new GenericJackson2JsonRedisSerializer(objectMapper);
+    // Create a safe ObjectMapper
+    ObjectMapper objectMapper = createSafeObjectMapper();
 
-        // String serializer for keys
-        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+    // Use GenericJackson2JsonRedisSerializer with the safe ObjectMapper
+    GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer =
+        new GenericJackson2JsonRedisSerializer(objectMapper);
 
-        // Set key serializer
-        template.setKeySerializer(stringRedisSerializer);
-        template.setHashKeySerializer(stringRedisSerializer);
+    // String serializer for keys
+    StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
-        // Set value serializer
-        template.setValueSerializer(jackson2JsonRedisSerializer);
-        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+    // Set key serializer
+    template.setKeySerializer(stringRedisSerializer);
+    template.setHashKeySerializer(stringRedisSerializer);
 
-        template.afterPropertiesSet();
+    // Set value serializer
+    template.setValueSerializer(jackson2JsonRedisSerializer);
+    template.setHashValueSerializer(jackson2JsonRedisSerializer);
 
-        log.info("RedisTemplate initialized successfully");
-        return template;
-    }
+    template.afterPropertiesSet();
 
-    /**
-     * Configure CacheManager with default cache configuration
-     *
-     * @param connectionFactory Redis connection factory
-     * @return CacheManager instance
-     */
-    @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        log.info("Initializing RedisCacheManager");
+    log.info("RedisTemplate initialized successfully");
+    return template;
+  }
 
-        // Create ObjectMapper with JavaTimeModule
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.activateDefaultTyping(
-            LaissezFaireSubTypeValidator.instance,
-            ObjectMapper.DefaultTyping.NON_FINAL
-        );
+  /**
+   * Configure CacheManager with default cache configuration
+   *
+   * @param connectionFactory Redis connection factory
+   * @return CacheManager instance
+   */
+  @Bean("redisCacheManager")
+  public CacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
+    log.info("Initializing RedisCacheManager");
 
-        // Create GenericJackson2JsonRedisSerializer with custom ObjectMapper
-        GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer =
-            new GenericJackson2JsonRedisSerializer(objectMapper);
+    // Create a safe ObjectMapper
+    ObjectMapper objectMapper = createSafeObjectMapper();
 
-        // Default cache configuration
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+    // Create GenericJackson2JsonRedisSerializer with the safe ObjectMapper
+    GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer =
+        new GenericJackson2JsonRedisSerializer(objectMapper);
+
+    // Default cache configuration
+    RedisCacheConfiguration config =
+        RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(Duration.ofHours(1)) // Default 1 hour TTL
             .serializeKeysWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer())
-            )
+                RedisSerializationContext.SerializationPair.fromSerializer(
+                    new StringRedisSerializer()))
             .serializeValuesWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(jackson2JsonRedisSerializer)
-            )
+                RedisSerializationContext.SerializationPair.fromSerializer(
+                    jackson2JsonRedisSerializer))
             .disableCachingNullValues();
 
-        RedisCacheManager cacheManager = RedisCacheManager.builder(connectionFactory)
+    RedisCacheManager cacheManager =
+        RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(config)
             .transactionAware()
             .build();
 
-        log.info("RedisCacheManager initialized successfully");
-        return cacheManager;
-    }
+    log.info("RedisCacheManager initialized successfully");
+    return cacheManager;
+  }
 }
