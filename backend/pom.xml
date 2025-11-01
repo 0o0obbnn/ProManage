@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.6</version>
+        <version>3.2.10</version>
         <relativePath/>
     </parent>
 
@@ -18,11 +18,13 @@
     <packaging>pom</packaging>
 
     <name>ProManage Parent</name>
+    <!-- Triggering IDE refresh to resolve dependency issues -->
     <description>ProManage Project Management System - Parent POM</description>
 
     <modules>
         <module>promanage-common</module>
         <module>promanage-dto</module>
+        <module>promanage-domain</module>
         <module>promanage-infrastructure</module>
         <module>promanage-service</module>
         <module>promanage-api</module>
@@ -37,30 +39,31 @@
         <maven.compiler.release>21</maven.compiler.release>
 
         <!-- Spring Boot -->
-        <spring-boot.version>3.5.6</spring-boot.version>
+        <spring-boot.version>3.2.10</spring-boot.version>
 
         <!-- Database -->
         <postgresql.version>42.7.3</postgresql.version>
-        <mybatis-plus.version>3.5.9</mybatis-plus.version>
-        <druid.version>1.2.22</druid.version>
-        <flyway.version>10.12.0</flyway.version>
+        <mybatis.version>3.5.15</mybatis.version>
+        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <druid.version>1.2.20</druid.version>
+        <flyway.version>9.22.3</flyway.version>
 
         <!-- Cache & Message Queue -->
-        <redisson.version>3.30.0</redisson.version>
+        <redisson.version>3.25.2</redisson.version>
 
         <!-- Search -->
-        <elasticsearch.version>8.13.4</elasticsearch.version>
+        <elasticsearch.version>8.11.0</elasticsearch.version>
 
         <!-- File Storage -->
-        <minio.version>8.5.9</minio.version>
-        <aws-s3.version>2.25.31</aws-s3.version>
+        <minio.version>8.5.7</minio.version>
+        <aws-s3.version>2.21.29</aws-s3.version>
 
         <!-- Security -->
-        <jjwt.version>0.12.5</jjwt.version>
-        <spring-security.version>6.2.4</spring-security.version>
+        <jjwt.version>0.12.3</jjwt.version>
+        <spring-security.version>6.2.1</spring-security.version>
 
         <!-- API Documentation -->
-        <springdoc-openapi.version>2.5.0</springdoc-openapi.version>
+        <springdoc-openapi.version>2.2.0</springdoc-openapi.version>
 
         <!-- Utilities -->
         <lombok.version>1.18.36</lombok.version>
@@ -69,6 +72,11 @@
         <guava.version>33.2.0-jre</guava.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <commons-io.version>2.16.1</commons-io.version>
+        <caffeine.version>3.1.8</caffeine.version>
+
+        <!-- Distributed Tracing -->
+        <micrometer-tracing.version>1.3.4</micrometer-tracing.version>
+        <zipkin-reporter.version>2.17.2</zipkin-reporter.version>
 
         <!-- Testing -->
         <mockito.version>5.11.0</mockito.version>
@@ -76,6 +84,10 @@
         <!-- Build Plugins -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
+        
+        <!-- Quality Check Control -->
+        <skipQualityChecks>false</skipQualityChecks>
+        <jacoco.version>0.8.11</jacoco.version>
     </properties>
 
     <dependencyManagement>
@@ -88,17 +100,22 @@
             </dependency>
             <dependency>
                 <groupId>com.promanage</groupId>
+                <artifactId>promanage-dto</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.promanage</groupId>
+                <artifactId>promanage-domain</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.promanage</groupId>
                 <artifactId>promanage-infrastructure</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.promanage</groupId>
                 <artifactId>promanage-service</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.promanage</groupId>
-                <artifactId>promanage-dto</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -126,6 +143,16 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-jsqlparser</artifactId>
                 <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-annotation</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis</artifactId>
+                <version>${mybatis.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.alibaba</groupId>
@@ -190,12 +217,19 @@
                 <scope>runtime</scope>
             </dependency>
 
-            <!-- SpringDoc OpenAPI -->
-            <dependency>
-                <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-                <version>${springdoc-openapi.version}</version>
-            </dependency>
+        <!-- SpringDoc OpenAPI -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc-openapi.version}</version>
+        </dependency>
+
+                <!-- Swagger Annotations -->
+                <dependency>
+                    <groupId>io.swagger.core.v3</groupId>
+                    <artifactId>swagger-annotations</artifactId>
+                    <version>2.2.15</version>
+                </dependency>
 
             <!-- Lombok -->
             <dependency>
@@ -243,8 +277,69 @@
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
             </dependency>
+
+            <!-- Caffeine Cache -->
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+            </dependency>
+
+            <!-- AspectJ -->
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjweaver</artifactId>
+                <version>1.9.22.1</version>
+            </dependency>
+
+            <!-- Distributed Tracing -->
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-tracing-bridge-otel</artifactId>
+                <version>${micrometer-tracing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-tracing-brave</artifactId>
+                <version>${micrometer-tracing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-exporter-zipkin</artifactId>
+                <version>1.38.0</version>
+            </dependency>
+            <dependency>
+                <groupId>io.zipkin.reporter2</groupId>
+                <artifactId>zipkin-reporter-brave</artifactId>
+                <version>${zipkin-reporter.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <repositories>
+        <repository>
+            <id>aliyun-central</id>
+            <name>Aliyun Maven Central Mirror</name>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <build>
         <!-- Plugins that will be inherited by all child modules -->
@@ -277,6 +372,189 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
+            </plugin>
+
+            <!-- Checkstyle Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <configLocation>${maven.multiModuleProjectDirectory}/checkstyle.xml</configLocation>
+
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
+                    <linkXRef>false</linkXRef>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- SpotBugs Plugin -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.8.6.0</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>Low</threshold>
+                    <failOnError>true</failOnError>
+                    <includeFilterFile>spotbugs-security-include.xml</includeFilterFile>
+                    <excludeFilterFile>spotbugs-security-exclude.xml</excludeFilterFile>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>1.12.0</version>
+                        </plugin>
+                    </plugins>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- PMD Plugin - 配置为CI/CD专用，本地开发可跳过 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.22.0</version>
+                <configuration>
+                    <rulesets>
+                        <ruleset>pmd-ruleset.xml</ruleset>
+                    </rulesets>
+                    <targetJdk>${maven.compiler.release}</targetJdk>
+                    <failOnViolation>false</failOnViolation> <!-- 改为警告模式 -->
+                    <printFailingErrors>true</printFailingErrors>
+                    <!-- 跳过测试文件检查 -->
+                    <excludes>
+                        <exclude>**/test/**/*.java</exclude>
+                        <exclude>**/*Test.java</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>pmd-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <!-- 仅在CI环境执行 -->
+                        <configuration>
+                            <skip>${skipQualityChecks}</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Spotless Code Formatter Plugin - 配置为可选，避免与IDE冲突 -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.43.0</version>
+                <configuration>
+                    <java>
+                        <!-- 使用更宽松的格式化规则 -->
+                        <googleJavaFormat>
+                            <version>1.17.0</version>
+                            <style>GOOGLE</style>
+                        </googleJavaFormat>
+                        
+                        <!-- 移除严格的import顺序检查，避免与IDE冲突 -->
+                        <removeUnusedImports/>
+                        
+                        <!-- 确保文件以换行符结尾 -->
+                        <endWithNewline/>
+                    </java>
+                </configuration>
+                <!-- 移除自动执行，改为手动执行 mvn spotless:apply -->
+                <executions>
+                    <!-- 注释掉自动检查，避免开发时冲突 -->
+                    <!--
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>verify</phase>
+                    </execution>
+                    -->
+                </executions>
+            </plugin>
+
+            <!-- JaCoCo Test Coverage Plugin -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <!-- 准备代理 -->
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    
+                    <!-- 生成报告 -->
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    
+                    <!-- 覆盖率检查 -->
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <!-- 行覆盖率要求 -->
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.70</minimum> <!-- 初始设为70%，逐步提升到80% -->
+                                        </limit>
+                                        <!-- 分支覆盖率要求 -->
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.60</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                            <!-- 排除不需要测试的类 -->
+                            <excludes>
+                                <exclude>**/config/**</exclude>
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/entity/**</exclude>
+                                <exclude>**/*Application.class</exclude>
+                                <exclude>**/*Config.class</exclude>
+                                <exclude>**/*Configuration.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
 
@@ -311,4 +589,47 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <!-- Maven Profiles for different environments -->
+    <profiles>
+        <!-- 开发环境配置 - 跳过大部分质量检查 -->
+        <profile>
+            <id>dev</id>
+            <properties>
+                <skipQualityChecks>true</skipQualityChecks>
+                <checkstyle.skip>true</checkstyle.skip>
+                <spotbugs.skip>true</spotbugs.skip>
+                <pmd.skip>true</pmd.skip>
+                <spotless.check.skip>true</spotless.check.skip>
+                <jacoco.skip>false</jacoco.skip>
+            </properties>
+        </profile>
+
+        <!-- CI/CD环境配置 - 启用所有质量检查 -->
+        <profile>
+            <id>ci</id>
+            <properties>
+                <skipQualityChecks>false</skipQualityChecks>
+                <checkstyle.skip>false</checkstyle.skip>
+                <spotbugs.skip>false</spotbugs.skip>
+                <pmd.skip>false</pmd.skip>
+                <spotless.check.skip>false</spotless.check.skip>
+                <jacoco.skip>false</jacoco.skip>
+            </properties>
+        </profile>
+
+        <!-- 快速构建配置 - 跳过所有检查和测试 -->
+        <profile>
+            <id>fast</id>
+            <properties>
+                <skipQualityChecks>true</skipQualityChecks>
+                <skipTests>true</skipTests>
+                <checkstyle.skip>true</checkstyle.skip>
+                <spotbugs.skip>true</spotbugs.skip>
+                <pmd.skip>true</pmd.skip>
+                <spotless.check.skip>true</spotless.check.skip>
+                <jacoco.skip>true</jacoco.skip>
+            </properties>
+        </profile>
+    </profiles>
 </project>

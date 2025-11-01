@@ -56,6 +56,8 @@ mybatis-plus:
 - [ ] MyBatis-Plus版本: ≥ 3.5.0
 - [ ] Jackson版本: ≥ 2.15.0
 - [ ] Spring Boot版本: ≥ 3.0.0
+- [ ] Docker版本: ≥ 20.10.0
+- [ ] Docker Compose版本: ≥ 1.29.0
 
 ### 5. 监控指标配置 ✅
 
@@ -139,6 +141,26 @@ psql -h localhost -U promanage -d promanage_prod -c "
 
 ### 阶段2: 应用部署 (灰度发布)
 
+#### 方式1: 使用自动化部署脚本 (推荐)
+```bash
+# 构建并部署到开发环境
+cd backend/promanage-api
+./deploy.sh -e dev -b -d
+
+# 或使用PowerShell版本 (Windows)
+powershell -File deploy.ps1 -Environment dev -Build -Deploy
+
+# 部署到生产环境
+./deploy.sh -e prod -d
+
+# 执行健康检查
+./deploy.sh -e prod -c
+
+# 执行回滚
+./deploy.sh -e prod -R
+```
+
+#### 方式2: 手动部署
 #### Step 1: 部署到Canary环境 (10%流量)
 ```bash
 # 构建镜像

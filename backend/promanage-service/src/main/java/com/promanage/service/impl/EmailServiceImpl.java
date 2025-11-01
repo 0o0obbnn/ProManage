@@ -1,16 +1,19 @@
 package com.promanage.service.impl;
 
-import com.promanage.service.service.IEmailService;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import com.promanage.service.service.IEmailService;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.mail.MailException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 邮件服务实现类
@@ -24,71 +27,69 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EmailServiceImpl implements IEmailService {
 
-    private final JavaMailSender mailSender;
+  private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+  @Value("${spring.mail.username}")
+  private String fromEmail;
 
-    @Value("${spring.application.name:ProManage}")
-    private String applicationName;
+  @Value("${spring.application.name:ProManage}")
+  private String applicationName;
 
-    @Override
-    @Async
-    public void sendSimpleEmail(String to, String subject, String content) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(content);
+  @Override
+  @Async
+  public void sendSimpleEmail(String to, String subject, String content) {
+    try {
+      SimpleMailMessage message = new SimpleMailMessage();
+      message.setFrom(fromEmail);
+      message.setTo(to);
+      message.setSubject(subject);
+      message.setText(content);
 
-            mailSender.send(message);
-            log.info("发送简单邮件成功, to={}, subject={}", to, subject);
-        } catch (Exception e) {
-            log.error("发送简单邮件失败, to={}, subject={}", to, subject, e);
-            throw new RuntimeException("邮件发送失败: " + e.getMessage(), e);
-        }
+      mailSender.send(message);
+      log.info("发送简单邮件成功, to={}, subject={}", to, subject);
+    } catch (MailException e) {
+      log.error("发送简单邮件失败, to={}, subject={}", to, subject, e);
+      throw new RuntimeException("邮件发送失败: " + e.getMessage(), e);
     }
+  }
 
-    @Override
-    @Async
-    public void sendHtmlEmail(String to, String subject, String htmlContent) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+  @Override
+  @Async
+  public void sendHtmlEmail(String to, String subject, String htmlContent) {
+    try {
+      MimeMessage message = mailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true);
+      helper.setFrom(fromEmail);
+      helper.setTo(to);
+      helper.setSubject(subject);
+      helper.setText(htmlContent, true);
 
-            mailSender.send(message);
-            log.info("发送HTML邮件成功, to={}, subject={}", to, subject);
-        } catch (MessagingException e) {
-            log.error("发送HTML邮件失败, to={}, subject={}", to, subject, e);
-            throw new RuntimeException("邮件发送失败: " + e.getMessage(), e);
-        }
+      mailSender.send(message);
+      log.info("发送HTML邮件成功, to={}, subject={}", to, subject);
+    } catch (MessagingException e) {
+      log.error("发送HTML邮件失败, to={}, subject={}", to, subject, e);
+      throw new RuntimeException("邮件发送失败: " + e.getMessage(), e);
     }
+  }
 
-    @Override
-    public void sendPasswordResetCode(String to, String code) {
-        String subject = applicationName + " - 密码重置验证码";
-        String htmlContent = buildPasswordResetEmailHtml(code);
-        sendHtmlEmail(to, subject, htmlContent);
-    }
+  @Override
+  public void sendPasswordResetCode(String to, String code) {
+    String subject = applicationName + " - 密码重置验证码";
+    String htmlContent = buildPasswordResetEmailHtml(code);
+    sendHtmlEmail(to, subject, htmlContent);
+  }
 
-    @Override
-    public void sendWelcomeEmail(String to, String username) {
-        String subject = "欢迎加入 " + applicationName;
-        String htmlContent = buildWelcomeEmailHtml(username);
-        sendHtmlEmail(to, subject, htmlContent);
-    }
+  @Override
+  public void sendWelcomeEmail(String to, String username) {
+    String subject = "欢迎加入 " + applicationName;
+    String htmlContent = buildWelcomeEmailHtml(username);
+    sendHtmlEmail(to, subject, htmlContent);
+  }
 
-    /**
-     * 构建密码重置邮件HTML内容
-     */
-    private String buildPasswordResetEmailHtml(String code) {
-        return """
+  /** 构建密码重置邮件HTML内容 */
+  private String buildPasswordResetEmailHtml(String code) {
+    return """
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -126,14 +127,13 @@ public class EmailServiceImpl implements IEmailService {
                     </div>
                 </body>
                 </html>
-                """.formatted(applicationName, code, applicationName);
-    }
+                """
+        .formatted(applicationName, code, applicationName);
+  }
 
-    /**
-     * 构建欢迎邮件HTML内容
-     */
-    private String buildWelcomeEmailHtml(String username) {
-        return """
+  /** 构建欢迎邮件HTML内容 */
+  private String buildWelcomeEmailHtml(String username) {
+    return """
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -174,6 +174,7 @@ public class EmailServiceImpl implements IEmailService {
                     </div>
                 </body>
                 </html>
-                """.formatted(applicationName, username, applicationName, applicationName);
-    }
+                """
+        .formatted(applicationName, username, applicationName, applicationName);
+  }
 }

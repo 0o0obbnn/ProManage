@@ -1,25 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(then echo \"$file\")",
-      "Bash(fi)",
-      "Bash(done)",
-      "Bash(mkdir:*)",
-      "Bash(mvn clean:*)",
-      "mcp__serena__get_current_config",
-      "Bash(npm run:*)",
-      "mcp__serena__get_symbols_overview",
+      "Bash(xargs sed:*)",
+      "Bash(tee:*)",
+      "Bash(mvn compiler:compile:*)",
+      "Bash(cat:*)",
+      "Bash(mvn clean compile:*)",
+      "Bash(mvn compile:*)",
       "mcp__serena__find_symbol",
-      "mcp__serena__activate_project",
-      "mcp__serena__think_about_collected_information",
-      "mcp__sequential-thinking__sequentialthinking",
-      "Bash(mvn dependency:tree:*)",
-      "Read(//d/maven-repo/junit/junit/5.10.2/**)",
-      "Bash(python3:*)",
-      "Bash(mvn test-compile:*)",
-      "Bash(mvn help:effective-pom:*)",
-      "Bash(mvn test:*)",
-      "Bash(git add:*)"
+      "mcp__serena__activate_project"
     ],
     "deny": [],
     "ask": []

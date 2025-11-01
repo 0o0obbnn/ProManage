@@ -7,9 +7,8 @@ import lombok.Data;
 
 /**
  * 更新用户密码请求DTO
- * <p>
- * 用于管理员修改用户密码的请求参数
- * </p>
+ *
+ * <p>用于管理员修改用户密码的请求参数
  *
  * @author ProManage Team
  * @version 1.0
@@ -19,8 +18,8 @@ import lombok.Data;
 @Schema(description = "更新用户密码请求")
 public class UserUpdatePasswordRequest {
 
-    @NotBlank(message = "新密码不能为空")
-    @Size(min = 6, max = 20, message = "密码长度必须在6-20个字符之间")
-    @Schema(description = "新密码", example = "123456", required = true)
-    private String newPassword;
+  @NotBlank(message = "新密码不能为空")
+  @Size(min = 6, max = 20, message = "密码长度必须在6-20个字符之间")
+  @Schema(description = "新密码", example = "123456", required = true)
+  private String newPassword;
 }

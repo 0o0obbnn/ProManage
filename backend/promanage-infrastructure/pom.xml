@@ -17,44 +17,49 @@
     <name>ProManage Infrastructure</name>
     <description>Infrastructure module for security, cache, database, and other configurations</description>
 
+    <properties>
+        <jacoco.skip>true</jacoco.skip>
+    </properties>
+
     <dependencies>
-        <!-- ProManage Common Module -->
+        <!-- ProManage Modules -->
         <dependency>
             <groupId>com.promanage</groupId>
             <artifactId>promanage-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.promanage</groupId>
+            <artifactId>promanage-domain</artifactId>
+        </dependency>
 
-        
-
-        
-
-        <!-- Spring Boot Web -->
+        <!-- Spring Boot Starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
-        <!-- Spring Boot Security -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-
-        <!-- Spring Boot Data Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
+        <!-- AspectJ -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
         </dependency>
 
         <!-- Spring Boot Data Elasticsearch -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
 
         <!-- Spring Boot AOP -->
@@ -110,10 +115,10 @@
         </dependency>
         -->
 
-        <!-- Jackson -->
+        <!-- Caffeine Cache -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -154,6 +159,11 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

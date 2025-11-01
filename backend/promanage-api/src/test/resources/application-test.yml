@@ -1,0 +1,97 @@
+# ProManage 测试环境配置
+spring:
+  profiles:
+    active: test
+  
+  # 数据源配置 - 由TestContainers动态配置
+  datasource:
+    # 这些配置会被TestContainers覆盖
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.H2Dialect
+  
+  # Redis配置 - 使用嵌入式Redis
+  data:
+    redis:
+      host: localhost
+      port: 6370
+      database: 1
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  
+  # 日志配置
+  logging:
+    level:
+      com.promanage: DEBUG
+      org.springframework.security: DEBUG
+      org.springframework.web: INFO
+      org.testcontainers: INFO
+      com.github.dockerjava: WARN
+      org.apache.http: WARN
+  
+  # 缓存配置
+  cache:
+    type: simple
+  
+  # 安全配置
+  security:
+    user:
+      name: test
+      password: test
+      roles: USER
+
+# JWT配置 - 测试专用
+jwt:
+  secret: test-secret-key-for-testing-only-minimum-64-characters-long-string
+  expiration: 3600000  # 1小时
+  refresh-expiration: 7200000  # 2小时
+  issuer: ProManage-Test
+
+# ProManage特定配置
+promanage:
+  security:
+    cors:
+      allowed-origins: 
+        - "http://localhost:3000"
+        - "http://localhost:8080"
+  
+  # 文件上传配置
+  file:
+    upload:
+      max-size: 10MB
+      allowed-types: jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,ppt,pptx
+  
+  # 测试特定配置
+  test:
+    cleanup-after-test: true
+    use-test-data: true
+
+# Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# TestContainers配置
+testcontainers:
+  reuse:
+    enable: true

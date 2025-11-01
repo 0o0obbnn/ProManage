@@ -1,9 +1,11 @@
 # ProManage Development Environment Configuration
 
 spring:
+  application:
+    name: promanage-api # Added for consistency and clarity
   datasource:
     druid:
-      url: jdbc:postgresql://192.168.2.144:5432/promanage
+      url: jdbc:postgresql://198.18.0.1:5432/promanage
       username: postgres
       password: postgres
       driver-class-name: org.postgresql.Driver
@@ -46,7 +48,7 @@ spring:
     redis:
       host: 192.168.2.144
       port: 6379
-      password: 
+      password:
       database: 0
       timeout: 3000ms
       lettuce:
@@ -134,20 +136,30 @@ mybatis-plus:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:VGVjaG5pY2FsU2VjcmV0S2V5UGxlYXNlQ2hhbmdlTWV0b09uZVBsZWFzZUxvbmdlclNlY3JldEtleUZvckRldk9ubHk=}  # Default for dev environment, overwrite in production
-  expiration: ${JWT_EXPIRATION:3600000}  # 1 hour (reduced from 24 hours for better security)
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours (reduced from 7 days)
+  secret: ${JWT_SECRET:VGVjaG5pY2FsU2VjcmV0S2V5UGxlYXNlQ2hhbmdlTWV0b09uZVBsZWFzZUxvbmdlclNlY3JldEtleUZvckRldk9ubHk=} # Default for dev environment, overwrite in production
+  expiration: ${JWT_EXPIRATION:3600000} # 1 hour (reduced from 24 hours for better security)
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000} # 24 hours (reduced from 7 days)
   issuer: ProManage
   header: Authorization
   token-prefix: Bearer
 
 # User Configuration
 user:
-  default-role-id: 2  # 默认角色ID (普通用户)
+  default-role-id: 2 # 默认角色ID (普通用户)
   password-min-length: 8
   password-max-length: 32
   username-min-length: 4
   username-max-length: 20
+
+# ProManage Business Configuration (for dev environment)
+promanage:
+  tracing:
+    enabled: true
+    zipkin:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+    sample-rate: ${TRACING_SAMPLE_RATE:0.1}
+    service-name: ${spring.application.name}
+    log-spans: ${TRACING_LOG_SPANS:false}
 
 # Elasticsearch Configuration (Optional)
 # elasticsearch:
@@ -186,7 +198,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,env,loggers
+        include: health,info,metrics,env,loggers,prometheus,zipkin
       base-path: /actuator
   endpoint:
     health:
@@ -194,6 +206,8 @@ management:
       probes:
         enabled: true
     info:
+      enabled: true
+    zipkin:
       enabled: true
   health:
     redis:
@@ -204,3 +218,12 @@ management:
     tags:
       application: ${spring.application.name}
       environment: dev
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLE_RATE:0.1}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}

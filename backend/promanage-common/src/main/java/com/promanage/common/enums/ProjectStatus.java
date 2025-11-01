@@ -13,48 +13,36 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ProjectStatus {
 
-    /**
-     * 活跃
-     */
-    ACTIVE(1, "活跃"),
+  /** 活跃 */
+  ACTIVE(1, "活跃"),
 
-    /**
-     * 已完成
-     */
-    COMPLETED(2, "已完成"),
+  /** 已完成 */
+  COMPLETED(2, "已完成"),
 
-    /**
-     * 已归档
-     */
-    ARCHIVED(3, "已归档"),
+  /** 已归档 */
+  ARCHIVED(3, "已归档"),
 
-    /**
-     * 已暂停
-     */
-    SUSPENDED(4, "已暂停");
+  /** 已暂停 */
+  SUSPENDED(4, "已暂停");
 
-    /**
-     * 状态码
-     */
-    private final Integer code;
+  /** 状态码 */
+  private final Integer code;
 
-    /**
-     * 状态描述
-     */
-    private final String description;
+  /** 状态描述 */
+  private final String description;
 
-    /**
-     * 根据code获取枚举
-     *
-     * @param code 状态码
-     * @return ProjectStatus
-     */
-    public static ProjectStatus getByCode(Integer code) {
-        for (ProjectStatus status : values()) {
-            if (status.getCode().equals(code)) {
-                return status;
-            }
-        }
-        return null;
+  /**
+   * 根据code获取枚举
+   *
+   * @param code 状态码
+   * @return ProjectStatus
+   */
+  public static ProjectStatus getByCode(Integer code) {
+    for (ProjectStatus status : values()) {
+      if (status.getCode().equals(code)) {
+        return status;
+      }
     }
+    return null;
+  }
 }

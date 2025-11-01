@@ -1,0 +1,71 @@
+# Prometheus配置文件
+# Version: 1.0
+
+# 全局配置
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# 告警规则文件
+rule_files:
+  - "rules/*.yml"
+
+# 抓取目标配置
+scrape_configs:
+  # ProManage API应用指标
+  - job_name: 'promanage-api'
+    static_configs:
+      - targets: ['promanage-api:8080']
+        labels:
+          application: 'promanage-api'
+          module: 'api'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Zipkin追踪指标
+  - job_name: 'zipkin'
+    static_configs:
+      - targets: ['zipkin:9411']
+        labels:
+          application: 'zipkin'
+          module: 'tracing'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # PostgreSQL数据库指标（如果启用了postgres_exporter）
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          application: 'postgresql'
+          module: 'database'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Redis缓存指标（如果启用了redis_exporter）
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          application: 'redis'
+          module: 'cache'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # JVM应用指标
+  - job_name: 'jvm'
+    static_configs:
+      - targets: ['promanage-api:8080']
+        labels:
+          application: 'promanage-api'
+          module: 'jvm'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+    params:
+      match[]:
+        - 'jvm_memory_used_bytes'
+        - 'jvm_memory_max_bytes'
+        - 'jvm_gc_collection_seconds_sum'
+        - 'process_cpu_usage'
+        - 'system_cpu_usage'
